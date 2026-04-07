@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer</title>
+    <link rel="stylesheet" th:href="@{/css/viewer.css}">
+    <!-- NEW: Pass documentId from Thymeleaf to JavaScript -->
+    <script th:if="${documentId}" th:inline="javascript">
+        window.documentId = /*[[${documentId}]]*/ null;
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+<div class="viewer-container">
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <button class="btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i>
+                Back
+            </button>
+            <div class="document-info">
+                <h3 id="documentTitle">Loading...</h3>
+            </div>
+        </div>
+
+        <div class="toolbar-center">
+            <div class="page-controls">
+                <button class="btn" onclick="previousPage()" id="prevBtn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="page-info">
+                    <input type="number" id="pageInput" min="1" onchange="goToPage()">
+                    <span id="pageCount">/ --</span>
+                </div>
+                <button class="btn" onclick="nextPage()" id="nextBtn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar-right">
+            <!-- NEW: Bookmark Button -->
+            <button class="btn bookmark-btn" id="bookmarkBtn" onclick="toggleBookmark()">
+                <i class="far fa-bookmark"></i>
+                <span class="bookmark-text">Bookmark</span>
+            </button>
+
+            <!-- NEW: Download Button -->
+            <button class="btn download-btn" onclick="downloadPdf()">
+                <i class="fas fa-download"></i>
+                Download
+            </button>
+
+            <div class="zoom-controls">
+                <button class="btn" onclick="zoomOut()">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <select id="zoomSelect" onchange="changeZoom()">
+                    <option value="0.5">50%</option>
+                    <option value="0.75">75%</option>
+                    <option value="1" selected>100%</option>
+                    <option value="1.25">125%</option>
+                    <option value="1.5">150%</option>
+                    <option value="2">200%</option>
+                    <option value="fit">Fit Width</option>
+                    <option value="auto">Fit Page</option>
+                </select>
+                <button class="btn" onclick="zoomIn()">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+            </div>
+            <button class="btn" onclick="toggleFullscreen()">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- PDF Content -->
+    <div class="pdf-container">
+        <div class="pdf-content" id="pdfContent">
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <span>Loading PDF...</span>
+    </div>
+
+    <!-- Bookmark Modal -->
+    <div id="bookmarkModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Bookmarks</h2>
+                <span class="close" onclick="closeBookmarkModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="form-actions" id="modalActions">
+                <button type="button" class="btn-secondary" onclick="closeBookmarkModal()">Cancel</button>
+                <button type="button" class="btn-primary" onclick="saveBookmark()">Save Bookmark</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download Progress Modal -->
+    <div id="downloadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Download PDF</h2>
+            </div>
+            <div class="modal-body">
+                <div class="download-info">
+                    <i class="fas fa-shield-alt download-icon"></i>
+                    <h3>Watermarked Download</h3>
+                    <p>This PDF will be downloaded with watermarks for security purposes.</p>
+                    <div class="download-progress" id="downloadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span class="progress-text">Preparing watermarked PDF...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeDownloadModal()">Cancel</button>
+                <button type="button" class="btn-primary" onclick="confirmDownload()">Download with Watermark</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/viewer.js}"></script>
+</body>
+</html>

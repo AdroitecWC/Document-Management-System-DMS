@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Activity Logs</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
+    <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
+    <style>
+        :root{
+            --bg: #f4f6f9;
+            --card: #fff;
+            --muted: #6c757d;
+            --border: #e9eef5;
+            --shadow: 0 6px 18px rgba(18,38,63,0.06);
+        }
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            padding-top: 70px;
+        }
+        .page-container{ padding: 28px 32px; }
+        .page-header { display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+        .btn-back, .btn-home { display:inline-flex; align-items:center; gap:8px; }
+        .page-title { font-size:22px; font-weight:600; color:#1f2d3d; }
+
+        /* Stat cards */
+        .stat-card {
+            border-radius: 12px; padding: 5px; color: white; transition: all 0.2s;
+            display: flex; justify-content: flex-end; align-items: center;
+            text-align: right; cursor: pointer; position: relative;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+
+        .stat-card.active::after { content: '✓'; position: absolute; top: 5px; left: 10px; font-size: 20px; font-weight: bold; }
+        .stat-number { font-size: 2rem; font-weight: bold; padding-left:0px; padding-right:5px; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; padding-left:0px; padding-top:15px; padding-right:5px; }
+
+        /* Toolbar */
+        .toolbar { margin: 18px 0 22px 0; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+        .filter-left { display:flex; gap:12px; align-items:center; flex:1 1 600px; }
+        .search-input { min-width: 420px; flex:1; }
+        .search-box { background: white; border-radius: 10px; padding: 10px; padding-top:5px; padding-bottom:5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .filter-right { display:flex; gap:8px; align-items:center; }
+        .filter-select { min-width:160px; }
+
+        /* Logs card */
+        .logs-card { background: var(--card); border-radius:10px; padding:20px; box-shadow: var(--shadow); }
+        .activity-row { border-bottom:1px solid var(--border); padding:18px 0; display:flex; gap:14px; align-items:flex-start; }
+        .activity-icon { min-width:44px; min-height:44px; border-radius:50%; background:#e6f4ea; display:flex; align-items:center; justify-content:center; color:#2d7a3a; font-weight:700; }
+        .activity-body { flex:1; }
+        .activity-meta { color:var(--muted); font-size:13px; margin-top:6px; }
+
+        /* ==================== BADGE COLOURS ==================== */
+
+        /* Authentication */
+        .badge-login              { color: #28a745; }
+        .badge-login-failed       { color: #dc3545; }
+        .badge-logout             { color: #28a745; }
+
+        /* User Actions */
+        .badge-user-create        { color: #28a745; }
+        .badge-user-create-failed { color: #dc3545; }
+        .badge-user-edit          { color: #28a745; }
+        .badge-user-edit-failed   { color: #dc3545; }
+        .badge-user-delete        { color: #28a745; }
+        .badge-user-delete-failed { color: #dc3545; }
+
+        /* Document Actions */
+        .badge-document-upload          { color: #28a745; }
+        .badge-document-upload-failed   { color: #dc3545; }
+        .badge-document-edit            { color: #28a745; }
+        .badge-document-edit-failed     { color: #dc3545; }
+        .badge-document-delete          { color: #28a745; }
+        .badge-document-delete-failed   { color: #dc3545; }
+        .badge-document-download        { color: #28a745; }
+        .badge-document-download-failed { color: #dc3545; }
+
+        /* Profile Actions */
+        .badge-edit-profile        { color: #28a745; }
+        .badge-edit-profile-failed { color: #dc3545; }
+
+        /* Tag / Classification */
+        .badge-success { color: #28a745; }
+        .badge-danger  { color: #dc3545; }
+
+        /* ✅ Settings Actions */
+        .badge-settings-update { color: #28a745; font-weight: 600; }
+        .badge-settings-fail   { color: #dc3545; font-weight: 600; }
+
+        /* Small utilities */
+        .muted-small { color:var(--muted); font-size:13px; }
+        .user-pill { font-weight:600; margin-right:8px; color: #007bff; cursor: pointer; text-decoration: none; }
+        .user-pill:hover { text-decoration: underline; }
+        .role-pill { font-size:12px; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#334155; margin-left:8px; }
+        .controls-inline { display:flex; gap:10px; align-items:center; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9998; }
+        .modal-overlay.active { display: block; }
+        .user-details-modal { display: none; position: fixed; background: white; border-radius: 12px; padding: 30px; width: 90%; max-width: 500px; z-index: 9999; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; transition: all 0.3s ease; }
+        .user-details-modal.active { display: block; }
+        .modal-header-custom { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e9eef5; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #6c757d; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { color: #dc3545; }
+        .user-detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .user-detail-label { font-weight: 600; width: 120px; color: #495057; }
+        .user-detail-value { flex: 1; color: #212529; }
+
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 900px){ .search-input { min-width: 160px; } .stat-card { min-width:48%; flex-basis:48%; } }
+
+        #scrollTopBtn { display: none; position: fixed; bottom: 30px; right: 30px; z-index: 1000; background-color: #007bff; color: white; border: none; outline: none; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: background-color 0.3s; }
+        #scrollTopBtn:hover { background-color:#1e3a5f; }
+
+        .alert-warning { background: linear-gradient(135deg, #fff9e6 0%, #fffcf0 100%); border: 2px solid #ffc107; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15); }
+        .alert-warning h5 { color: #856404; font-weight: 600; margin-bottom: 8px; }
+        .alert-warning p { color: #856404; font-size: 14px; line-height: 1.6; }
+        .alert-warning small { display: inline-block; margin-top: 6px; font-size: 13px; color: #6c5100; }
+        .btn-warning { background-color: #ffc107; border-color: #ffc107; color: #000; font-weight: 600; padding: 10px 24px; transition: all 0.3s ease; border-radius: 8px; }
+        .btn-warning:hover { background-color: #e0a800; border-color: #d39e00; color: #000; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(255, 193, 7, 0.4); }
+        .bi-lock-fill { animation: lockPulse 2s ease-in-out infinite; }
+        @keyframes lockPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .library-icon {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            margin-right: 0px;
+            transition: transform 0.3s ease;
+        }
+        .stat-card.active {
+border: 2px solid white;
+box-shadow: 0 0 15px rgba(255,255,255,0.6);
+}
+    </style>
+</head>
+<body>
+<div th:replace="~{common/navbar :: navbar}"></div>
+
+<div class="d-flex">
+    <div th:replace="~{common/sidebar :: sidebar}"></div>
+
+    <div class="main-content flex-grow-1 p-4">
+        <!-- Breadcrumb -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1"><img src="/images/Activity_logs_black_fill.png"
+                                      class="library-icon"
+                                      alt="Document Library Icon"> Activity Logs</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a th:href="@{/documents}" class="text-decoration-none">
+                                <i class="bi bi-house me-1"></i> Home
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">Activity Logs</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row active" style="background-color: #0A3D91"
+                     data-filter="all" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">All Events</div>
+                    <div class="stat-number" th:text="${totalLogs}">5</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #228ff5"
+                     data-filter="today" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Today</div>
+                    <div class="stat-number" th:text="${todayCount}">1</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #4DA3FF"
+                     data-filter="success" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Success</div>
+                    <div class="stat-number" th:text="${countSuccessLogs}">2</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #67abf5"
+                     data-filter="failures" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Failures</div>
+                    <div class="stat-number" th:text="${countFailedLogs}">2</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #82b3e0"
+                     data-filter="downloads" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Downloads</div>
+                    <div class="stat-number" th:text="${countDownloadLogs != null ? countDownloadLogs : 0}">0</div>
+                </div>
+            </div>
+            <!-- ✅ NEW: Settings card -->
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #aacef0"
+                     data-filter="settings" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Settings</div>
+                    <div class="stat-number" th:text="${countSettingsLogs != null ? countSettingsLogs : 0}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search box with conditional toolbar -->
+        <div class="search-box mb-4">
+            <div th:if="${hasValidLicense and isProfessionalEdition}">
+                <div class="toolbar">
+                    <div class="filter-left">
+                        <div class="input-group search-input">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0"
+                                   placeholder="Search by ID, user, action, or details....."
+                                   id="searchInput">
+                        </div>
+                    </div>
+                    <div class="filter-right controls-inline">
+                        <input type="date" id="startDate" class="form-control" style="width:160px;" onchange="filterByDateRange()" />
+                        <span class="muted-small">to</span>
+                        <input type="date" id="endDate" class="form-control" style="width:160px;" onchange="filterByDateRange()" />
+                        <button class="btn btn-outline-secondary" id="clearDateBtn" style="display:none;" onclick="clearDateFilters()" title="Clear dates">
+                            <i class="bi bi-x-circle me-1"></i> Clear
+                        </button>
+                        <button class="btn" style="background-color: #1e3a5f; color:#ffffff;" onclick="downloadLogsAsCSV()">
+                            <i class="bi bi-download me-1"></i> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${!hasValidLicense or !isProfessionalEdition}">
+                <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert" style="margin-bottom: 0;">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-lock-fill me-3" style="font-size: 1.8rem; color: #856404;"></i>
+                        <div>
+                            <h5 class="mb-1" style="color: #856404; font-weight: 600;">
+                                <span th:if="${!hasValidLicense}">No Active License</span>
+                                <span th:if="${hasValidLicense and !isProfessionalEdition}">Advanced Features Locked</span>
+                            </h5>
+                            <p class="mb-0" style="color: #856404; font-size: 14px;">
+                                <span th:if="${!hasValidLicense}">Please activate a valid license to access activity logs features.</span>
+                                <span th:if="${hasValidLicense and !isProfessionalEdition}">
+                                    You are currently using <strong th:text="${currentEdition == 'ED1' ? 'Essential Edition' :
+                  (currentEdition == 'ED2' ? 'Professional Edition' : currentEdition)}">
+    Essential Edition
+</strong>.
+                                    Upgrade to <strong>Professional Edition</strong> to unlock:
+                                    <br>
+                                    <small>✓ Advanced search filters &nbsp; ✓ Date range selection &nbsp; ✓ CSV export capabilities</small>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity list card -->
+        <div class="logs-card mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0"><i class="bi bi-activity"></i> Activity Log <small class="text-muted">(<span id="visibleLogsCount" th:text="${totalLogs}">0</span>)</small></h5>
+                <div class="muted-small">Showing recent activity</div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle" id="activityLogsTable">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width:80px">ID</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th style="width:160px">Time</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${logs == null or logs.isEmpty()}">
+                        <td colspan="5" class="text-center py-4">No logs found</td>
+                    </tr>
+
+                    <tr th:each="log : ${logs}"
+                        th:attr="
+        data-timestamp=${log.timestamp},
+        data-date=${#temporals.format(log.timestamp,'yyyy-MM-dd')},
+        data-action=${log.action},
+        data-user-id=${log.user != null ? log.user.id : ''}">
+                        <td th:text="${log.logId}">1</td>
+
+                        <td>
+                            <div>
+                                <a href="javascript:void(0)"
+                                   class="user-pill user-link"
+                                   th:text="${log.user != null ? log.user.username : 'Deleted User'}"
+                                   th:attr="data-user-id=${log.user != null ? log.user.id : 0}"
+                                   th:classappend="${log.user == null ? 'disabled-link' : ''}"
+                                   th:style="${log.user == null ? 'cursor: default; color: #6c757d; pointer-events: none;' : ''}">
+                                    User
+                                </a>
+                                <small class="muted-small d-block" th:text="${log.user != null ? log.user.email : 'N/A'}">email</small>
+                            </div>
+                        </td>
+
+                        <td>
+                            <!-- ✅ COMPLETE badge mapping including all SETTINGS actions -->
+                            <span class="badge"
+                                  th:classappend="${
+                                    log.action == 'LOGIN'                         ? 'badge-login' :
+                                    log.action == 'LOGIN_FAILED'                  ? 'badge-login-failed' :
+                                    log.action == 'LOGOUT'                        ? 'badge-logout' :
+                                    log.action == 'USER_CREATE'                   ? 'badge-user-create' :
+                                    log.action == 'USER_CREATE_FAILED'            ? 'badge-user-create-failed' :
+                                    log.action == 'USER_EDIT'                     ? 'badge-user-edit' :
+                                    log.action == 'USER_EDIT_FAILED'              ? 'badge-user-edit-failed' :
+                                    log.action == 'USER_DELETE'                   ? 'badge-user-delete' :
+                                    log.action == 'USER_DELETE_FAILED'            ? 'badge-user-delete-failed' :
+                                    log.action == 'DOCUMENT_UPLOAD'               ? 'badge-document-upload' :
+                                    log.action == 'DOCUMENT_UPLOAD_FAILED'        ? 'badge-document-upload-failed' :
+                                    log.action == 'DOCUMENT_EDIT'                 ? 'badge-document-edit' :
+                                    log.action == 'DOCUMENT_EDIT_FAILED'          ? 'badge-document-edit-failed' :
+                                    log.action == 'DOCUMENT_DELETE'               ? 'badge-document-delete' :
+                                    log.action == 'DOCUMENT_DELETE_FAILED'        ? 'badge-document-delete-failed' :
+                                    log.action == 'DOCUMENT_DOWNLOAD'             ? 'badge-document-download' :
+                                    log.action == 'DOCUMENT_DOWNLOAD_FAILED'      ? 'badge-document-download-failed' :
+                                    log.action == 'EDIT_PROFILE'                  ? 'badge-edit-profile' :
+                                    log.action == 'EDIT_PROFILE_FAILED'           ? 'badge-edit-profile-failed' :
+                                    log.action == 'TAG_ADD'                       ? 'badge-success' :
+                                    log.action == 'TAG_EDIT'                      ? 'badge-success' :
+                                    log.action == 'TAG_DELETE'                    ? 'badge-success' :
+                                    log.action == 'TAG_ADD_FAIL'                  ? 'badge-danger' :
+                                    log.action == 'TAG_EDIT_FAIL'                 ? 'badge-danger' :
+                                    log.action == 'TAG_DELETE_FAIL'               ? 'badge-danger' :
+                                    log.action == 'CLASSIFICATION_ADD'            ? 'badge-success' :
+                                    log.action == 'CLASSIFICATION_EDIT'           ? 'badge-success' :
+                                    log.action == 'CLASSIFICATION_DELETE'         ? 'badge-success' :
+                                    log.action == 'CLASSIFICATION_ADD_FAIL'       ? 'badge-danger' :
+                                    log.action == 'CLASSIFICATION_EDIT_FAIL'      ? 'badge-danger' :
+                                    log.action == 'BULK_DOCUMENT_UPLOADED'        ? 'badge-success' :
+                                    log.action == 'BULK_DOCUMENT_UPLOAD_FAIL'     ? 'badge-danger' :
+                                    log.action == 'SETTINGS_REPOSITORY_UPDATE'    ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_REPOSITORY_UPDATE_FAIL' ? 'badge-settings-fail' :
+                                    log.action == 'SETTINGS_METADATA_UPDATE'      ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_METADATA_UPDATE_FAIL' ? 'badge-settings-fail' :
+                                    log.action == 'SETTINGS_TAG_POLICY_UPDATE'    ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_TAG_POLICY_UPDATE_FAIL' ? 'badge-settings-fail' :
+                                    log.action == 'SETTINGS_WATERMARK_UPDATE'     ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_WATERMARK_UPDATE_FAIL' ? 'badge-settings-fail' :
+                                    log.action == 'SETTINGS_SECURITY_UPDATE'      ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_SECURITY_UPDATE_FAIL' ? 'badge-settings-fail' :
+                                    log.action == 'SETTINGS_LOGGING_UPDATE'       ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_LOGGING_UPDATE_FAIL'  ? 'badge-settings-fail' :
+                                    log.action == 'SETTINGS_BULK_USER_DELETE'     ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_BULK_USER_DELETE_FAIL' ? 'badge-settings-fail' :
+                                    log.action == 'SETTINGS_BULK_DOC_DELETE'      ? 'badge-settings-update' :
+                                    log.action == 'SETTINGS_BULK_DOC_DELETE_FAIL' ? 'badge-settings-fail' :
+                                    ''}"
+                                  th:text="${log.action}">
+                                ACTION
+                            </span>
+                        </td>
+
+                        <td th:text="${log.details}">Details</td>
+
+                        <td>
+                            <div th:text="${#temporals.format(log.timestamp, 'dd MMM yyyy')}">14 Oct 2025</div>
+                            <div class="muted-small" th:text="${#temporals.format(log.timestamp, 'HH:mm:ss')}">10:30</div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <button id="scrollTopBtn" title="Go to top"><i class="bi bi-arrow-up"></i></button>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" id="modalOverlay"></div>
+
+<!-- User Details Modal -->
+<div class="user-details-modal" id="userDetailsModal">
+    <div class="modal-header-custom">
+        <h4>User Details</h4>
+        <button class="modal-close" id="modalCloseBtn" type="button">&times;</button>
+    </div>
+    <div id="userDetailsContent">
+        <div class="text-center py-4"><div class="loading-spinner"></div></div>
+    </div>
+</div>
+
+<script src="/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{common/navbar :: navbar-js}"></div>
+<script th:inline="javascript">var contextPath = /*[[@{/}]]*/ '/';</script>
+
+<script>
+    let activeFilters = new Set(['all']);
+    let isProfessional = [[${isProfessionalEdition and hasValidLicense}]];
+
+    // ==================== CENTER MODAL ====================
+    function centerModalToMainContent() {
+        const modal = document.getElementById('userDetailsModal');
+        const mainContent = document.querySelector('.main-content');
+        if (!modal || !mainContent) return;
+        const mainRect = mainContent.getBoundingClientRect();
+        const modalWidth = modal.offsetWidth;
+        const modalHeight = modal.offsetHeight;
+        const left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
+        const top = window.innerHeight / 2 - modalHeight / 2;
+        modal.style.left = `${left}px`;
+        modal.style.top = `${top}px`;
+        modal.style.transform = 'none';
+    }
+
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('activityLogsTable');
+        if (table) {
+            table.addEventListener('click', function(e) {
+                const userLink = e.target.closest('.user-link');
+                if (userLink && !userLink.classList.contains('disabled-link')) {
+                    const userId = userLink.getAttribute('data-user-id');
+                    if (userId && userId !== '0') showUserDetails(parseInt(userId));
+                }
+            });
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.addEventListener('input', function() { applyFilters(); });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeUserModal();
+        });
+
+        const scrollTopBtn = document.getElementById("scrollTopBtn");
+        if (scrollTopBtn) {
+            window.onscroll = function() {
+                scrollTopBtn.style.display = (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
+            };
+            scrollTopBtn.addEventListener("click", function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        }
+
+        // Sort table ascending on page load
+        sortTable('desc');
+    });
+
+    // ==================== MODAL EVENTS ====================
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeUserModal();
+        });
+    }
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) closeUserModal();
+        });
+    }
+
+    window.addEventListener('resize', function() {
+        const modal = document.getElementById('userDetailsModal');
+        if (modal && modal.classList.contains('active')) centerModalToMainContent();
+    });
+
+    const sidebarToggle = document.querySelector('[data-bs-toggle="offcanvas"]');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            setTimeout(() => {
+                const modal = document.getElementById('userDetailsModal');
+                if (modal && modal.classList.contains('active')) centerModalToMainContent();
+            }, 350);
+        });
+    }
+
+    // ==================== USER DETAILS MODAL ====================
+    function showUserDetails(userId) {
+        const modal = document.getElementById('userDetailsModal');
+        const overlay = document.getElementById('modalOverlay');
+        const content = document.getElementById('userDetailsContent');
+        modal.classList.add('active');
+        overlay.classList.add('active');
+        setTimeout(() => { centerModalToMainContent(); }, 10);
+        content.innerHTML = '<div class="text-center py-4"><div class="loading-spinner"></div><p class="mt-2">Loading user details...</p></div>';
+        fetch(contextPath + `apis/users/${userId}`)
+            .then(response => { if (!response.ok) throw new Error('User not found'); return response.json(); })
+            .then(user => {
+                let createdDate = 'N/A';
+                if (user.createdAt) {
+                    const date = new Date(user.createdAt);
+                    createdDate = date.toLocaleString('en-IN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+                }
+                let roleName = user.roleName || 'N/A';
+                let groupsHtml = '<span class="text-muted">No groups assigned</span>';
+                if (user.groups && user.groups.length > 0) {
+                    groupsHtml = user.groups.map(group => `<span class="badge rounded-pill" style="background-color: #d1fae5; color: #065f46; margin-right: 4px; margin-bottom: 4px; padding: 6px 12px; font-size: 11px;">${group.groupName}</span>`).join('');
+                }
+                content.innerHTML = `
+                    <div class="user-detail-row"><div class="user-detail-label">First Name:</div><div class="user-detail-value">${user.firstName || 'N/A'}</div></div>
+                    <div class="user-detail-row"><div class="user-detail-label">Last Name:</div><div class="user-detail-value">${user.lastName || 'N/A'}</div></div>
+                    <div class="user-detail-row"><div class="user-detail-label">Username:</div><div class="user-detail-value">${user.username || 'N/A'}</div></div>
+                    <div class="user-detail-row"><div class="user-detail-label">Email:</div><div class="user-detail-value">${user.email || 'N/A'}</div></div>
+                    <div class="user-detail-row"><div class="user-detail-label">Role:</div><div class="user-detail-value"><span class="role-pill">${roleName}</span></div></div>
+                    <div class="user-detail-row"><div class="user-detail-label">Groups:</div><div class="user-detail-value">${groupsHtml}</div></div>
+                    <div class="user-detail-row"><div class="user-detail-label">Created At:</div><div class="user-detail-value">${createdDate}</div></div>
+                    <div class="user-detail-row" style="border-bottom: none;"><div class="user-detail-label">Created By:</div><div class="user-detail-value">${user.createdByUsername || 'System'}</div></div>`;
+                setTimeout(() => { centerModalToMainContent(); }, 10);
+            })
+            .catch(error => {
+                content.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>Failed to load user details. ${error.message}</div>`;
+                setTimeout(() => { centerModalToMainContent(); }, 10);
+            });
+    }
+
+    function closeUserModal() {
+        const modal = document.getElementById('userDetailsModal');
+        const overlay = document.getElementById('modalOverlay');
+        if (modal) { modal.classList.remove('active'); modal.style.left = ''; modal.style.top = ''; modal.style.transform = ''; }
+        if (overlay) overlay.classList.remove('active');
+    }
+
+    // ==================== SORT TABLE ASCENDING ====================
+    function sortTable(order) {
+    const tbody = document.querySelector('#activityLogsTable tbody');
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (rows.length <= 1) return;
+
+    const firstRowCells = rows[0].querySelectorAll('td');
+    if (firstRowCells.length < 5) return;
+
+    rows.sort((a, b) => {
+        const tsA = a.getAttribute('data-timestamp') || '';
+        const tsB = b.getAttribute('data-timestamp') || '';
+        return order === 'asc' ? tsA.localeCompare(tsB) : tsB.localeCompare(tsA);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+    // ==================== FILTER BY STAT CARD ====================
+    function filterByStatCard(card) {
+        const filter = card.getAttribute('data-filter');
+
+        if (filter === 'all') {
+            activeFilters.clear();
+            activeFilters.add('all');
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            applyFilters();
+            return;
+        }
+
+        // Remove 'all' when selecting specific filters
+        activeFilters.delete('all');
+        document.querySelector('[data-filter="all"]').classList.remove('active');
+
+        // Toggle the clicked filter
+        if (activeFilters.has(filter)) {
+            activeFilters.delete(filter);
+            card.classList.remove('active');
+        } else {
+            activeFilters.add(filter);
+            card.classList.add('active');
+        }
+
+        // If nothing selected, revert to 'all'
+        if (activeFilters.size === 0) {
+            activeFilters.add('all');
+            document.querySelector('[data-filter="all"]').classList.add('active');
+        }
+
+        applyFilters();
+    }
+
+    // ==================== DATE RANGE CHANGE ====================
+function filterByDateRange() {
+    if (!isProfessional) return;
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const hasDate = (startDateInput && startDateInput.value) || (endDateInput && endDateInput.value);
+
+    sortTable(hasDate ? 'asc' : 'desc');
+    toggleClearDateButton();
+    applyFilters();
+}
+
+    // ==================== CLEAR DATES ====================
+function clearDateFilters() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    if (startDateInput) startDateInput.value = '';
+    if (endDateInput) endDateInput.value = '';
+    sortTable('desc');
+    toggleClearDateButton();
+    applyFilters();
+}
+
+    function toggleClearDateButton() {
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const clearBtn = document.getElementById('clearDateBtn');
+        if (!clearBtn) return;
+
+        const hasDate = (startDateInput && startDateInput.value) || (endDateInput && endDateInput.value);
+        clearBtn.style.display = hasDate ? 'inline-flex' : 'none';
+    }
+
+    // ==================== APPLY FILTERS ====================
+function applyFilters() {
+    const searchInput = document.getElementById('searchInput');
+    const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    let startDate = null;
+    let endDate = null;
+
+    if (isProfessional && startDateInput && startDateInput.value) {
+        startDate = new Date(startDateInput.value);
+        startDate.setHours(0, 0, 0, 0);
+    }
+
+    if (isProfessional && endDateInput && endDateInput.value) {
+        endDate = new Date(endDateInput.value);
+        endDate.setHours(23, 59, 59, 999);
+    }
+
+    if (startDate && !endDate) {
+        endDate = new Date();
+        endDate.setHours(23, 59, 59, 999);
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const rows = document.querySelectorAll('#activityLogsTable tbody tr');
+    let visibleCount = 0;
+
+    // Split filters into THREE categories
+    const hasTimeFilter = activeFilters.has('today');
+
+    const statusFilters = new Set();
+    if (activeFilters.has('success'))  statusFilters.add('success');
+    if (activeFilters.has('failures')) statusFilters.add('failures');
+
+    const categoryFilters = new Set();
+    if (activeFilters.has('downloads')) categoryFilters.add('downloads');
+    if (activeFilters.has('settings'))  categoryFilters.add('settings');
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 5) return;
+
+        const idCell = cells[0].textContent.trim();
+        if (!idCell || idCell.toLowerCase().includes('no logs')) return;
+
+        const action = row.getAttribute('data-action') || '';
+        const dateText = cells[4].children[0]?.textContent?.trim();
+        const logDate = parseDateFromText(dateText);
+
+        const isFailed = action.includes('FAILED') || action.includes('FAIL');
+      const isDownload = action === 'DOCUMENT_DOWNLOAD' || action === 'DOCUMENT_DOWNLOAD_FAILED';
+        const isSettings = action.startsWith('SETTINGS_');
+
+        let show = true;
+
+        // --- DATE RANGE filter (ED2 only) - always AND ---
+        if (show && startDate && logDate) {
+            const logDateTime = new Date(logDate);
+            logDateTime.setHours(0, 0, 0, 0);
+            if (logDateTime < startDate) show = false;
+        }
+        if (show && endDate && logDate) {
+            const logDateTime = new Date(logDate);
+            logDateTime.setHours(23, 59, 59, 999);
+            if (logDateTime > endDate) show = false;
+        }
+
+        // --- STAT CARD FILTERS ---
+        if (show && !activeFilters.has('all')) {
+
+            // TIME filter (AND) — must be today
+            if (hasTimeFilter) {
+                if (!logDate || logDate.getTime() !== today.getTime()) {
+                    show = false;
+                }
+            }
+
+            // STATUS filter (AND) — must match success/failure status
+            if (show && statusFilters.size > 0) {
+                let matchesStatus = false;
+                if (statusFilters.has('success') && !isFailed) matchesStatus = true;
+                if (statusFilters.has('failures') && isFailed) matchesStatus = true;
+                if (!matchesStatus) show = false;
+            }
+
+            // CATEGORY filter (AND with above, OR among categories)
+            if (show && categoryFilters.size > 0) {
+                let matchesCategory = false;
+                if (categoryFilters.has('downloads') && isDownload) matchesCategory = true;
+                if (categoryFilters.has('settings') && isSettings) matchesCategory = true;
+                if (!matchesCategory) show = false;
+            }
+        }
+
+        // --- SEARCH filter - always AND ---
+        if (show && searchQuery) {
+            let text = '';
+            cells.forEach(c => text += c.textContent.toLowerCase() + ' ');
+            if (!text.includes(searchQuery)) show = false;
+        }
+
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+    });
+
+    const counter = document.getElementById('visibleLogsCount');
+    if (counter) counter.textContent = visibleCount;
+}
+
+    // ==================== PARSE DATE ====================
+    function parseDateFromText(dateText) {
+        if (!dateText) return null;
+        const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const parts = dateText.split(" ");
+        if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const monthIndex = monthNames.indexOf(parts[1]);
+            const year = parseInt(parts[2], 10);
+            if (!isNaN(day) && monthIndex >= 0 && !isNaN(year)) {
+                const date = new Date(year, monthIndex, day);
+                date.setHours(0, 0, 0, 0);
+                return date;
+            }
+        }
+        return null;
+    }
+
+    // ==================== CSV DOWNLOAD ====================
+    function downloadLogsAsCSV() {
+        if (!isProfessional) { alert("CSV Export is only available in Professional Edition (ED2)."); return; }
+        const table = document.querySelector("#activityLogsTable");
+        if (!table) { alert("No logs table found!"); return; }
+
+        let csvContent = "";
+        const rows = table.querySelectorAll("tr");
+
+        rows.forEach((row, index) => {
+            const cols = row.querySelectorAll("th, td");
+            if (cols.length === 0) return;
+
+            if (index === 0) {
+                csvContent += Array.from(cols).map(col => `"${col.textContent.trim().replace(/"/g, '""')}"`).join(",") + "\n";
+                return;
+            }
+
+            const idCell = cols[0]?.textContent.trim();
+            if (!idCell || idCell.toLowerCase().includes('no logs')) return;
+
+            // Only export visible (filtered) rows
+            if (row.style.display === 'none') return;
+
+            csvContent += Array.from(cols).map(col => `"${col.textContent.trim().replace(/"/g, '""')}"`).join(",") + "\n";
+        });
+
+        if (csvContent.trim() === "" || csvContent.split("\n").length <= 2) {
+            alert("No logs found for the current filters!");
+            return;
+        }
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        const startDateInput = document.querySelector("#startDate");
+        const endDateInput = document.querySelector("#endDate");
+        const s = startDateInput && startDateInput.value ? startDateInput.value : 'All';
+        const e = endDateInput && endDateInput.value ? endDateInput.value : 'All';
+
+        link.href = url;
+        link.download = `Activity_Logs_${s}_to_${e}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function goBack() {
+        if (document.referrer && document.referrer !== window.location.href) window.history.back();
+        else window.location.href = contextPath + 'documents';
+    }
+</script>
+</body>
+</html>

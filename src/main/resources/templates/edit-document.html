@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Document - Codes & Standards</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
+    <script src="/pdfjs/pdf.js"></script>
+    <!-- Include Sidebar Styles -->
+    <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
+    <style>
+        /* ============== GLOBAL RESET ============== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            padding-top: 70px;
+        }
+
+        /* ============== WIZARD STYLES ============== */
+        .wizard-container {
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .wizard-header {
+            background-color: #1e3a5f;
+            padding: 35px 40px;
+            color: white;
+        }
+
+        .wizard-header h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+        }
+
+        .wizard-header p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        /* Step Progress Bar */
+        .wizard-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 35px 80px;
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        .wizard-steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50px;
+            right: 50px;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+
+        .wizard-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .wizard-step-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 20px;
+            color: #9ca3af;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .wizard-step-circle i {
+            font-size: 20px;
+        }
+
+        .wizard-step.active .wizard-step-circle {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .wizard-step.completed .wizard-step-circle {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .wizard-step-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .wizard-step.active .wizard-step-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .wizard-step.completed .wizard-step-label {
+            color: #10b981;
+        }
+
+        /* Wizard Content */
+        .wizard-content {
+            padding: 50px 70px;
+            min-height: 450px;
+        }
+
+        .wizard-step-content {
+            display: none;
+        }
+
+        .wizard-step-content.active {
+            display: block;
+            animation: fadeIn 0.4s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Wizard Navigation */
+        .wizard-navigation {
+            display: flex;
+            justify-content: space-between;
+            padding: 25px 70px 35px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .wizard-btn {
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wizard-btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .wizard-btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .wizard-btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .wizard-btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .wizard-btn-primary:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .wizard-btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .wizard-btn-success:hover {
+            background: #059669;
+        }
+
+        /* ============== FORM STYLES ============== */
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a2332;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .form-section-title i {
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .required-indicator {
+            color: #ef4444;
+        }
+
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ============== TAGS & CLASSIFICATIONS & GROUPS ============== */
+        .selection-area-flex {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f9fafb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 100px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .selection-area-flex::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .selection-area-flex::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .selection-area-flex::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
+        }
+
+        .selection-area-flex::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        .selection-item-flex {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 16px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .selection-item-flex:hover {
+            border-color: #4DA3FF;
+            background: #e6f4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .selection-item-flex.selected {
+            border-color: #4DA3FF;
+            background: #e6f4ff;
+            color: #4DA3FF;
+        }
+
+        .selection-item-flex.blink {
+            animation: blinkAnimation 0.6s ease 3;
+        }
+
+        /* Classification-specific styling */
+        .selection-item-flex.selected[data-classification-name] {
+            border-color: #1e3a5f !important;
+            background: #d9e4f2 !important;
+            color: #1e3a5f !important;
+        }
+        .selection-item-flex[data-classification-name]:hover {
+            border-color: #1e3a5f !important;
+            background: #d9e4f2 !important;
+        }
+
+        /* Group-specific styling */
+        .selection-item-flex.selected[data-group-id] {
+            border-color: #10b981 !important;
+            background: #d1fae5 !important;
+            color: #065f46 !important;
+        }
+        .selection-item-flex[data-group-id]:hover {
+            border-color: #10b981 !important;
+            background: #d1fae5 !important;
+        }
+
+        @keyframes blinkAnimation {
+            0%, 100% { border-color: #e5e7eb; background: white; }
+            50% { border-color: #fbbf24; background: #fef3c7; transform: scale(1.05); }
+        }
+
+        .selected-items-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            min-height: 80px;
+            background: white;
+            margin-top: 10px;
+        }
+
+        .selected-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #4DA3FF;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: chipFadeIn 0.3s;
+        }
+
+        .classification-chip {
+            background: #1e3a5f !important;
+            color: white !important;
+        }
+
+        .group-chip {
+            background: #10b981 !important;
+            color: white !important;
+        }
+
+        @keyframes chipFadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .chip-remove {
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.8;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.2s;
+        }
+
+        .chip-remove:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 13px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .error-message {
+            display: none;
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 5px;
+            animation: fadeIn 0.3s;
+            padding: 8px 12px;
+            background: #fee2e2;
+            border-radius: 6px;
+            border-left: 3px solid #ef4444;
+        }
+
+        .error-message.show {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ============== STEP 3: REVIEW SECTION - BEFORE/AFTER ============== */
+        .review-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .comparison-container {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .comparison-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a2332;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .comparison-title.before {
+            color: #dc2626;
+        }
+
+        .comparison-title.after {
+            color: #059669;
+        }
+
+        .comparison-title i {
+            font-size: 20px;
+        }
+
+        .comparison-section {
+            margin-bottom: 20px;
+        }
+
+        .comparison-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .comparison-section h6 {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .comparison-grid strong {
+            color: #374151;
+        }
+
+        .comparison-grid span {
+            color: #6b7280;
+        }
+
+        .value-changed {
+            background: #fef3c7;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        .value-unchanged {
+            color: #9ca3af;
+        }
+
+        .comparison-divider {
+            border: 0;
+            border-top: 1px solid #e5e7eb;
+            margin: 15px 0;
+        }
+
+        .comparison-tags, .comparison-classifications, .comparison-groups {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pdf-preview-box {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+
+        .pdf-preview-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a2332;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .pdf-canvas-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 100%;
+        }
+
+        #reviewPdfCanvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .pdf-placeholder {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .pdf-placeholder i {
+            font-size: 64px;
+            color: #d1d5db;
+            margin-bottom: 15px;
+        }
+
+        .pdf-placeholder p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* ============== CUSTOM MODALS (Matching Upload Page) ============== */
+        .custom-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+
+        .custom-modal-overlay.show {
+            display: block;
+        }
+
+        .custom-modal {
+            display: none;
+            position: fixed;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            animation: slideUp 0.3s;
+            overflow: hidden;
+            flex-direction: column;
+            z-index: 9999;
+        }
+
+        .custom-modal.show {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header-custom {
+            padding: 25px 30px;
+            background: #1e3a5f;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .modal-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .modal-title-custom {
+            flex: 1;
+        }
+
+        .modal-title-custom h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-title-custom p {
+            margin: 5px 0 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .modal-close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body-custom {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .modal-body-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body-custom::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .modal-body-custom::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.15);
+            border-radius: 3px;
+        }
+        .modal-body-custom::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0,0,0,0.25);
+        }
+
+        .modal-body-custom p {
+            margin: 0;
+            font-size: 15px;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        .modal-footer-custom {
+            padding: 20px 30px;
+            background: #f9fafb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .modal-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-secondary {
+            background: white;
+            color: #374151;
+            border: 2px solid #e5e7eb;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        .modal-btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Alert Styles */
+        .alert {
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert i {
+            font-size: 20px;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .wizard-steps {
+                padding: 35px 80px;
+            }
+
+            .wizard-content {
+                padding: 30px 30px;
+            }
+
+            .wizard-navigation {
+                padding: 15px 30px 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .review-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .wizard-steps::before {
+                left: 30px;
+                right: 30px;
+            }
+
+            .wizard-step-label {
+                font-size: 12px;
+            }
+
+            .wizard-step-circle {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Include Top Navbar -->
+<div th:replace="~{common/navbar :: navbar}"></div>
+
+<!-- Sidebar + Content -->
+<div class="d-flex">
+    <!-- Include Sidebar -->
+    <div th:replace="~{common/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-grow-1 p-4">
+        <!-- Alert Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${success}">Document updated successfully!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span th:text="${error}">Error updating document!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Wizard Container -->
+        <div class="wizard-container">
+            <!-- Wizard Header -->
+            <div class="wizard-header">
+                <h2><i class="bi bi-pencil-square me-2"></i>Edit Document</h2>
+                <p>Update document information and metadata in 3 simple steps</p>
+            </div>
+
+            <!-- Step Progress Bar -->
+            <div class="wizard-steps">
+                <div class="wizard-step active" data-step="1">
+                    <div class="wizard-step-circle">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                    <div class="wizard-step-label">Document Details</div>
+                </div>
+                <div class="wizard-step" data-step="2">
+                    <div class="wizard-step-circle">
+                        <i class="bi bi-tags"></i>
+                    </div>
+                    <div class="wizard-step-label">Tags & Access</div>
+                </div>
+                <div class="wizard-step" data-step="3">
+                    <div class="wizard-step-circle">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="wizard-step-label">Review & Update</div>
+                </div>
+            </div>
+
+            <!-- Wizard Form -->
+            <form id="editForm" method="post" th:action="@{/document/edit/{id}(id=${document.id})}" th:object="${document}">
+                <input type="hidden" name="tagNames" id="tagNamesField" />
+                <input type="hidden" name="classificationNames" id="classificationNamesField" />
+                <input type="hidden" name="groupIds" id="groupIdsField" />
+                <input type="hidden" name="publishMonth" id="publishMonthField" />
+                <input type="hidden" name="publishYear" id="publishYearField" />
+
+                <!-- Wizard Content Area -->
+                <div class="wizard-content">
+                    <!-- Step 1: Document Details -->
+                    <div class="wizard-step-content active" data-step="1">
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="bi bi-info-circle"></i>
+                                Basic Information
+                            </div>
+
+                            <div class="form-group">
+                                <label for="title" class="form-label">
+                                    Document Title <span class="required-indicator">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="title" th:field="*{title}" placeholder="e.g., Product Manual v2.1" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productCode" class="form-label">
+                                        Product Code <span class="required-indicator">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="productCode" th:field="*{productCode}" placeholder="e.g., PM-001" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="edition" class="form-label">Edition</label>
+                                    <input type="text" class="form-control" id="edition" th:field="*{edition}" placeholder="e.g., 1.0, 2.1">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="publishMonth" class="form-label">Publication Month</label>
+                                    <select class="form-control" id="publishMonth">
+                                        <option value="">Select Month (Optional)</option>
+                                        <option value="01">January</option>
+                                        <option value="02">February</option>
+                                        <option value="03">March</option>
+                                        <option value="04">April</option>
+                                        <option value="05">May</option>
+                                        <option value="06">June</option>
+                                        <option value="07">July</option>
+                                        <option value="08">August</option>
+                                        <option value="09">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="publishYear" class="form-label">
+                                        Publication Year <span class="required-indicator">*</span>
+                                    </label>
+                                    <select class="form-control" id="publishYear" required>
+                                        <option value="">Select Year</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="noOfPages" class="form-label">Number of Pages</label>
+                                <input type="number" class="form-control" id="noOfPages" th:field="*{noOfPages}" placeholder="Number of pages" min="1" readonly>
+                                <p class="info-text">
+                                    <i class="bi bi-lock"></i> Page count cannot be changed
+                                </p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="notes" class="form-label">Notes / Description</label>
+                                <textarea class="form-control" id="notes" th:field="*{notes}" placeholder="Add any additional notes, description, or comments about this document..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Tags, Classifications & Groups -->
+                    <div class="wizard-step-content" data-step="2">
+                        <!-- Tags Section -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="bi bi-tags"></i>
+                                Tags (Optional)
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Create New Tag</label>
+                                <p class="info-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Enter a tag name (lowercase, no spaces) and press Enter or click Add
+                                </p>
+                                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                    <input type="text" class="form-control" id="newTagInput" placeholder="Enter tag name (e.g., manual, technical)" style="flex: 1;">
+                                    <button type="button" class="wizard-btn wizard-btn-primary" id="addTagBtn" style="padding: 12px 24px;">
+                                        <i class="bi bi-plus-circle"></i> Add
+                                    </button>
+                                </div>
+                                <div class="error-message" id="tagErrorMessage"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Select Existing Tags</label>
+                                <p class="info-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Click on tags to select/deselect them
+                                </p>
+                                <div class="selection-area-flex" id="tagsSelectionArea">
+                                    <div th:if="${allTags == null or allTags.isEmpty()}" class="empty-state">
+                                        No existing tags available
+                                    </div>
+                                    <div th:each="tag : ${allTags}" class="selection-item-flex" th:attr="data-tag-name=${tag.tagName}">
+                                        <input type="checkbox" class="selection-checkbox tag-checkbox" th:attr="data-tag-name=${tag.tagName}" style="display: none;">
+                                        <span class="selection-label" th:text="${tag.tagName}">Tag Name</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Selected Tags</label>
+                                <div class="selected-items-container" id="selectedTagsContainer">
+                                    <div class="empty-state">No tags selected</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Classifications Section -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="bi bi-folder"></i>
+                                Classifications (Optional)
+                            </div>
+
+                            <div class="form-group">
+                                <!-- Classification Restriction Message -->
+                                <div id="classificationRestrictionMsg"
+                                     style="display:none;
+                                        color:#b45309;
+                                        background:#fff7ed;
+                                        padding:10px 12px;
+                                        border-left:4px solid #f59e0b;
+                                        border-radius:6px;
+                                        margin-bottom:10px;
+                                        font-size:14px;">
+                                    <i class="bi bi-lock-fill"></i>
+                                    Upgrade to <strong>Professional Edition</strong> to add classifications to documents.
+                                </div>
+
+                                <label class="form-label" id="selectexectingclassifications">Select Existing Classifications</label>
+                                <p class="info-text" id="selectexectingclassificationsmessage">
+                                    <i class="bi bi-info-circle"></i>
+                                    Click on classifications to select/deselect them
+                                </p>
+                                <div class="selection-area-flex" id="classificationsSelectionArea">
+                                    <div th:if="${allClassifications == null or allClassifications.isEmpty()}" class="empty-state">
+                                        No existing classifications available
+                                    </div>
+                                    <div th:each="classification : ${allClassifications}" class="selection-item-flex" th:attr="data-classification-name=${classification.classificationName}">
+                                        <input type="checkbox" class="selection-checkbox classification-checkbox" th:attr="data-classification-name=${classification.classificationName}" style="display: none;">
+                                        <span class="selection-label" th:text="${classification.classificationName}">Classification Name</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Selected Classifications</label>
+                                <div class="selected-items-container" id="selectedClassificationsContainer">
+                                    <div class="empty-state">No classifications selected</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Groups Section - Access Control -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="bi bi-people"></i>
+                                Access Control - Groups (Optional)
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Select Groups for Access Control</label>
+                                <p class="info-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Only users in selected groups will have access to this document
+                                </p>
+                                <div class="selection-area-flex" id="groupsSelectionArea">
+                                    <div th:if="${allGroups == null or allGroups.isEmpty()}" class="empty-state">
+                                        No existing groups available
+                                    </div>
+                                    <div th:each="group : ${allGroups}" class="selection-item-flex"
+                                         th:attr="data-group-id=${group.id}, data-group-name=${group.groupName}">
+                                        <input type="checkbox" class="selection-checkbox group-checkbox"
+                                               th:attr="data-group-id=${group.id}, data-group-name=${group.groupName}"
+                                               style="display: none;">
+                                        <span class="selection-label" th:text="${group.groupName}">Group Name</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Selected Groups</label>
+                                <div class="selected-items-container" id="selectedGroupsContainer">
+                                    <div class="empty-state">No groups selected</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Review & Submit - BEFORE/AFTER Comparison -->
+                    <div class="wizard-step-content" data-step="3">
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="bi bi-eye"></i>
+                                Review Your Changes
+                            </div>
+
+                            <div class="review-container">
+                                <!-- BEFORE: Original Details -->
+                                <div class="comparison-container">
+                                    <div class="comparison-title before">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                        Previous Details
+                                    </div>
+
+                                    <div class="comparison-section">
+                                        <h6>DOCUMENT INFORMATION</h6>
+                                        <div class="comparison-grid">
+                                            <strong>Title:</strong> <span id="beforeTitle">-</span>
+                                            <strong>Product Code:</strong> <span id="beforeProductCode">-</span>
+                                            <strong>Edition:</strong> <span id="beforeEdition">-</span>
+                                            <strong>Publish Date:</strong> <span id="beforePublishDate">-</span>
+                                            <strong>Pages:</strong> <span id="beforePages">-</span>
+                                            <strong>Notes:</strong> <span id="beforeNotes">-</span>
+                                        </div>
+                                    </div>
+
+                                    <hr class="comparison-divider">
+
+                                    <div class="comparison-section">
+                                        <h6>TAGS</h6>
+                                        <div class="comparison-tags" id="beforeTags">
+                                            <span style="color: #9ca3af; font-size: 14px;">No tags</span>
+                                        </div>
+                                    </div>
+
+                                    <hr class="comparison-divider">
+
+                                    <div class="comparison-section">
+                                        <h6>CLASSIFICATIONS</h6>
+                                        <div class="comparison-classifications" id="beforeClassifications">
+                                            <span style="color: #9ca3af; font-size: 14px;">No classifications</span>
+                                        </div>
+                                    </div>
+
+                                    <hr class="comparison-divider">
+
+                                    <div class="comparison-section">
+                                        <h6>ACCESS CONTROL - GROUPS</h6>
+                                        <div class="comparison-groups" id="beforeGroups">
+                                            <span style="color: #9ca3af; font-size: 14px;">No groups</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AFTER: Updated Details -->
+                                <div class="comparison-container">
+                                    <div class="comparison-title after">
+                                        <i class="bi bi-file-earmark-check"></i>
+                                        Updated Details
+                                    </div>
+
+                                    <div class="comparison-section">
+                                        <h6>DOCUMENT INFORMATION</h6>
+                                        <div class="comparison-grid">
+                                            <strong>Title:</strong> <span id="afterTitle">-</span>
+                                            <strong>Product Code:</strong> <span id="afterProductCode">-</span>
+                                            <strong>Edition:</strong> <span id="afterEdition">-</span>
+                                            <strong>Publish Date:</strong> <span id="afterPublishDate">-</span>
+                                            <strong>Pages:</strong> <span id="afterPages">-</span>
+                                            <strong>Notes:</strong> <span id="afterNotes">-</span>
+                                        </div>
+                                    </div>
+
+                                    <hr class="comparison-divider">
+
+                                    <div class="comparison-section">
+                                        <h6>TAGS</h6>
+                                        <div class="comparison-tags" id="afterTags">
+                                            <span style="color: #9ca3af; font-size: 14px;">No tags selected</span>
+                                        </div>
+                                    </div>
+
+                                    <hr class="comparison-divider">
+
+                                    <div class="comparison-section">
+                                        <h6>CLASSIFICATIONS</h6>
+                                        <div class="comparison-classifications" id="afterClassifications">
+                                            <span style="color: #9ca3af; font-size: 14px;">No classifications selected</span>
+                                        </div>
+                                    </div>
+
+                                    <hr class="comparison-divider">
+
+                                    <div class="comparison-section">
+                                        <h6>ACCESS CONTROL - GROUPS</h6>
+                                        <div class="comparison-groups" id="afterGroups">
+                                            <span style="color: #9ca3af; font-size: 14px;">No groups selected</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wizard Navigation -->
+                <div class="wizard-navigation">
+                    <div>
+                        <button type="button" class="wizard-btn wizard-btn-secondary" id="prevBtn" style="display: none;">
+                            <i class="bi bi-arrow-left"></i> Previous
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" class="wizard-btn wizard-btn-secondary" id="cancelBtn">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                        <button type="button" class="wizard-btn wizard-btn-primary" id="nextBtn">
+                            Next <i class="bi bi-arrow-right"></i>
+                        </button>
+                        <button type="submit" class="wizard-btn wizard-btn-success" id="submitBtn" style="display: none;">
+                            <i class="bi bi-save"></i> Update Document
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- ==================== CONFIRMATION MODAL (Inside main-content) ==================== -->
+        <div class="custom-modal-overlay" id="confirmationModal" onclick="if(event.target===this) closeCustomModal('confirmationModal')">
+            <div class="custom-modal">
+                <div class="modal-header-custom">
+                    <div class="modal-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="modal-title-custom">
+                        <h3>Unsaved Changes</h3>
+                        <p>You have unsaved changes that will be lost</p>
+                    </div>
+                    <button type="button" class="modal-close-btn" onclick="closeConfirmationModal()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <div class="modal-body-custom">
+                    <p>Are you sure you want to leave this page? All your changes will be lost if you continue.</p>
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeConfirmationModal()">
+                        Continue Editing
+                    </button>
+                    <button type="button" class="modal-btn modal-btn-danger" id="confirmCancelBtn">
+                        Yes, Discard Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="/js/bootstrap.bundle.min.js"></script>
+<!-- Include Navbar JavaScript -->
+<div th:replace="~{common/navbar :: navbar-js}"></div>
+
+<script th:inline="javascript">
+    // ============== STATE MANAGEMENT ==============
+    let currentStep = 1;
+    let formChanged = false;
+    let selectedTags = [];
+    let selectedClassifications = [];
+    let selectedGroups = [];
+    let allExistingTags = [];
+    let allExistingGroups = [];
+    let originalFormData = {};
+    let pdfDoc = null;
+    const documentId = /*[[${document.id}]]*/ 0;
+    let isPasswordProtected = false;
+    let classificationSelectionLocked = false;
+    let maxTagsPerDocument = 10;
+    let maxTagsExceeded = false;
+
+    // ==================== MODAL POSITIONING (sidebar-aware, matching Upload page) ====================
+    let activeCustomModalId = null;
+
+    function centerModalToMainContent(modalId) {
+        const overlay = document.getElementById(modalId);
+        if (!overlay) return;
+        const modalEl = overlay.querySelector('.custom-modal');
+        if (!modalEl) return;
+
+        const mainContent = document.querySelector('.main-content');
+        if (!mainContent) return;
+
+        const mainRect = mainContent.getBoundingClientRect();
+        const modalWidth = modalEl.offsetWidth;
+        const modalHeight = modalEl.offsetHeight;
+
+        const left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
+        const top = Math.max(80, (window.innerHeight / 2) - (modalHeight / 2));
+
+        modalEl.style.left = `${left}px`;
+        modalEl.style.top = `${top}px`;
+    }
+
+    function openCustomModal(modalId) {
+        const overlay = document.getElementById(modalId);
+        if (!overlay) return;
+
+        activeCustomModalId = modalId;
+        overlay.classList.add('show');
+
+        const modalEl = overlay.querySelector('.custom-modal');
+        if (modalEl) modalEl.classList.add('show');
+
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => centerModalToMainContent(modalId), 10);
+    }
+
+    function closeCustomModal(modalId) {
+        const overlay = document.getElementById(modalId);
+        if (!overlay) return;
+
+        overlay.classList.remove('show');
+
+        const modalEl = overlay.querySelector('.custom-modal');
+        if (modalEl) {
+            modalEl.classList.remove('show');
+            modalEl.style.left = '';
+            modalEl.style.top = '';
+        }
+
+        document.body.style.overflow = '';
+        activeCustomModalId = null;
+    }
+
+    // ============== EDITION ACCESS CHECK ==============
+    async function checkClassificationEditAccess() {
+        try {
+            const response = await fetch('/api/classifications/check-management-access');
+            const data = await response.json();
+            console.log('Classification license check:', data);
+            if (data && data.managementAllowed === false) {
+                classificationSelectionLocked = true;
+                applyEssentialClassificationLock();
+            }
+        } catch (err) {
+            console.error('Classification edit license check failed', err);
+        }
+    }
+
+    function applyEssentialClassificationLock() {
+        document.getElementById('classificationRestrictionMsg').style.display = 'block';
+
+        const selectionArea = document.getElementById('classificationsSelectionArea');
+        const selectLabel = document.getElementById('selectexectingclassifications');
+        const selectMessage = document.getElementById('selectexectingclassificationsmessage');
+        if (selectionArea) selectionArea.style.display = 'none';
+        if (selectLabel) selectLabel.style.display = 'none';
+        if (selectMessage) selectMessage.style.display = 'none';
+    }
+
+    // ============== INITIALIZATION ==============
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('Page loaded, initializing...');
+
+        populateYearDropdown();
+        initializeData();
+        await fetchMaxTagsPerDocument();
+        await checkClassificationEditAccess();
+
+        // Setup modal resize/sidebar observers (matching Upload page)
+        setupModalObservers();
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                if (bsAlert) bsAlert.close();
+            });
+        }, 5000);
+    });
+
+    function setupModalObservers() {
+        // Re-center modal on window resize
+        window.addEventListener('resize', function() {
+            if (activeCustomModalId) centerModalToMainContent(activeCustomModalId);
+        });
+
+        // Re-center on sidebar toggle
+        const sidebarToggle = document.querySelector('[data-bs-toggle="offcanvas"]');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                setTimeout(() => {
+                    if (activeCustomModalId) centerModalToMainContent(activeCustomModalId);
+                }, 350);
+            });
+        }
+
+        // MutationObserver for sidebar
+        const sidebar = document.querySelector('.sidebar, .offcanvas, [class*="sidebar"]');
+        if (sidebar) {
+            const observer = new MutationObserver(function() {
+                setTimeout(() => {
+                    if (activeCustomModalId) centerModalToMainContent(activeCustomModalId);
+                }, 350);
+            });
+            observer.observe(sidebar, { attributes: true, attributeFilter: ['class', 'style'] });
+        }
+
+        // Escape key closes active modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && activeCustomModalId) closeCustomModal(activeCustomModalId);
+        });
+    }
+
+    function initializeData() {
+        // Load existing data from Thymeleaf
+        const existingTagsStr = /*[[${document.tagNames}]]*/ '';
+        const existingClassificationsStr = /*[[${document.classificationNames}]]*/ '';
+        const existingGroupIdsStr = /*[[${document.groupIds}]]*/ '';
+        const publishDate = /*[[${document.publishDate}]]*/ '';
+
+        console.log('Document ID:', documentId);
+        console.log('Existing tags:', existingTagsStr);
+        console.log('Existing classifications:', existingClassificationsStr);
+        console.log('Existing groups:', existingGroupIdsStr);
+        console.log('Publish date:', publishDate);
+
+        // Parse publish date if exists
+        if (publishDate && publishDate.trim() !== '') {
+            try {
+                const dateObj = new Date(publishDate);
+                if (!isNaN(dateObj.getTime())) {
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const year = dateObj.getFullYear();
+                    document.getElementById('publishMonth').value = month;
+                    document.getElementById('publishYear').value = year;
+                    console.log('Set publish date:', month, year);
+                }
+            } catch (e) {
+                console.error('Error parsing date:', e);
+            }
+        }
+
+        // Load existing tags
+        if (existingTagsStr && existingTagsStr.trim() !== '') {
+            selectedTags = existingTagsStr.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+        }
+
+        // Load existing classifications
+        if (existingClassificationsStr && existingClassificationsStr.trim() !== '') {
+            selectedClassifications = existingClassificationsStr.split(',').map(c => c.trim()).filter(c => c !== '');
+        }
+
+        // Load existing groups
+        if (existingGroupIdsStr && existingGroupIdsStr.trim() !== '') {
+            const groupIdArray = existingGroupIdsStr.split(',').map(id => id.trim()).filter(id => id !== '');
+            groupIdArray.forEach(groupId => {
+                const groupItem = document.querySelector(`.selection-item-flex[data-group-id="${groupId}"]`);
+                if (groupItem) {
+                    const groupName = groupItem.getAttribute('data-group-name');
+                    selectedGroups.push({ id: groupId, name: groupName });
+                }
+            });
+        }
+
+        // Store all existing tags for validation
+        document.querySelectorAll('.tag-checkbox').forEach(checkbox => {
+            const tagName = checkbox.getAttribute('data-tag-name');
+            if (tagName) allExistingTags.push(tagName.toLowerCase());
+        });
+
+        // Store all existing groups
+        document.querySelectorAll('.group-checkbox').forEach(checkbox => {
+            const groupId = checkbox.getAttribute('data-group-id');
+            const groupName = checkbox.getAttribute('data-group-name');
+            if (groupId && groupName) allExistingGroups.push({ id: groupId, name: groupName });
+        });
+
+        // Attach click handlers to existing tags
+        document.querySelectorAll('.selection-item-flex[data-tag-name]').forEach(item => {
+            item.addEventListener('click', function() {
+                const checkbox = this.querySelector('.tag-checkbox');
+                const tagName = this.getAttribute('data-tag-name');
+
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                    this.classList.remove('selected');
+                    selectedTags = selectedTags.filter(t => t !== tagName);
+                } else {
+                    if (selectedTags.length >= maxTagsPerDocument) {
+                        showTagError(`<i class="bi bi-exclamation-triangle"></i> Maximum ${maxTagsPerDocument} tags allowed per document`);
+                        blinkItem(this);
+                        return;
+                    }
+                    checkbox.checked = true;
+                    this.classList.add('selected');
+                    if (!selectedTags.includes(tagName)) selectedTags.push(tagName);
+                }
+                renderSelectedTags();
+                formChanged = true;
+            });
+        });
+
+        // Attach click handlers to existing classifications
+        document.querySelectorAll('.selection-item-flex[data-classification-name]').forEach(item => {
+            item.addEventListener('click', function() {
+                if (classificationSelectionLocked) {
+                    this.classList.add('blink');
+                    setTimeout(() => this.classList.remove('blink'), 800);
+                    return;
+                }
+                const checkbox = this.querySelector('.classification-checkbox');
+                const classificationName = this.getAttribute('data-classification-name');
+
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                    this.classList.remove('selected');
+                    selectedClassifications = selectedClassifications.filter(c => c !== classificationName);
+                } else {
+                    checkbox.checked = true;
+                    this.classList.add('selected');
+                    if (!selectedClassifications.includes(classificationName)) selectedClassifications.push(classificationName);
+                }
+                renderSelectedClassifications();
+                formChanged = true;
+            });
+        });
+
+        // Attach click handlers to existing groups
+        document.querySelectorAll('.selection-item-flex[data-group-id]').forEach(item => {
+            item.addEventListener('click', function() {
+                const checkbox = this.querySelector('.group-checkbox');
+                const groupId = this.getAttribute('data-group-id');
+                const groupName = this.getAttribute('data-group-name');
+
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                    this.classList.remove('selected');
+                    selectedGroups = selectedGroups.filter(g => g.id !== groupId);
+                } else {
+                    checkbox.checked = true;
+                    this.classList.add('selected');
+                    if (!selectedGroups.find(g => g.id === groupId)) selectedGroups.push({ id: groupId, name: groupName });
+                }
+                renderSelectedGroups();
+                formChanged = true;
+            });
+        });
+
+        // Mark selected tags in UI
+        selectedTags.forEach(tag => {
+            const item = document.querySelector(`.selection-item-flex[data-tag-name="${tag}"]`);
+            if (item) {
+                item.classList.add('selected');
+                const checkbox = item.querySelector('.tag-checkbox');
+                if (checkbox) checkbox.checked = true;
+            }
+        });
+
+        // Mark selected classifications in UI
+        selectedClassifications.forEach(classification => {
+            const item = document.querySelector(`.selection-item-flex[data-classification-name="${classification}"]`);
+            if (item) {
+                item.classList.add('selected');
+                const checkbox = item.querySelector('.classification-checkbox');
+                if (checkbox) checkbox.checked = true;
+            }
+        });
+
+        // Mark selected groups in UI
+        selectedGroups.forEach(group => {
+            const item = document.querySelector(`.selection-item-flex[data-group-id="${group.id}"]`);
+            if (item) {
+                item.classList.add('selected');
+                const checkbox = item.querySelector('.group-checkbox');
+                if (checkbox) checkbox.checked = true;
+            }
+        });
+
+        renderSelectedTags();
+        renderSelectedClassifications();
+        renderSelectedGroups();
+        captureOriginalFormData();
+    }
+
+    function captureOriginalFormData() {
+        originalFormData = {
+            title: document.getElementById('title').value,
+            productCode: document.getElementById('productCode').value,
+            edition: document.getElementById('edition').value,
+            publishMonth: document.getElementById('publishMonth').value,
+            publishYear: document.getElementById('publishYear').value,
+            noOfPages: document.getElementById('noOfPages').value,
+            notes: document.getElementById('notes').value,
+            tags: [...selectedTags],
+            classifications: [...selectedClassifications],
+            groups: [...selectedGroups]
+        };
+        console.log('Captured original form data:', originalFormData);
+    }
+
+    function hasFormChanged() {
+        const currentData = {
+            title: document.getElementById('title').value,
+            productCode: document.getElementById('productCode').value,
+            edition: document.getElementById('edition').value,
+            publishMonth: document.getElementById('publishMonth').value,
+            publishYear: document.getElementById('publishYear').value,
+            notes: document.getElementById('notes').value,
+            tags: [...selectedTags],
+            classifications: [...selectedClassifications],
+            groups: [...selectedGroups]
+        };
+        return JSON.stringify(originalFormData) !== JSON.stringify(currentData);
+    }
+
+    // ============== POPULATE YEAR DROPDOWN ==============
+    function populateYearDropdown() {
+        const yearSelect = document.getElementById('publishYear');
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear; year >= 1900; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        }
+    }
+
+    // ============== WIZARD NAVIGATION ==============
+    function updateWizardStep(step) {
+        document.querySelectorAll('.wizard-step-content').forEach(content => content.classList.remove('active'));
+        const currentContent = document.querySelector(`.wizard-step-content[data-step="${step}"]`);
+        if (currentContent) currentContent.classList.add('active');
+
+        document.querySelectorAll('.wizard-step').forEach(stepEl => {
+            const stepNum = parseInt(stepEl.getAttribute('data-step'));
+            stepEl.classList.remove('active', 'completed');
+            if (stepNum < step) stepEl.classList.add('completed');
+            else if (stepNum === step) stepEl.classList.add('active');
+        });
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (step === 1) {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+        } else if (step === 2) {
+            prevBtn.style.display = 'inline-flex';
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+        } else if (step === 3) {
+            prevBtn.style.display = 'inline-flex';
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'inline-flex';
+            updateReviewSection();
+        }
+
+        currentStep = step;
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', function() {
+        if (currentStep === 1) {
+            const title = document.getElementById('title').value.trim();
+            const productCode = document.getElementById('productCode').value.trim();
+            const publishYear = document.getElementById('publishYear').value.trim();
+
+            if (!title || !productCode) {
+                showCustomAlert('Please fill in all required fields (Title and Product Code).');
+                return;
+            }
+            if (!publishYear) {
+                showCustomAlert('Publication Year is required.');
+                return;
+            }
+            updateWizardStep(2);
+        } else if (currentStep === 2) {
+            updateWizardStep(3);
+        }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', function() {
+        if (currentStep > 1) updateWizardStep(currentStep - 1);
+    });
+
+    // ============== TAGS HANDLING ==============
+    const newTagInput = document.getElementById('newTagInput');
+    const addTagBtn = document.getElementById('addTagBtn');
+    const tagErrorMessage = document.getElementById('tagErrorMessage');
+
+    addTagBtn.addEventListener('click', addNewTag);
+    newTagInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); addNewTag(); }
+    });
+    newTagInput.addEventListener('input', function() { hideTagError(); });
+
+    function addNewTag() {
+        let tagName = newTagInput.value.trim();
+        if (!tagName) { showTagError('<i class="bi bi-exclamation-circle"></i> Please enter a tag name'); return; }
+        if (tagName.includes(' ')) { showTagError('<i class="bi bi-exclamation-circle"></i> Spaces are not allowed in tag names'); return; }
+        if (selectedTags.length >= maxTagsPerDocument) {
+            showTagError(`<i class="bi bi-exclamation-triangle"></i> Maximum ${maxTagsPerDocument} tags allowed per document. Remove some tags before adding new ones.`);
+            return;
+        }
+
+        tagName = tagName.toLowerCase();
+
+        if (allExistingTags.includes(tagName)) {
+            const existingItem = Array.from(document.querySelectorAll('.selection-item-flex[data-tag-name]')).find(
+                item => item.getAttribute('data-tag-name').toLowerCase() === tagName
+            );
+            if (existingItem) {
+                blinkItem(existingItem);
+                showTagError('<i class="bi bi-info-circle"></i> Tag already exists in available tags');
+                const checkbox = existingItem.querySelector('.tag-checkbox');
+                if (checkbox && !checkbox.checked) {
+                    checkbox.checked = true;
+                    if (!selectedTags.includes(tagName)) {
+                        selectedTags.push(tagName);
+                        existingItem.classList.add('selected');
+                        renderSelectedTags();
+                        formChanged = true;
+                    }
+                }
+            }
+            newTagInput.value = '';
+            return;
+        }
+
+        if (selectedTags.some(t => t.toLowerCase() === tagName)) {
+            showTagError('<i class="bi bi-info-circle"></i> Tag is already selected');
+            newTagInput.value = '';
+            return;
+        }
+
+        selectedTags.push(tagName);
+        allExistingTags.push(tagName);
+
+        const tagsArea = document.getElementById('tagsSelectionArea');
+        const emptyState = tagsArea.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
+
+        const newTagItem = createNewSelectionItem(tagName, 'tag');
+        newTagItem.classList.add('selected');
+        const checkbox = newTagItem.querySelector('.tag-checkbox');
+        checkbox.checked = true;
+
+        tagsArea.appendChild(newTagItem);
+        renderSelectedTags();
+        newTagInput.value = '';
+        formChanged = true;
+    }
+
+    // ============== FETCH MAX TAGS SETTING ==============
+    async function fetchMaxTagsPerDocument() {
+        try {
+            const response = await fetch('/api/settings/max-tags-per-document');
+            const data = await response.json();
+            maxTagsPerDocument = data.maxTagsPerDocument || 10;
+            console.log('Max tags per document:', maxTagsPerDocument);
+            if (selectedTags.length > maxTagsPerDocument) {
+                maxTagsExceeded = true;
+                showMaxTagsWarning();
+            }
+        } catch (error) {
+            console.error('Error fetching max tags setting:', error);
+            maxTagsPerDocument = 10;
+        }
+    }
+
+    function showMaxTagsWarning() {
+        const existingWarning = document.getElementById('maxTagsWarning');
+        if (existingWarning) existingWarning.remove();
+
+        const warningDiv = document.createElement('div');
+        warningDiv.id = 'maxTagsWarning';
+        warningDiv.style.cssText = `
+            background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;
+            padding: 15px; margin-bottom: 20px; display: flex; align-items: center;
+            gap: 10px; animation: fadeIn 0.3s;
+        `;
+        warningDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle-fill" style="color: #856404; font-size: 20px;"></i>
+            <div style="flex: 1;">
+                <strong style="color: #856404;">Tag Limit Exceeded</strong>
+                <p style="margin: 5px 0 0; color: #664d03; font-size: 14px;">
+                    This document currently has <strong>${selectedTags.length} tags</strong>,
+                    which exceeds the maximum limit of <strong>${maxTagsPerDocument} tags</strong>.
+                    You cannot add more tags. Please remove some tags before adding new ones.
+                </p>
+            </div>
+        `;
+
+        const tagsSection = document.querySelector('.form-section');
+        if (tagsSection) {
+            const firstChild = tagsSection.firstChild;
+            if (firstChild) tagsSection.insertBefore(warningDiv, firstChild.nextSibling);
+        }
+    }
+
+    function createNewSelectionItem(name, type) {
+        const item = document.createElement('div');
+        item.className = 'selection-item-flex';
+        item.setAttribute(`data-${type}-name`, name);
+        item.innerHTML = `
+            <input type="checkbox" class="selection-checkbox ${type}-checkbox" data-${type}-name="${name}" style="display: none;">
+            <span class="selection-label">${name}</span>
+        `;
+
+        item.addEventListener('click', function() {
+            const checkbox = this.querySelector(`.${type}-checkbox`);
+            const itemName = this.getAttribute(`data-${type}-name`);
+
+            if (checkbox.checked) {
+                checkbox.checked = false;
+                this.classList.remove('selected');
+                if (type === 'tag') {
+                    selectedTags = selectedTags.filter(t => t !== itemName);
+                    renderSelectedTags();
+                } else {
+                    selectedClassifications = selectedClassifications.filter(c => c !== itemName);
+                    renderSelectedClassifications();
+                }
+            } else {
+                if (type === 'tag' && selectedTags.length >= maxTagsPerDocument) {
+                    this.classList.add('blink');
+                    setTimeout(() => this.classList.remove('blink'), 800);
+                    showTagError(`<i class="bi bi-exclamation-circle"></i> Maximum ${maxTagsPerDocument} tags allowed per document`);
+                    return;
+                }
+                checkbox.checked = true;
+                this.classList.add('selected');
+                if (type === 'tag') {
+                    if (!selectedTags.includes(itemName)) selectedTags.push(itemName);
+                    renderSelectedTags();
+                } else {
+                    if (!selectedClassifications.includes(itemName)) selectedClassifications.push(itemName);
+                    renderSelectedClassifications();
+                }
+            }
+            formChanged = true;
+        });
+
+        return item;
+    }
+
+    function showTagError(message) {
+        tagErrorMessage.innerHTML = message;
+        tagErrorMessage.classList.add('show');
+        setTimeout(() => hideTagError(), 3000);
+    }
+
+    function hideTagError() { tagErrorMessage.classList.remove('show'); }
+
+    function renderSelectedTags() {
+        const container = document.getElementById('selectedTagsContainer');
+        container.innerHTML = '';
+        if (selectedTags.length === 0) {
+            container.innerHTML = '<div class="empty-state">No tags selected</div>';
+        } else {
+            selectedTags.forEach(tag => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip';
+                chip.innerHTML = `${tag}<span class="chip-remove" onclick="removeSelectedTag('${tag}')"><i class="bi bi-x"></i></span>`;
+                container.appendChild(chip);
+            });
+        }
+        document.getElementById('tagNamesField').value = selectedTags.join(',');
+
+        if (selectedTags.length > maxTagsPerDocument) {
+            if (!document.getElementById('maxTagsWarning')) showMaxTagsWarning();
+        } else {
+            const warning = document.getElementById('maxTagsWarning');
+            if (warning) warning.remove();
+        }
+    }
+
+    function removeSelectedTag(tagName) {
+        selectedTags = selectedTags.filter(t => t !== tagName);
+        const checkbox = document.querySelector(`.tag-checkbox[data-tag-name="${tagName}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+            const item = checkbox.closest('.selection-item-flex');
+            if (item) item.classList.remove('selected');
+        }
+        renderSelectedTags();
+        formChanged = true;
+    }
+
+    // ============== CLASSIFICATIONS HANDLING ==============
+    function renderSelectedClassifications() {
+        const container = document.getElementById('selectedClassificationsContainer');
+        container.innerHTML = '';
+        if (selectedClassifications.length === 0) {
+            container.innerHTML = '<div class="empty-state">No classifications selected</div>';
+        } else {
+            selectedClassifications.forEach(classification => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip classification-chip';
+                chip.innerHTML = `${classification}<span class="chip-remove" onclick="removeSelectedClassification('${classification}')"><i class="bi bi-x"></i></span>`;
+                container.appendChild(chip);
+            });
+        }
+        document.getElementById('classificationNamesField').value = selectedClassifications.join(',');
+    }
+
+    function removeSelectedClassification(classificationName) {
+        if (classificationSelectionLocked) {
+            showCustomAlert('Upgrade to Professional Edition to modify classifications.');
+            return;
+        }
+        selectedClassifications = selectedClassifications.filter(c => c !== classificationName);
+        const checkbox = document.querySelector(`.classification-checkbox[data-classification-name="${classificationName}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+            const item = checkbox.closest('.selection-item-flex');
+            if (item) item.classList.remove('selected');
+        }
+        renderSelectedClassifications();
+        formChanged = true;
+    }
+
+    // ============== GROUPS HANDLING ==============
+    function renderSelectedGroups() {
+        const container = document.getElementById('selectedGroupsContainer');
+        container.innerHTML = '';
+        if (selectedGroups.length === 0) {
+            container.innerHTML = '<div class="empty-state">No groups selected</div>';
+        } else {
+            selectedGroups.forEach(group => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip group-chip';
+                chip.innerHTML = `${group.name}<span class="chip-remove" onclick="removeSelectedGroup('${group.id}')"><i class="bi bi-x"></i></span>`;
+                container.appendChild(chip);
+            });
+        }
+        document.getElementById('groupIdsField').value = selectedGroups.map(g => g.id).join(',');
+    }
+
+    function removeSelectedGroup(groupId) {
+        selectedGroups = selectedGroups.filter(g => g.id !== groupId);
+        const checkbox = document.querySelector(`.group-checkbox[data-group-id="${groupId}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+            const item = checkbox.closest('.selection-item-flex');
+            if (item) item.classList.remove('selected');
+        }
+        renderSelectedGroups();
+        formChanged = true;
+    }
+
+    // ============== BLINK ANIMATION ==============
+    function blinkItem(element) {
+        element.classList.add('blink');
+        setTimeout(() => element.classList.remove('blink'), 1800);
+    }
+
+    // ============== REVIEW SECTION - BEFORE/AFTER ==============
+    async function updateReviewSection() {
+        function formatPublishDate(month, year) {
+            if (!year) return '-';
+            if (month) {
+                const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                                  'July', 'August', 'September', 'October', 'November', 'December'];
+                return `${monthNames[parseInt(month)]} ${year}`;
+            }
+            return year;
+        }
+
+        // BEFORE Values
+        document.getElementById('beforeTitle').textContent = originalFormData.title || '-';
+        document.getElementById('beforeProductCode').textContent = originalFormData.productCode || '-';
+        document.getElementById('beforeEdition').textContent = originalFormData.edition || '-';
+        document.getElementById('beforePublishDate').textContent = formatPublishDate(originalFormData.publishMonth, originalFormData.publishYear);
+        document.getElementById('beforePages').textContent = originalFormData.noOfPages || '-';
+        document.getElementById('beforeNotes').textContent = originalFormData.notes ?
+            (originalFormData.notes.length > 100 ? originalFormData.notes.substring(0, 100) + '...' : originalFormData.notes) : '-';
+
+        // AFTER Values
+        const currentTitle = document.getElementById('title').value || '-';
+        const currentProductCode = document.getElementById('productCode').value || '-';
+        const currentEdition = document.getElementById('edition').value || '-';
+        const currentMonth = document.getElementById('publishMonth').value;
+        const currentYear = document.getElementById('publishYear').value;
+        const currentPages = document.getElementById('noOfPages').value || '-';
+        const currentNotes = document.getElementById('notes').value;
+
+        document.getElementById('afterTitle').innerHTML = currentTitle !== originalFormData.title ?
+            `<span class="value-changed">${currentTitle}</span>` : currentTitle;
+        document.getElementById('afterProductCode').innerHTML = currentProductCode !== originalFormData.productCode ?
+            `<span class="value-changed">${currentProductCode}</span>` : currentProductCode;
+        document.getElementById('afterEdition').innerHTML = currentEdition !== originalFormData.edition ?
+            `<span class="value-changed">${currentEdition}</span>` : currentEdition;
+
+        const currentPublishDate = formatPublishDate(currentMonth, currentYear);
+        const originalPublishDate = formatPublishDate(originalFormData.publishMonth, originalFormData.publishYear);
+        document.getElementById('afterPublishDate').innerHTML = currentPublishDate !== originalPublishDate ?
+            `<span class="value-changed">${currentPublishDate}</span>` : currentPublishDate;
+
+        document.getElementById('afterPages').textContent = currentPages;
+
+        const displayNotes = currentNotes ? (currentNotes.length > 100 ? currentNotes.substring(0, 100) + '...' : currentNotes) : '-';
+        document.getElementById('afterNotes').innerHTML = currentNotes !== originalFormData.notes ?
+            `<span class="value-changed">${displayNotes}</span>` : displayNotes;
+
+        // BEFORE Tags
+        const beforeTagsContainer = document.getElementById('beforeTags');
+        beforeTagsContainer.innerHTML = '';
+        if (originalFormData.tags.length === 0) {
+            beforeTagsContainer.innerHTML = '<span style="color: #9ca3af; font-size: 14px;">No tags</span>';
+        } else {
+            originalFormData.tags.forEach(tag => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip';
+                chip.textContent = tag;
+                beforeTagsContainer.appendChild(chip);
+            });
+        }
+
+        // AFTER Tags
+        const afterTagsContainer = document.getElementById('afterTags');
+        afterTagsContainer.innerHTML = '';
+        const tagsChanged = JSON.stringify(selectedTags.sort()) !== JSON.stringify(originalFormData.tags.sort());
+        if (selectedTags.length === 0) {
+            afterTagsContainer.innerHTML = '<span style="color: #9ca3af; font-size: 14px;">No tags selected</span>';
+        } else {
+            selectedTags.forEach(tag => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip';
+                if (tagsChanged && !originalFormData.tags.includes(tag)) chip.style.background = '#f59e0b';
+                chip.textContent = tag;
+                afterTagsContainer.appendChild(chip);
+            });
+        }
+
+        // BEFORE Classifications
+        const beforeClassificationsContainer = document.getElementById('beforeClassifications');
+        beforeClassificationsContainer.innerHTML = '';
+        if (originalFormData.classifications.length === 0) {
+            beforeClassificationsContainer.innerHTML = '<span style="color: #9ca3af; font-size: 14px;">No classifications</span>';
+        } else {
+            originalFormData.classifications.forEach(classification => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip classification-chip';
+                chip.textContent = classification;
+                beforeClassificationsContainer.appendChild(chip);
+            });
+        }
+
+        // AFTER Classifications
+        const afterClassificationsContainer = document.getElementById('afterClassifications');
+        afterClassificationsContainer.innerHTML = '';
+        const classificationsChanged = JSON.stringify(selectedClassifications.sort()) !== JSON.stringify(originalFormData.classifications.sort());
+        if (selectedClassifications.length === 0) {
+            afterClassificationsContainer.innerHTML = '<span style="color: #9ca3af; font-size: 14px;">No classifications selected</span>';
+        } else {
+            selectedClassifications.forEach(classification => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip classification-chip';
+                if (classificationsChanged && !originalFormData.classifications.includes(classification)) chip.style.background = '#f59e0b';
+                chip.textContent = classification;
+                afterClassificationsContainer.appendChild(chip);
+            });
+        }
+
+        // BEFORE Groups
+        const beforeGroupsContainer = document.getElementById('beforeGroups');
+        beforeGroupsContainer.innerHTML = '';
+        if (originalFormData.groups.length === 0) {
+            beforeGroupsContainer.innerHTML = '<span style="color: #9ca3af; font-size: 14px;">No groups</span>';
+        } else {
+            originalFormData.groups.forEach(group => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip group-chip';
+                chip.textContent = group.name;
+                beforeGroupsContainer.appendChild(chip);
+            });
+        }
+
+        // AFTER Groups
+        const afterGroupsContainer = document.getElementById('afterGroups');
+        afterGroupsContainer.innerHTML = '';
+        const groupsChanged = JSON.stringify(selectedGroups.map(g => g.id).sort()) !==
+                             JSON.stringify(originalFormData.groups.map(g => g.id).sort());
+        if (selectedGroups.length === 0) {
+            afterGroupsContainer.innerHTML = '<span style="color: #9ca3af; font-size: 14px;">No groups selected</span>';
+        } else {
+            selectedGroups.forEach(group => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip group-chip';
+                if (groupsChanged && !originalFormData.groups.find(g => g.id === group.id)) chip.style.background = '#f59e0b';
+                chip.textContent = group.name;
+                afterGroupsContainer.appendChild(chip);
+            });
+        }
+
+        // Load PDF Preview
+        await loadPdfPreview();
+    }
+
+    async function loadPdfPreview() {
+        if (!documentId) {
+            showPdfPlaceholder('Document ID not available');
+            return;
+        }
+
+        const pdfUrl = `/document/view/${documentId}`;
+        const canvas = document.getElementById('reviewPdfCanvas');
+
+        try {
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            pdfDoc = await loadingTask.promise;
+            const page = await pdfDoc.getPage(1);
+            const context = canvas.getContext('2d');
+            const viewport = page.getViewport({ scale: 1.5 });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+            isPasswordProtected = false;
+        } catch (error) {
+            console.error("Error loading PDF preview:", error);
+            showPdfPlaceholder('Document may be password protected or preview is unavailable');
+            isPasswordProtected = true;
+        }
+    }
+
+    function showPdfPlaceholder(message) {
+        const container = document.getElementById('pdfPreviewContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="pdf-placeholder">
+                    <i class="bi bi-file-earmark-lock"></i>
+                    <p><strong>Preview Not Available</strong></p>
+                    <p style="font-size: 12px; margin-top: 5px;">${message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // ============== NAVIGATION PROTECTION ==============
+    let isSubmitting = false;
+    let navigationConfirmed = false;
+    let pendingNavigationUrl = null;
+
+    // Track form changes
+    document.getElementById('editForm').addEventListener('input', function() { formChanged = true; });
+    document.getElementById('editForm').addEventListener('change', function() { formChanged = true; });
+
+    // Push initial state to prevent back button
+    window.history.pushState(null, '', window.location.href);
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function(e) {
+        if (hasFormChanged() && !isSubmitting && !navigationConfirmed) {
+            window.history.pushState(null, '', window.location.href);
+            showNavigationConfirmation('back');
+        }
+    });
+
+    // Intercept all link clicks
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (link && link.href && !link.hasAttribute('data-bs-toggle')) {
+            const isWizardButton = link.closest('.wizard-navigation') ||
+                                   link.closest('.wizard-content') ||
+                                   link.id === 'confirmCancelBtn' ||
+                                   link.classList.contains('modal-btn');
+            const isNavLink = link.closest('.navbar') ||
+                             link.closest('.sidebar') ||
+                             link.closest('nav') ||
+                             link.hasAttribute('href');
+
+            if (isNavLink && !isWizardButton && hasFormChanged() && !isSubmitting && !navigationConfirmed) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                showNavigationConfirmation(link.href);
+                return false;
+            }
+        }
+    }, true);
+
+    // Cancel button handler
+    document.getElementById('cancelBtn').addEventListener('click', function() {
+        if (hasFormChanged()) {
+            showNavigationConfirmation('/documents');
+        } else {
+            window.location.href = '/documents';
+        }
+    });
+
+    function closeConfirmationModal() {
+        closeCustomModal('confirmationModal');
+    }
+
+    function showNavigationConfirmation(targetUrl) {
+        pendingNavigationUrl = targetUrl;
+        openCustomModal('confirmationModal');
+
+        const confirmBtn = document.getElementById('confirmCancelBtn');
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        newConfirmBtn.onclick = function() {
+            navigationConfirmed = true;
+            formChanged = false;
+            isSubmitting = true;
+            closeConfirmationModal();
+            if (pendingNavigationUrl === 'back') {
+                window.history.back();
+            } else {
+                window.location.href = pendingNavigationUrl;
+            }
+        };
+    }
+
+    // Prevent accidental navigation
+    window.addEventListener('beforeunload', function(e) {
+        if (hasFormChanged() && !isSubmitting) {
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+        }
+    });
+
+    // Intercept form submissions from other forms
+    document.addEventListener('submit', function(e) {
+        if (e.target.id !== 'editForm' && hasFormChanged() && !isSubmitting && !navigationConfirmed) {
+            e.preventDefault();
+            showNavigationConfirmation(e.target.action);
+        }
+    }, true);
+
+    // ============== FORM SUBMISSION ==============
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        const title = document.getElementById('title').value.trim();
+        const productCode = document.getElementById('productCode').value.trim();
+        const publishYear = document.getElementById('publishYear').value.trim();
+
+        if (!title) { e.preventDefault(); showCustomAlert('Document Title is required.'); return false; }
+        if (!productCode) { e.preventDefault(); showCustomAlert('Product Code is required.'); return false; }
+        if (!publishYear) { e.preventDefault(); showCustomAlert('Publication Year is required.'); return false; }
+
+        document.getElementById('publishMonthField').value = document.getElementById('publishMonth').value;
+        document.getElementById('publishYearField').value = document.getElementById('publishYear').value;
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+        formChanged = false;
+        isSubmitting = true;
+        return true;
+    });
+
+    function showCustomAlert(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.style.cssText = `
+            position: fixed; top: 20px; right: 20px; background: #ef4444; color: white;
+            padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000; animation: slideInRight 0.3s ease; max-width: 400px;
+            display: flex; align-items: center; gap: 10px;
+        `;
+        alertDiv.innerHTML = `<i class="bi bi-exclamation-circle-fill" style="font-size: 20px;"></i><span>${message}</span>`;
+        document.body.appendChild(alertDiv);
+        setTimeout(() => {
+            alertDiv.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => alertDiv.remove(), 300);
+        }, 3000);
+    }
+
+    // Initialize wizard
+    updateWizardStep(1);
+</script>
+
+<script>
+    /**
+     * Go back function for back button in navbar
+     */
+    function goBack() {
+        if (hasFormChanged()) {
+            openCustomModal('confirmationModal');
+            const confirmBtn = document.getElementById('confirmCancelBtn');
+            confirmBtn.onclick = function() {
+                navigationConfirmed = true;
+                formChanged = false;
+                isSubmitting = true;
+                closeConfirmationModal();
+                if (document.referrer && document.referrer !== window.location.href) {
+                    window.history.back();
+                } else {
+                    window.location.href = '/documents';
+                }
+            };
+        } else if (document.referrer && document.referrer !== window.location.href) {
+            window.history.back();
+        } else {
+            window.location.href = '/documents';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- ==================== META TAGS ==================== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Codes & Standards</title>
+
+    <!-- ==================== STYLESHEETS ==================== -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
+    <!-- Include Sidebar Styles -->
+    <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
+
+    <style>
+        /* ==================== BODY STYLES ==================== */
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            padding-top: 70px;
+        }
+        .main-content {
+    position: relative;
+}
+
+        /* ==================== STATISTICS CARDS ==================== */
+        .stat-card {
+            border-radius: 12px;
+            padding: 5px;
+            color: white;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            text-align: right;
+            cursor: pointer;
+            position: relative;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .stat-card.active::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            padding-left:0px;
+            padding-right:5px;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            padding-left:0px;
+            padding-top:15px;
+            padding-right:5px;
+        }
+
+        /* ==================== SEARCH AND TABLE CONTAINERS ==================== */
+        .search-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* ==================== ROLE BADGES ==================== */
+        .role-admin {
+          background-color: #0A3D91 !important;
+          color: white !important;
+          padding:10px;
+        }
+        .role-manager {
+          background-color: #4DA3FF !important;
+          color: white !important;
+          padding:10px;
+        }
+        .role-viewer {
+          background-color: #67abf5 !important;
+          color: white !important;
+          padding:10px;
+        }
+
+        /* ==================== CLICKABLE TABLE ROWS ==================== */
+        .clickable-row {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .clickable-row:hover {
+            background-color: #f0f7ff !important;
+        }
+        .clickable-row td {
+            vertical-align: middle;
+        }
+        .username-text {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        /* ==================== MODAL OVERLAY ==================== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+.modal-overlay.active {
+    display: block;
+    animation: overlayFadeIn 0.25s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+        /* ==================== USER DETAILS MODAL ==================== */
+        .user-details-modal {
+    display: none;
+    position: fixed;
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    width: 90%;
+    max-width: 500px;
+    z-index: 9999;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    max-height: 80vh;
+    overflow-y: auto;
+    transition: all 0.3s ease; /* Smooth transition when sidebar toggles */
+}
+.user-details-modal.active {
+    display: block;
+}
+        .modal-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9eef5;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close:hover {
+            color: #dc3545;
+        }
+        .user-detail-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .user-detail-label {
+            font-weight: 600;
+            width: 120px;
+            color: #495057;
+        }
+        .user-detail-value {
+            flex: 1;
+            color: #212529;
+        }
+
+        /* ==================== LOADING SPINNER ==================== */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ==================== ROLE PILL ==================== */
+        .role-pill {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #334155;
+        }
+
+        /* ==================== FORM VALIDATION FEEDBACK ==================== */
+        .validation-feedback {
+            display: none;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .validation-feedback.valid {
+            color: #198754;
+            display: block;
+        }
+        .validation-feedback.invalid {
+            color: #dc3545;
+            display: block;
+        }
+        .validation-feedback.checking {
+            color: #0d6efd;
+            display: block;
+        }
+        .form-control.is-valid {
+            border-color: #198754;
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+
+        /* ==================== GROUPS DROPDOWN WITH CHECKBOXES ==================== */
+        .groups-dropdown-container {
+            position: relative;
+        }
+
+        .groups-dropdown-btn {
+            width: 100%;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            background-color: white;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 38px;
+        }
+
+        .groups-dropdown-btn:hover {
+            border-color: #86b7fe;
+        }
+
+        .groups-dropdown-btn:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .groups-selected-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #495057;
+        }
+
+        .groups-selected-text.placeholder {
+            color: #6c757d;
+        }
+
+        .groups-dropdown-arrow {
+            margin-left: 8px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .groups-dropdown-btn.active .groups-dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .groups-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .groups-dropdown-menu.show {
+            display: block;
+        }
+
+        .groups-search-box {
+            padding: 8px;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+
+        .groups-search-box input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .groups-search-box input:focus {
+            outline: none;
+            border-color: #86b7fe;
+        }
+
+        .groups-checkbox-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+
+        .groups-checkbox-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .groups-checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .groups-checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .groups-no-results {
+            padding: 12px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .groups-select-all {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+
+        .groups-clear-btn {
+            padding: 8px 12px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 0.875rem;
+            background-color: #f8f9fa;
+        }
+
+        .groups-clear-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .groups-count-badge {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+        /* ==================== CUSTOM MODALS (Add/Edit/Delete) ==================== */
+.custom-modal {
+    display: none;
+    position: fixed;
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    z-index: 9999;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    max-height: 85vh;
+    overflow: hidden;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+.custom-modal.modal-sm {
+    max-width: 500px;
+}
+.custom-modal.active {
+    display: flex;
+    animation: modalSlideIn 0.3s ease forwards;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Forms inside modals must also be flex */
+.custom-modal > form {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+    overflow: hidden;
+}
+
+/* Modal Header - stays pinned at top */
+.custom-modal .modal-header {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
+}
+
+.custom-modal .modal-title {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+/* Modal Body - only this part scrolls */
+.custom-modal .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.custom-modal .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-modal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-modal .modal-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 3px;
+}
+.custom-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0,0,0,0.25);
+}
+
+/* Modal Footer - stays pinned at bottom */
+.custom-modal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: 0 0 12px 12px;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.modal-close-btn:hover {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .custom-modal {
+        width: 95% !important;
+        max-width: 95% !important;
+    }
+}
+        .library-icon {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        margin-right: 0px;
+        transition: transform 0.3s ease;
+    }
+        .stat-card.active::after {
+content: '✓';
+}
+    </style>
+</head>
+<body>
+<!-- ==================== TOP NAVBAR ==================== -->
+<div th:replace="~{common/navbar :: navbar}"></div>
+
+<!-- ==================== SIDEBAR + CONTENT ==================== -->
+<div class="d-flex">
+    <div th:replace="~{common/sidebar :: sidebar}"></div>
+
+    <!-- ==================== MAIN CONTENT AREA ==================== -->
+    <div class="main-content flex-grow-1 p-4">
+        <!-- ==================== BREADCRUMB AND PAGE HEADER ==================== -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1"><img src="/images/user_management_black_fill.png"
+                                      class="library-icon"
+                                      alt="Document Library Icon"> User Management</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a th:href="@{/documents}" class="text-decoration-none">
+                                <i class="bi bi-house me-1"></i> Home
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">User Management</li>
+                    </ol>
+                </nav>
+            </div>
+            <button class="btn" style="background:#1e3a5f; color:white;" onclick="openModal('addUserModal')">
+                <i class="bi bi-plus-circle me-2"></i> Add User
+            </button>
+        </div>
+
+        <!-- ==================== STATISTICS CARDS ==================== -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row active" style="background-color: #0A3D91"
+                     data-filter="all" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">All Users</div>
+                    <div class="stat-number" th:text="${totalUsers}">5</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #03539e"
+                     data-filter="Admin" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Admins</div>
+                    <div class="stat-number" th:text="${adminCount}">1</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #4DA3FF"
+                     data-filter="Manager" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Managers</div>
+                    <div class="stat-number" th:text="${managerCount}">2</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #67abf5"
+                     data-filter="Viewer" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Viewers</div>
+                    <div class="stat-number" th:text="${viewerCount}">2</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ALERT MESSAGES ==================== -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${success}">Document uploaded successfully!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span th:text="${error}">Error uploading document!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- ==================== SEARCH AND FILTERS ==================== -->
+        <div class="search-box mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-9">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search users...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted text-end">
+                        <i class="bi bi-people me-2"></i>
+                        Users (<span id="userCount" th:text="${totalUsers}">5</span>)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== USERS TABLE ==================== -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover" id="usersTable">
+                    <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${users}"
+                        th:attr="data-role=${user.roleName},data-user-id=${user.id}"
+                        class="clickable-row">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-3"
+                                     style="width: 40px; height: 40px; font-weight: bold; background: #1e3a5f;">
+                                    <span th:text="${(user.firstName != null and user.firstName != '' and user.lastName != null and user.lastName != '') ?
+                                        (#strings.substring(user.firstName, 0, 1) + #strings.substring(user.lastName, 0, 1)) :
+                                        '??'}">JD</span>
+                                </div>
+                                <div>
+                                    <span class="username-text"
+                                          th:text="${user.username != null ? user.username : 'N/A'}">username</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div th:text="${(user.firstName != null and user.lastName != null) ? (user.firstName + ' ' + user.lastName) : 'N/A'}">John Doe</div>
+                        </td>
+                        <td th:text="${user.email != null ? user.email : 'N/A'}">email@example.com</td>
+                        <td>
+                            <span class="badge rounded-pill"
+                                  th:class="${'badge rounded-pill ' +
+                                      (user.roleName != null ?
+                                          (user.roleName == 'Admin' ? 'role-admin' :
+                                              (user.roleName == 'Manager' ? 'role-manager' : 'role-viewer'))
+                                          : 'role-viewer')}"
+                                  th:text="${user.roleName != null ? user.roleName : 'Unknown'}">Role</span>
+                        </td>
+                        <td>
+                            <small class="text-muted" th:text="${user.createdAt != null ? user.createdAt : 'N/A'}">15-Jan-2024 14:30:45</small>
+                        </td>
+                        <td class="actions-cell">
+                            <button class="btn btn-sm btn-outline-primary me-1"
+                                    th:attr="data-id=${user.id},
+                                             data-firstname=${user.firstName != null ? user.firstName : ''},
+                                             data-lastname=${user.lastName != null ? user.lastName : ''},
+                                             data-username=${user.username != null ? user.username : ''},
+                                             data-email=${user.email != null ? user.email : ''},
+                                             data-roleid=${user.roleId != null ? user.roleId : ''}"
+                                    onclick="openEditModal(this); event.stopPropagation();" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <a href="#"
+                               class="btn btn-sm btn-outline-danger"
+                               th:data-userid="${user.id}"
+                               th:data-username="${(user.firstName != null and user.lastName != null) ? (user.firstName + ' ' + user.lastName) : (user.username != null ? user.username : 'Unknown User')}"
+                               title="Delete"
+                               onclick="event.stopPropagation(); openDeleteModal(this);">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(users)}">
+                        <td colspan="6" class="text-center py-5">
+                            <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <p class="text-muted mt-3">No users found.</p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL OVERLAY ==================== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeActiveModal()"></div>
+
+<!-- ==================== USER DETAILS MODAL ==================== -->
+<div class="user-details-modal" id="userDetailsModal">
+    <div class="modal-header-custom">
+        <h4>User Details</h4>
+        <button class="modal-close" onclick="closeUserModal()">&times;</button>
+    </div>
+    <div id="userDetailsContent">
+        <div class="text-center py-4">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ==================== ADD USER MODAL ==================== -->
+<div class="custom-modal" id="addUserModal">
+            <form method="post" th:action="@{/add/save}" id="addUserForm">
+                <div class="modal-header text-white" style="background:#1e3a5f; color:white;">
+                    <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add New User</h5>
+                    <button type="button" class="modal-close-btn" onclick="closeModal('addUserModal')" style="color:white;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="firstName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="lastName" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="username" id="addUsername" required>
+                            <small class="text-muted" id="usernameMinLengthHint"><i class="bi bi-info-circle me-1"></i>Username must be at least 2 characters</small>
+                            <div class="validation-feedback" id="addUsernameFeedback"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" id="addEmail" required>
+                            <div class="validation-feedback" id="addEmailFeedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" name="password" id="addPassword" required>
+                            <div id="addPasswordPolicyError" class="invalid-feedback" style="display: none;"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" name="roleId" required>
+                                <option value="">-- Select Role --</option>
+                                <option th:each="role : ${roles}" th:value="${role.id}" th:text="${role.roleName}">Role</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Access to Groups</label>
+                            <div class="groups-dropdown-container">
+                                <!-- ✅ FIXED: Text span is now INSIDE the button -->
+                                <div class="groups-dropdown-btn" id="addGroupsBtn" onclick="toggleGroupsDropdown('add')">
+                                    <span class="groups-selected-text placeholder" id="addGroupsSelectedText">Select groups...</span>
+                                    <i class="bi bi-chevron-down groups-dropdown-arrow"></i>
+                                </div>
+                                <div class="groups-dropdown-menu" id="addGroupsMenu">
+                                    <div class="groups-search-box">
+                                        <input type="text" placeholder="Search groups..."
+                                               id="addGroupsSearch"
+                                               onkeyup="filterGroups('add')"
+                                               onclick="event.stopPropagation()">
+                                    </div>
+                                    <div class="groups-select-all groups-checkbox-item" onclick="toggleSelectAll('add')">
+                                        <input type="checkbox" id="addSelectAllCheckbox" onclick="event.stopPropagation(); toggleSelectAll('add')">
+                                        <label for="addSelectAllCheckbox">Select All</label>
+                                    </div>
+                                    <div id="addGroupsCheckboxes">
+                                        <!-- Groups checkboxes will be inserted here by JavaScript -->
+                                    </div>
+                                    <div class="groups-clear-btn" onclick="clearGroupSelection('add')">
+                                        Clear Selection
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="groupIds" id="addGroupIds">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addUserModal')">Cancel</button>
+                    <button type="submit" class="btn"  style="background:#1e3a5f; color:white;" id="addUserSubmitBtn">
+                        <i class="bi bi-check-circle me-2"></i>Add User
+                    </button>
+                </div>
+            </form>
+        </div>
+
+
+<!-- ==================== EDIT USER MODAL ==================== -->
+<div class="custom-modal" id="editUserModal">
+            <form method="post" id="editForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="modal-header" style="background:#1e3a5f; color:white;">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit User</h5>
+                    <button type="button" class="modal-close-btn" style="color:white;" onclick="closeModal('editUserModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editFirstName" name="firstName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editLastName" name="lastName" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" id="editUsername" name="username" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="editEmail" name="email" required>
+                            <div class="validation-feedback" id="editEmailFeedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="editPassword" name="password">
+                            <small class="text-muted">Leave blank to keep current</small>
+                            <div id="editPasswordPolicyError" class="invalid-feedback" style="display: none;"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editRoleId" name="roleId" required>
+                                <option th:each="role : ${roles}" th:value="${role.id}" th:text="${role.roleName}">Role</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Access to Groups</label>
+                            <div class="groups-dropdown-container">
+                                <!-- ✅ FIXED: Text span is now INSIDE the button -->
+                                <div class="groups-dropdown-btn" id="editGroupsBtn" onclick="toggleGroupsDropdown('edit')">
+                                    <span class="groups-selected-text placeholder" id="editGroupsSelectedText">Loading groups...</span>
+                                    <i class="bi bi-chevron-down groups-dropdown-arrow"></i>
+                                </div>
+                                <div class="groups-dropdown-menu" id="editGroupsMenu">
+                                    <div class="groups-search-box">
+                                        <input type="text" placeholder="Search groups..."
+                                               id="editGroupsSearch"
+                                               onkeyup="filterGroups('edit')"
+                                               onclick="event.stopPropagation()">
+                                    </div>
+                                    <div class="groups-select-all groups-checkbox-item" onclick="toggleSelectAll('edit')">
+                                        <input type="checkbox" id="editSelectAllCheckbox" onclick="event.stopPropagation(); toggleSelectAll('edit')">
+                                        <label for="editSelectAllCheckbox">Select All</label>
+                                    </div>
+                                    <div id="editGroupsCheckboxes">
+                                        <!-- Groups checkboxes will be inserted here by JavaScript -->
+                                    </div>
+                                    <div class="groups-clear-btn" onclick="clearGroupSelection('edit')">
+                                        Clear Selection
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="groupIds" id="editGroupIds">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editUserModal')">Cancel</button>
+                    <button type="submit" class="btn" style="background:#1e3a5f; color:white;">
+                        <i class="bi bi-check-circle me-2"></i>Update User
+                    </button>
+                </div>
+            </form>
+        </div>
+
+
+
+<!-- ==================== DELETE CONFIRMATION MODAL ==================== -->
+<div class="custom-modal modal-sm" id="deleteModal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete User</h5>
+                <button type="button" class="modal-close-btn" onclick="closeModal('deleteModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteModalMessage">Are you sure you want to delete this user? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <a id="confirmDeleteBtn" href="#" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+
+
+<!-- ==================== JAVASCRIPT INCLUDES ==================== -->
+<script src="/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{common/navbar :: navbar-js}"></div>
+
+<script th:inline="javascript">
+    var contextPath = /*[[@{/}]]*/ '/';
+</script>
+
+<script>
+    // ==================== GLOBAL VARIABLES ====================
+<!--    let currentFilter = 'all';-->
+let activeFilters = new Set(['all']);
+    let usernameCheckTimeout = null;
+    let emailCheckTimeout = null;
+    let isUsernameValid = false;
+    let isEmailValid = false;
+    let isEditEmailValid = true;
+    let editEmailCheckTimeout = null;
+    let originalEmail = '';
+    let allGroups = [];
+    // ==================== CENTER MODAL TO MAIN CONTENT ====================
+    function centerModalToMainContent() {
+        const modal = document.getElementById('userDetailsModal');
+        const mainContent = document.querySelector('.main-content');
+
+        if (!modal || !mainContent) return;
+
+        // Get main-content dimensions and position
+        const mainRect = mainContent.getBoundingClientRect();
+
+        // Calculate center position relative to main-content
+        const modalWidth = modal.offsetWidth;
+        const modalHeight = modal.offsetHeight;
+
+        // Center horizontally within main-content
+        const left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
+
+        // Center vertically within viewport (but considering navbar)
+        const top = window.innerHeight / 2 - modalHeight / 2;
+
+        modal.style.left = `${left}px`;
+        modal.style.top = `${top}px`;
+        modal.style.transform = 'none'; // Remove transform since we're using absolute positioning
+    }
+    // ==================== UNIFIED MODAL MANAGEMENT ====================
+let activeModalId = null;
+
+function centerCustomModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const mainContent = document.querySelector('.main-content');
+    if (!modal || !mainContent) return;
+
+    const mainRect = mainContent.getBoundingClientRect();
+    const modalWidth = modal.offsetWidth;
+    const modalHeight = modal.offsetHeight;
+
+    const left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
+    const top = Math.max(80, (window.innerHeight / 2) - (modalHeight / 2));
+
+    modal.style.left = `${left}px`;
+    modal.style.top = `${top}px`;
+    modal.style.transform = 'none';
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const overlay = document.getElementById('modalOverlay');
+    if (!modal || !overlay) return;
+
+    // Close any previously open custom modal
+    if (activeModalId && activeModalId !== modalId) {
+        closeModal(activeModalId);
+    }
+
+    activeModalId = modalId;
+
+    // Step 1: Make modal visible but invisible to measure dimensions
+    modal.style.visibility = 'hidden';
+    modal.style.display = 'flex';
+
+    // Step 2: Position it correctly while still invisible
+    centerCustomModal(modalId);
+
+    // Step 3: Hide it again, remove inline display
+    modal.style.display = '';
+    modal.style.visibility = '';
+
+    // Step 4: Now show with animation — appears at correct position
+    modal.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const overlay = document.getElementById('modalOverlay');
+
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.left = '';
+        modal.style.top = '';
+        modal.style.transform = '';
+    }
+
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+
+    document.body.style.overflow = '';
+    activeModalId = null;
+
+    // Modal-specific cleanup
+    if (modalId === 'addUserModal') {
+        document.getElementById('addUserForm')?.reset();
+        clearGroupSelection('add');
+        const usernameFeedback = document.getElementById('addUsernameFeedback');
+        if (usernameFeedback) { usernameFeedback.className = 'validation-feedback'; usernameFeedback.textContent = ''; }
+        const emailFeedback = document.getElementById('addEmailFeedback');
+        if (emailFeedback) { emailFeedback.className = 'validation-feedback'; emailFeedback.textContent = ''; }
+        document.getElementById('addUsername')?.classList.remove('is-valid', 'is-invalid');
+        document.getElementById('addEmail')?.classList.remove('is-valid', 'is-invalid');
+        document.getElementById('addPassword')?.classList.remove('is-invalid');
+        const addPwdError = document.getElementById('addPasswordPolicyError');
+        if (addPwdError) addPwdError.style.display = 'none';
+        isUsernameValid = false;
+        isEmailValid = false;
+          const hint = document.getElementById('usernameMinLengthHint');
+        if (hint) hint.style.display = 'block';
+    } else if (modalId === 'editUserModal') {
+        document.getElementById('editPassword')?.classList.remove('is-invalid');
+        const editPwdError = document.getElementById('editPasswordPolicyError');
+        if (editPwdError) editPwdError.style.display = 'none';
+        const editEmailFeedback = document.getElementById('editEmailFeedback');
+        if (editEmailFeedback) { editEmailFeedback.className = 'validation-feedback'; editEmailFeedback.textContent = ''; }
+        document.getElementById('editEmail')?.classList.remove('is-valid', 'is-invalid');
+    }
+}
+
+function closeActiveModal() {
+    // Close user details modal if open
+    const userModal = document.getElementById('userDetailsModal');
+    if (userModal && userModal.classList.contains('active')) {
+        closeUserModal();
+        return;
+    }
+    // Close any custom modal
+    if (activeModalId) {
+        closeModal(activeModalId);
+    }
+}
+    function closeUserModal() {
+    const modal = document.getElementById('userDetailsModal');
+    const overlay = document.getElementById('modalOverlay');
+
+    if (modal) {
+        modal.classList.remove('active');
+        // Reset inline styles
+        modal.style.left = '';
+        modal.style.top = '';
+        modal.style.transform = '';
+    }
+
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+
+    console.log('✅ User modal closed');
+}
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchGroups();
+
+        const table = document.getElementById('usersTable');
+        if (table) {
+            table.addEventListener('click', function(e) {
+                const clickableRow = e.target.closest('.clickable-row');
+                const actionsCell = e.target.closest('.actions-cell');
+
+                if (clickableRow && !actionsCell) {
+                    const userId = clickableRow.getAttribute('data-user-id');
+                    if (userId && userId !== '0') {
+                        showUserDetails(parseInt(userId));
+                    }
+                }
+            });
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                applyFilters();
+            });
+        }
+
+       document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeUserModal();
+        if (activeModalId) closeModal(activeModalId);
+        closeGroupsDropdown('add');
+        closeGroupsDropdown('edit');
+    }
+});
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.groups-dropdown-container')) {
+                closeGroupsDropdown('add');
+                closeGroupsDropdown('edit');
+            }
+        });
+
+        const addUsernameInput = document.getElementById('addUsername');
+        if (addUsernameInput) {
+            addUsernameInput.addEventListener('input', function() {
+                clearTimeout(usernameCheckTimeout);
+                const username = this.value.trim();
+                const feedback = document.getElementById('addUsernameFeedback');
+                const hint = document.getElementById('usernameMinLengthHint');
+
+                // Show/hide minimum length hint
+                if (hint) {
+                    hint.style.display = username.length >= 2 ? 'none' : 'block';
+                }
+
+               if (username.length < 2) {
+                    feedback.className = 'validation-feedback';
+                    feedback.textContent = '';
+                    this.classList.remove('is-valid', 'is-invalid');
+                    isUsernameValid = false;
+                    updateSubmitButton();
+                    return;
+                }
+
+                feedback.className = 'validation-feedback checking';
+                feedback.innerHTML = '<i class="bi bi-arrow-repeat"></i> Checking username...';
+                this.classList.remove('is-valid', 'is-invalid');
+
+                usernameCheckTimeout = setTimeout(() => {
+                    checkUsernameAvailability(username);
+                }, 500);
+            });
+        }
+
+        const addEmailInput = document.getElementById('addEmail');
+        if (addEmailInput) {
+            addEmailInput.addEventListener('input', function() {
+                clearTimeout(emailCheckTimeout);
+                const email = this.value.trim();
+                const feedback = document.getElementById('addEmailFeedback');
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (email.length === 0) {
+                    feedback.className = 'validation-feedback';
+                    feedback.textContent = '';
+                    this.classList.remove('is-valid', 'is-invalid');
+                    isEmailValid = false;
+                    updateSubmitButton();
+                    return;
+                }
+
+                if (!emailRegex.test(email)) {
+                    feedback.className = 'validation-feedback invalid';
+                    feedback.innerHTML = '<i class="bi bi-x-circle"></i> Invalid email format.';
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                    isEmailValid = false;
+                    updateSubmitButton();
+                    return;
+                }
+
+                feedback.className = 'validation-feedback checking';
+                feedback.innerHTML = '<i class="bi bi-arrow-repeat"></i> Checking email...';
+                this.classList.remove('is-valid', 'is-invalid');
+
+                emailCheckTimeout = setTimeout(() => {
+                    checkEmailAvailability(email);
+                }, 500);
+            });
+        }
+
+        const editEmailInput = document.getElementById('editEmail');
+        if (editEmailInput) {
+            editEmailInput.addEventListener('input', function() {
+                clearTimeout(editEmailCheckTimeout);
+                const email = this.value.trim();
+                const feedback = document.getElementById('editEmailFeedback');
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (email.length === 0) {
+                    feedback.className = 'validation-feedback';
+                    feedback.textContent = '';
+                    this.classList.remove('is-valid', 'is-invalid');
+                    isEditEmailValid = false;
+                    updateEditSubmitButton();
+                    return;
+                }
+
+                if (!emailRegex.test(email)) {
+                    feedback.className = 'validation-feedback invalid';
+                    feedback.innerHTML = '<i class="bi bi-x-circle"></i> Invalid email format.';
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                    isEditEmailValid = false;
+                    updateEditSubmitButton();
+                    return;
+                }
+
+                if (email === originalEmail) {
+                    feedback.className = 'validation-feedback valid';
+                    feedback.innerHTML = '<i class="bi bi-check-circle"></i> Current email.';
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    isEditEmailValid = true;
+                    updateEditSubmitButton();
+                    return;
+                }
+
+                feedback.className = 'validation-feedback checking';
+                feedback.innerHTML = '<i class="bi bi-arrow-repeat"></i> Checking email...';
+                this.classList.remove('is-valid', 'is-invalid');
+
+                editEmailCheckTimeout = setTimeout(() => {
+                    checkEditEmailAvailability(email);
+                }, 500);
+            });
+        }
+
+        const addUserForm = document.getElementById('addUserForm');
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', function(e) {
+                updateSelectedGroupsBeforeSubmit('add');
+                console.log('📝 Form submitting with groupIds:', document.getElementById('addGroupIds').value);
+
+                if (!isUsernameValid || !isEmailValid) {
+                    e.preventDefault();
+                    let message = 'Please fix the following issues:\n';
+                    if (!isUsernameValid) {
+                        message += '- Username is not available or invalid\n';
+                    }
+                    if (!isEmailValid) {
+                        message += '- Email is not available or invalid\n';
+                    }
+                    alert(message);
+                    return false;
+                }
+            });
+        }
+
+
+        const editUserForm = document.getElementById('editForm');
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', function(e) {
+                // Update groupIds hidden input before submission
+                updateSelectedGroupsBeforeSubmit('edit');
+
+                const groupIdsValue = document.getElementById('editGroupIds').value;
+                console.log('📝 Edit form submitting with groupIds:', groupIdsValue);
+
+                // Log for debugging
+                if (!groupIdsValue || groupIdsValue.trim() === '') {
+                    console.warn('⚠️ Warning: No groups selected. This will remove all group associations.');
+                }
+
+                if (!isEditEmailValid) {
+                    e.preventDefault();
+                    alert('Please fix the email - it is already in use by another user.');
+                    return false;
+                }
+            });
+        }
+
+
+        formatAllDates();
+        // ✅ ADD THIS: Re-center modal when window resizes or sidebar toggles
+       window.addEventListener('resize', function() {
+    const modal = document.getElementById('userDetailsModal');
+    if (modal && modal.classList.contains('active')) {
+        centerModalToMainContent();
+    }
+    if (activeModalId) {
+        centerCustomModal(activeModalId);
+    }
+});
+
+        // ✅ ADD THIS: Listen for sidebar toggle events
+        const sidebarToggle = document.querySelector('[data-bs-toggle="offcanvas"]');
+       if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', function() {
+        setTimeout(() => {
+            const modal = document.getElementById('userDetailsModal');
+            if (modal && modal.classList.contains('active')) {
+                centerModalToMainContent();
+            }
+            if (activeModalId) {
+                centerCustomModal(activeModalId);
+            }
+        }, 350);
+    });
+}
+    });
+
+    // ==================== GROUPS FUNCTIONALITY ====================
+
+    function fetchGroups() {
+        console.log('🔄 Fetching groups...');
+        fetch(contextPath + 'api/access-groups')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch groups');
+                }
+                return response.json();
+            })
+            .then(groups => {
+                console.log('✅ Fetched groups:', groups);
+                allGroups = groups;
+                populateGroupsDropdown('add', groups);
+                populateGroupsDropdown('edit', groups);
+            })
+            .catch(error => {
+                console.error('❌ Error fetching groups:', error);
+                allGroups = [];
+            });
+    }
+
+    function populateGroupsDropdown(modalType, groups) {
+        const container = document.getElementById(`${modalType}GroupsCheckboxes`);
+        if (!container) {
+            console.error(`❌ Container not found: ${modalType}GroupsCheckboxes`);
+            return;
+        }
+
+        container.innerHTML = '';
+
+        if (groups.length === 0) {
+            container.innerHTML = '<div class="groups-no-results">No groups available</div>';
+            return;
+        }
+
+        groups.forEach(group => {
+            const item = document.createElement('div');
+            item.className = 'groups-checkbox-item';
+            item.setAttribute('data-group-name', group.groupName.toLowerCase());
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = `${modalType}-group-checkbox`;
+            checkbox.id = `${modalType}Group${group.id}`;
+            checkbox.value = group.id;
+            checkbox.onchange = function() {
+                updateSelectedGroups(modalType);
+            };
+
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            label.textContent = group.groupName;
+            label.style.marginLeft = '8px';
+            label.style.cursor = 'pointer';
+            label.onclick = function() {
+                checkbox.checked = !checkbox.checked;
+                updateSelectedGroups(modalType);
+            };
+
+            item.appendChild(checkbox);
+            item.appendChild(label);
+            container.appendChild(item);
+        });
+
+        console.log(`✅ Populated ${groups.length} groups in ${modalType} dropdown`);
+    }
+
+    function toggleGroupsDropdown(modalType) {
+        const menu = document.getElementById(`${modalType}GroupsMenu`);
+        const btn = document.getElementById(`${modalType}GroupsBtn`);
+
+        if (menu.classList.contains('show')) {
+            closeGroupsDropdown(modalType);
+        } else {
+            const otherType = modalType === 'add' ? 'edit' : 'add';
+            closeGroupsDropdown(otherType);
+
+            menu.classList.add('show');
+            btn.classList.add('active');
+        }
+    }
+
+    function closeGroupsDropdown(modalType) {
+        const menu = document.getElementById(`${modalType}GroupsMenu`);
+        const btn = document.getElementById(`${modalType}GroupsBtn`);
+
+        if (menu && btn) {
+            menu.classList.remove('show');
+            btn.classList.remove('active');
+        }
+    }
+
+    function filterGroups(modalType) {
+        const searchValue = document.getElementById(`${modalType}GroupsSearch`).value.toLowerCase();
+        const items = document.querySelectorAll(`#${modalType}GroupsCheckboxes .groups-checkbox-item`);
+
+        let visibleCount = 0;
+        items.forEach(item => {
+            const groupName = item.getAttribute('data-group-name');
+            if (groupName.includes(searchValue)) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        const container = document.getElementById(`${modalType}GroupsCheckboxes`);
+        let noResults = container.querySelector('.groups-no-results');
+
+        if (visibleCount === 0 && items.length > 0) {
+            if (!noResults) {
+                noResults = document.createElement('div');
+                noResults.className = 'groups-no-results';
+                noResults.textContent = 'No groups found';
+                container.appendChild(noResults);
+            }
+        } else if (noResults) {
+            noResults.remove();
+        }
+    }
+
+    function updateSelectedGroups(modalType) {
+        const checkboxes = document.querySelectorAll(`.${modalType}-group-checkbox:checked`);
+        const selectedIds = Array.from(checkboxes)
+            .map(cb => cb.value)
+            .filter(id => id && id !== 'undefined' && id !== 'null');
+
+        console.log(`🔄 ${modalType} - Selected Group IDs:`, selectedIds);
+
+        const textElement = document.getElementById(`${modalType}GroupsSelectedText`);
+        if (selectedIds.length === 0) {
+            textElement.textContent = 'Select groups...';
+            textElement.classList.add('placeholder');
+        } else {
+            const selectedNames = Array.from(checkboxes)
+                .map(cb => {
+                    const label = cb.parentElement.querySelector('label');
+                    return label ? label.textContent : '';
+                })
+                .filter(name => name);
+
+            if (selectedNames.length === 1) {
+                textElement.textContent = selectedNames[0];
+            } else {
+                textElement.innerHTML = `${selectedNames[0]} <span class="groups-count-badge">+${selectedNames.length - 1}</span>`;
+            }
+            textElement.classList.remove('placeholder');
+        }
+
+        const allCheckboxes = document.querySelectorAll(`.${modalType}-group-checkbox`);
+        const selectAllCheckbox = document.getElementById(`${modalType}SelectAllCheckbox`);
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length;
+        }
+    }
+
+    function updateSelectedGroupsBeforeSubmit(modalType) {
+        const checkboxes = document.querySelectorAll(`.${modalType}-group-checkbox:checked`);
+        const selectedIds = Array.from(checkboxes)
+            .map(cb => cb.value)
+            .filter(id => id && id !== 'undefined' && id !== 'null');
+
+        const hiddenInput = document.getElementById(`${modalType}GroupIds`);
+        hiddenInput.value = selectedIds.join(',');
+
+        console.log(`✅ Updated ${modalType}GroupIds hidden input:`, hiddenInput.value);
+    }
+
+    function toggleSelectAll(modalType) {
+        const selectAllCheckbox = document.getElementById(`${modalType}SelectAllCheckbox`);
+        const allCheckboxes = document.querySelectorAll(`.${modalType}-group-checkbox`);
+
+        allCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+
+        updateSelectedGroups(modalType);
+    }
+
+    function clearGroupSelection(modalType) {
+        const allCheckboxes = document.querySelectorAll(`.${modalType}-group-checkbox`);
+        allCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        const selectAllCheckbox = document.getElementById(`${modalType}SelectAllCheckbox`);
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+        }
+
+        updateSelectedGroups(modalType);
+    }
+
+    function loadUserGroups(userId) {
+        console.log('🔄 Loading groups for user:', userId);
+
+        // Show loading state
+        const textElement = document.getElementById('editGroupsSelectedText');
+        textElement.textContent = 'Loading groups...';
+        textElement.classList.add('placeholder');
+
+        fetch(contextPath + `api/access-groups/by-user/${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user groups');
+                }
+                return response.json();
+            })
+            .then(userGroups => {
+                console.log('✅ User groups received:', userGroups);
+
+                // IMPORTANT: Wait a bit to ensure DOM is ready
+                setTimeout(() => {
+                    // Clear ALL previous selections first
+                    const allCheckboxes = document.querySelectorAll('.edit-group-checkbox');
+                    allCheckboxes.forEach(cb => {
+                        cb.checked = false;
+                    });
+                    console.log('🧹 Cleared all edit checkboxes');
+
+                    // Check the boxes for user's current groups
+                    let checkedCount = 0;
+                    userGroups.forEach(group => {
+                        const checkbox = document.getElementById(`editGroup${group.id}`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                            checkedCount++;
+                            console.log(`✅ Checked group: ${group.groupName} (ID: ${group.id})`);
+                        } else {
+                            console.warn(`⚠️ Checkbox not found for group ID: ${group.id}, Name: ${group.groupName}`);
+                        }
+                    });
+
+                    console.log(`📊 Total groups checked: ${checkedCount} out of ${userGroups.length}`);
+
+                    // Update the display text and hidden input
+                    updateSelectedGroups('edit');
+
+                    // CRITICAL: Also update the hidden input immediately to preserve current groups
+                    updateSelectedGroupsBeforeSubmit('edit');
+
+                    // If no groups, show appropriate message
+                    if (userGroups.length === 0) {
+                        textElement.textContent = 'No groups assigned';
+                        textElement.classList.add('placeholder');
+                        // Clear hidden input since no groups
+                        document.getElementById('editGroupIds').value = '';
+                    }
+                }, 100); // Small delay to ensure dropdowns are populated
+
+            })
+            .catch(error => {
+                console.error('❌ Error loading user groups:', error);
+                textElement.textContent = 'Select groups...';
+                textElement.classList.add('placeholder');
+                // Don't clear the hidden input on error - keep any existing values
+            });
+    }
+
+    // ==================== USERNAME VALIDATION ====================
+
+    function checkUsernameAvailability(username) {
+        const feedback = document.getElementById('addUsernameFeedback');
+        const input = document.getElementById('addUsername');
+
+        fetch(contextPath + `users/check-username?username=${encodeURIComponent(username)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    feedback.className = 'validation-feedback invalid';
+                    feedback.innerHTML = '<i class="bi bi-x-circle"></i> Username already exists.';
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                    isUsernameValid = false;
+                } else {
+                    feedback.className = 'validation-feedback valid';
+                    feedback.innerHTML = '<i class="bi bi-check-circle"></i> Username is available.';
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    isUsernameValid = true;
+                }
+                updateSubmitButton();
+            })
+            .catch(error => {
+                console.error('Error checking username:', error);
+                feedback.className = 'validation-feedback';
+                feedback.textContent = '';
+                input.classList.remove('is-valid', 'is-invalid');
+                isUsernameValid = false;
+                updateSubmitButton();
+            });
+    }
+
+    // ==================== EMAIL VALIDATION ====================
+
+    function checkEmailAvailability(email) {
+        const feedback = document.getElementById('addEmailFeedback');
+        const input = document.getElementById('addEmail');
+
+        fetch(contextPath + `users/check-email?email=${encodeURIComponent(email)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    feedback.className = 'validation-feedback invalid';
+                    feedback.innerHTML = '<i class="bi bi-x-circle"></i> Email already exists.';
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                    isEmailValid = false;
+                } else {
+                    feedback.className = 'validation-feedback valid';
+                    feedback.innerHTML = '<i class="bi bi-check-circle"></i> Email is available.';
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    isEmailValid = true;
+                }
+                updateSubmitButton();
+            })
+            .catch(error => {
+                console.error('Error checking email:', error);
+                feedback.className = 'validation-feedback';
+                feedback.textContent = '';
+                input.classList.remove('is-valid', 'is-invalid');
+                isEmailValid = false;
+                updateSubmitButton();
+            });
+    }
+
+    function checkEditEmailAvailability(email) {
+        const feedback = document.getElementById('editEmailFeedback');
+        const input = document.getElementById('editEmail');
+
+        fetch(contextPath + `users/check-email?email=${encodeURIComponent(email)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    feedback.className = 'validation-feedback invalid';
+                    feedback.innerHTML = '<i class="bi bi-x-circle"></i> Email already exists.';
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                    isEditEmailValid = false;
+                } else {
+                    feedback.className = 'validation-feedback valid';
+                    feedback.innerHTML = '<i class="bi bi-check-circle"></i> Email is available.';
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    isEditEmailValid = true;
+                }
+                updateEditSubmitButton();
+            })
+            .catch(error => {
+                console.error('Error checking email:', error);
+                feedback.className = 'validation-feedback';
+                feedback.textContent = '';
+                input.classList.remove('is-valid', 'is-invalid');
+                isEditEmailValid = true;
+                updateEditSubmitButton();
+            });
+    }
+
+    // ==================== SUBMIT BUTTON CONTROL ====================
+
+    function updateEditSubmitButton() {
+        const submitBtn = document.querySelector('#editUserModal button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = !isEditEmailValid;
+        }
+    }
+
+    function updateSubmitButton() {
+        const submitBtn = document.getElementById('addUserSubmitBtn');
+        const usernameInput = document.getElementById('addUsername');
+        const emailInput = document.getElementById('addEmail');
+
+        const usernameHasValue = usernameInput && usernameInput.value.trim().length >= 1;
+        const emailHasValue = emailInput && emailInput.value.trim().length > 0;
+
+        if (usernameHasValue && emailHasValue && isUsernameValid && isEmailValid) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+
+    // ==================== USER DETAILS MODAL ====================
+
+    function showUserDetails(userId) {
+        const modal = document.getElementById('userDetailsModal');
+        const overlay = document.getElementById('modalOverlay');
+        const content = document.getElementById('userDetailsContent');
+
+        modal.classList.add('active');
+        overlay.classList.add('active');
+
+        // ✅ Center modal after showing it
+        setTimeout(() => {
+            centerModalToMainContent();
+        }, 10);
+
+        content.innerHTML = '<div class="text-center py-4"><div class="loading-spinner"></div><p class="mt-2">Loading user details...</p></div>';
+
+        fetch(contextPath + `apis/users/${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('User not found');
+                }
+                return response.json();
+            })
+            .then(user => {
+                let createdDate = 'N/A';
+                if (user.createdAt) {
+                    const date = new Date(user.createdAt);
+                    createdDate = date.toLocaleString('en-IN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    });
+                }
+
+                let roleName = user.roleName || 'N/A';
+                let groupsHtml = '<span class="text-muted">No groups assigned</span>';
+                if (user.groups && user.groups.length > 0) {
+                    groupsHtml = user.groups.map(group =>
+                        `<span class="badge rounded-pill" style="background-color: #d1fae5; color: #065f46; margin-right: 4px; margin-bottom: 4px; padding: 6px 12px; font-size: 11px;">${group.groupName}</span>`
+                    ).join('');
+                }
+
+                content.innerHTML = `
+            <div class="user-detail-row">
+                <div class="user-detail-label">First Name:</div>
+                <div class="user-detail-value">${user.firstName || 'N/A'}</div>
+            </div>
+            <div class="user-detail-row">
+                <div class="user-detail-label">Last Name:</div>
+                <div class="user-detail-value">${user.lastName || 'N/A'}</div>
+            </div>
+            <div class="user-detail-row">
+                <div class="user-detail-label">Username:</div>
+                <div class="user-detail-value">${user.username || 'N/A'}</div>
+            </div>
+            <div class="user-detail-row">
+                <div class="user-detail-label">Email:</div>
+                <div class="user-detail-value">${user.email || 'N/A'}</div>
+            </div>
+            <div class="user-detail-row">
+                <div class="user-detail-label">Role:</div>
+                <div class="user-detail-value"><span class="role-pill">${roleName}</span></div>
+            </div>
+            <div class="user-detail-row">
+                 <div class="user-detail-label">Groups:</div>
+                 <div class="user-detail-value">${groupsHtml}</div>
+            </div>
+            <div class="user-detail-row">
+                <div class="user-detail-label">Created At:</div>
+                <div class="user-detail-value">${createdDate}</div>
+            </div>
+            <div class="user-detail-row" style="border-bottom: none;">
+                <div class="user-detail-label">Created By:</div>
+                <div class="user-detail-value">${user.createdByUsername || 'System'}</div>
+            </div>
+        `;
+
+                // ✅ Re-center after content loads (height may change)
+                setTimeout(() => {
+                    centerModalToMainContent();
+                }, 10);
+            })
+            .catch(error => {
+                content.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Failed to load user details. ${error.message}
+                    </div>
+                `;
+
+                // ✅ Re-center after error message loads
+                setTimeout(() => {
+                    centerModalToMainContent();
+                }, 10);
+            });
+    }
+
+    // ==================== TABLE FILTERING ====================
+
+<!--    function filterByStatCard(card) {-->
+<!--        const filter = card.getAttribute('data-filter');-->
+<!--        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));-->
+<!--        card.classList.add('active');-->
+<!--        currentFilter = filter;-->
+<!--        applyFilters();-->
+<!--    }-->
+function filterByStatCard(card) {
+
+    const filter = card.getAttribute('data-filter');
+
+    // If "All" clicked → reset everything
+    if (filter === 'all') {
+
+        activeFilters.clear();
+        activeFilters.add('all');
+
+        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+
+        applyFilters();
+        return;
+    }
+
+    // Remove ALL filter
+    activeFilters.delete('all');
+    document.querySelector('[data-filter="all"]').classList.remove('active');
+
+    // Toggle selected card
+    if (activeFilters.has(filter)) {
+        activeFilters.delete(filter);
+        card.classList.remove('active');
+    } else {
+        activeFilters.add(filter);
+        card.classList.add('active');
+    }
+
+    // If nothing selected → default to ALL
+    if (activeFilters.size === 0) {
+        activeFilters.add('all');
+        document.querySelector('[data-filter="all"]').classList.add('active');
+    }
+
+    applyFilters();
+}
+
+    function applyFilters() {
+        const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+        const allRows = document.querySelectorAll('#usersTable tbody tr');
+        let visibleCount = 0;
+
+        allRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 6) return;
+
+            let show = true;
+            const rowRole = row.getAttribute('data-role') || '';
+
+<!--            if (currentFilter !== 'all') {-->
+<!--                if (rowRole !== currentFilter) {-->
+<!--                    show = false;-->
+<!--                }-->
+<!--            }-->
+if (!activeFilters.has('all')) {
+    if (!activeFilters.has(rowRole)) {
+        show = false;
+    }
+}
+
+            if (searchQuery && show) {
+                let searchText = '';
+                for (let i = 0; i < 3; i++) {
+                    searchText += cells[i].textContent.toLowerCase() + ' ';
+                }
+                if (!searchText.includes(searchQuery)) {
+                    show = false;
+                }
+            }
+
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        document.getElementById('userCount').textContent = visibleCount;
+    }
+
+    // ==================== DATE FORMATTING ====================
+
+    function formatDate(dateString) {
+        if (!dateString || dateString === 'N/A') return 'N/A';
+
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+
+            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+        } catch (error) {
+            return dateString;
+        }
+    }
+
+    function formatAllDates() {
+        const dateElements = document.querySelectorAll('#usersTable tbody tr td:nth-child(5) small');
+        dateElements.forEach(element => {
+            const originalDate = element.textContent.trim();
+            element.textContent = formatDate(originalDate);
+        });
+    }
+
+    // ==================== EDIT MODAL ====================
+
+    function openEditModal(button) {
+        const userId = button.getAttribute('data-id');
+        const firstName = button.getAttribute('data-firstname');
+        const lastName = button.getAttribute('data-lastname');
+        const username = button.getAttribute('data-username');
+        const email = button.getAttribute('data-email');
+        const roleId = button.getAttribute('data-roleid');
+
+        console.log('📝 Opening edit modal for user ID:', userId);
+
+        document.getElementById('editFirstName').value = firstName;
+        document.getElementById('editLastName').value = lastName;
+        document.getElementById('editUsername').value = username;
+        document.getElementById('editEmail').value = email;
+        document.getElementById('editRoleId').value = roleId;
+        document.getElementById('editPassword').value = '';
+
+        originalEmail = email;
+
+        isEditEmailValid = true;
+        const feedback = document.getElementById('editEmailFeedback');
+        const input = document.getElementById('editEmail');
+        if (feedback) {
+            feedback.className = 'validation-feedback';
+            feedback.textContent = '';
+        }
+        if (input) {
+            input.classList.remove('is-valid', 'is-invalid');
+        }
+        updateEditSubmitButton();
+
+        // IMPORTANT: Ensure groups are loaded before attempting to check them
+        if (allGroups && allGroups.length > 0) {
+            // Groups already loaded, proceed immediately
+            loadUserGroups(userId);
+        } else {
+            // Groups not loaded yet, wait for them
+            console.log('⏳ Groups not loaded yet, waiting...');
+            const checkInterval = setInterval(() => {
+                if (allGroups && allGroups.length > 0) {
+                    clearInterval(checkInterval);
+                    console.log('✅ Groups now available, loading user groups');
+                    loadUserGroups(userId);
+                }
+            }, 100);
+
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                if (!allGroups || allGroups.length === 0) {
+                    console.error('❌ Timeout: Groups failed to load');
+                }
+            }, 5000);
+        }
+
+        document.getElementById('editForm').action = '/edit/' + userId;
+
+        // Show modal
+        openModal('editUserModal');
+        console.log('✅ Edit modal opened for user:', username);
+    }
+
+    // ==================== DELETE MODAL ====================
+
+   function openDeleteModal(button) {
+    const userId = button.getAttribute('data-userid');
+    const username = button.getAttribute('data-username');
+
+    document.getElementById('deleteModalMessage').textContent =
+        `Are you sure you want to delete ${username}? This action cannot be undone.`;
+    document.getElementById('confirmDeleteBtn').setAttribute('href', `/delete/${userId}`);
+
+    openModal('deleteModal');
+}
+
+    // ==================== FORM RESET ON SUCCESS ====================
+
+    window.addEventListener('load', function() {
+        const successAlert = document.querySelector('.alert-success');
+
+        if (successAlert) {
+            setTimeout(() => {
+                const addUserForm = document.getElementById('addUserForm');
+                if (addUserForm) {
+                    addUserForm.reset();
+                }
+                const usernameFeedback = document.getElementById('addUsernameFeedback');
+                if (usernameFeedback) {
+                    usernameFeedback.className = 'validation-feedback';
+                    usernameFeedback.textContent = '';
+                }
+                const emailFeedback = document.getElementById('addEmailFeedback');
+                if (emailFeedback) {
+                    emailFeedback.className = 'validation-feedback';
+                    emailFeedback.textContent = '';
+                }
+                const usernameInput = document.getElementById('addUsername');
+                const emailInput = document.getElementById('addEmail');
+                if (usernameInput) usernameInput.classList.remove('is-valid', 'is-invalid');
+                if (emailInput) emailInput.classList.remove('is-valid', 'is-invalid');
+
+                clearGroupSelection('add');
+
+                isUsernameValid = false;
+                isEmailValid = false;
+                document.getElementById('addUserSubmitBtn').disabled = true;
+            }, 100);
+        }
+
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                if (bsAlert) bsAlert.close();
+            });
+        }, 5000);
+    });
+    // ==================== PASSWORD POLICY VALIDATION FOR ADD USER ====================
+let passwordPolicyCache = null;
+
+async function fetchPasswordPolicy() {
+    if (passwordPolicyCache !== null) {
+        return passwordPolicyCache;
+    }
+    try {
+        const response = await fetch(contextPath + 'api/settings/password-policy');
+        if (response.ok) {
+            passwordPolicyCache = await response.json();
+            return passwordPolicyCache;
+        }
+    } catch (error) {
+        console.error('Error fetching password policy:', error);
+    }
+    return null;
+}
+
+function validatePasswordPolicy(password, policy) {
+    if (!policy || !policy.enforcePasswordPolicy) {
+        return { valid: true, errors: [] };
+    }
+    const errors = [];
+    if (policy.minPasswordLength && password.length < policy.minPasswordLength) {
+        errors.push(`Must be at least ${policy.minPasswordLength} characters`);
+    }
+    if (policy.requireUppercase && !/[A-Z]/.test(password)) {
+        errors.push('Must contain uppercase letter');
+    }
+    if (policy.requireLowercase && !/[a-z]/.test(password)) {
+        errors.push('Must contain lowercase letter');
+    }
+    if (policy.requireNumber && !/[0-9]/.test(password)) {
+        errors.push('Must contain number');
+    }
+    if (policy.requireSpecialChar && !/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password)) {
+        errors.push('Must contain special character');
+    }
+    return { valid: errors.length === 0, errors: errors };
+}
+
+function showPasswordErrors(errors) {
+    const input = document.getElementById('addPassword');
+    const errorDiv = document.getElementById('addPasswordPolicyError');
+    if (errors.length > 0) {
+        input.classList.add('is-invalid');
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = errors.join(', ');
+    } else {
+        input.classList.remove('is-invalid');
+        errorDiv.style.display = 'none';
+    }
+}
+
+// Add listener for real-time validation
+document.getElementById('addPassword')?.addEventListener('input', async function() {
+    const password = this.value;
+    if (password.length === 0) {
+        showPasswordErrors([]);
+        return;
+    }
+    const policy = await fetchPasswordPolicy();
+    if (policy) {
+        const result = validatePasswordPolicy(password, policy);
+        showPasswordErrors(result.errors);
+    }
+});
+
+// Validate on form submit
+document.getElementById('addUserForm')?.addEventListener('submit', async function(e) {
+    const passwordInput = document.getElementById('addPassword');
+    const policy = await fetchPasswordPolicy();
+    if (policy && policy.enforcePasswordPolicy) {
+        const result = validatePasswordPolicy(passwordInput.value, policy);
+        if (!result.valid) {
+            e.preventDefault();
+            showPasswordErrors(result.errors);
+            alert('Please fix password policy errors');
+            return false;
+        }
+    }
+});
+
+
+
+
+    // Real-time validation for Edit User password
+document.getElementById('editPassword')?.addEventListener('input', async function() {
+    const password = this.value;
+    if (password.length === 0) {
+        this.classList.remove('is-invalid');
+        document.getElementById('editPasswordPolicyError').style.display = 'none';
+        return;
+    }
+    const policy = await fetchPasswordPolicy();
+    if (policy) {
+        const result = validatePasswordPolicy(password, policy);
+        const errorDiv = document.getElementById('editPasswordPolicyError');
+        if (result.errors.length > 0) {
+            this.classList.add('is-invalid');
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = result.errors.join(', ');
+        } else {
+            this.classList.remove('is-invalid');
+            errorDiv.style.display = 'none';
+        }
+    }
+});
+
+// Validate on Edit User form submit
+document.getElementById('editForm')?.addEventListener('submit', async function(e) {
+    const passwordInput = document.getElementById('editPassword');
+    if (passwordInput.value.trim().length === 0) {
+        return; // Allow empty password (keep current)
+    }
+    const policy = await fetchPasswordPolicy();
+    if (policy && policy.enforcePasswordPolicy) {
+        const result = validatePasswordPolicy(passwordInput.value, policy);
+        if (!result.valid) {
+            e.preventDefault();
+            passwordInput.classList.add('is-invalid');
+            document.getElementById('editPasswordPolicyError').style.display = 'block';
+            document.getElementById('editPasswordPolicyError').textContent = result.errors.join(', ');
+            alert('Please fix password policy errors');
+            return false;
+        }
+    }
+});
+</script>
+</body>
+</html>

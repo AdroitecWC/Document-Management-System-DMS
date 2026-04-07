@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Logs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .log-card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-box {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .badge-login { background-color: #28a745; }
+        .badge-logout { background-color: #6c757d; }
+        .badge-create { background-color: #007bff; }
+        .badge-edit { background-color: #ffc107; color: #000; }
+        .badge-delete { background-color: #dc3545; }
+        .badge-document-upload {background-color: #20c997; }
+
+.badge-document-edit {
+    background-color: #ffc107; /* Yellow - same as edit */
+    color: #000;
+}
+
+.badge-document-delete {
+    background-color: #dc3545; /* Red - same as delete/danger */
+}
+
+<!--.badge-document-view {-->
+<!--    background-color: #17a2b8; /* Teal/blue - info */-->
+<!--}-->
+
+.badge-document-download {
+    background-color: #007bff; /* Blue - same as create/info */
+}
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="mb-4"><i class="bi bi-clock-history"></i> Activity Logs</h1>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="stats-box">
+                <h5>Today's Activities</h5>
+                <h2 th:text="${todayCount}">0</h2>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stats-box">
+                <h5>Total Logs</h5>
+                <h2 th:text="${totalLogs}">0</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <input type="date" id="startDate" class="form-control" style="width: 160px;">
+        <span>to</span>
+        <input type="date" id="endDate" class="form-control" style="width: 160px;">
+        <button class="btn btn-primary" onclick="downloadLogsAsCSV()">
+            <i class="bi bi-download me-2"></i> Download (Filtered)
+        </button>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="log-card">
+    <h4 class="mb-3">All Activities</h4>
+    <div class="table-responsive">
+        <!--            <table class="table table-hover">-->
+        <table id="activityLogsTable" class="table table-striped table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Details</th>
+                <th>Time</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${logs == null or logs.isEmpty()}">
+                <td colspan="5" class="text-center">No logs found</td>
+            </tr>
+            <tr th:each="log : ${logs}">
+                <td th:text="${log.logId}">1</td>
+                <!--                    <td>-->
+                <!--                        <span th:if="${log.user != null}"-->
+                <!--                            th:text="${log.user.username}">User</span>-->
+                <!--                        <span th:unless="${log.user != null}">Unknown</span>-->
+                <!--                        <br>-->
+                <!--                        <small class="text-muted"-->
+                <!--                               th:if="${log.user != null}"-->
+                <!--                               th:text="${log.user.email}">email</small>-->
+                <!--                    </td>-->
+
+                <td>
+                    <span th:text="${log.user != null ? log.user.username : 'Deleted User'}"></span><br>
+                    <small class="text-muted"
+                           th:text="${log.user != null ? log.user.email : 'N/A'}"></small>
+                </td>
+
+                <td>
+                            <span class="badge"
+                                  th:classappend="${log.action == 'LOGIN' ? 'badge-login' :
+                       log.action == 'LOGOUT' ? 'badge-logout' :
+                       log.action == 'USER_CREATE' ? 'badge-create' :
+                       log.action == 'USER_EDIT' ? 'badge-edit' :
+                       log.action == 'USER_DELETE' ? 'badge-delete' :
+                       log.action == 'DOCUMENT_UPLOAD' ? 'badge-document-upload' :
+                       log.action == 'DOCUMENT_EDIT' ? 'badge-document-edit' :
+                       log.action == 'DOCUMENT_DELETE' ? 'badge-document-delete' :
+                       log.action == 'DOCUMENT_DOWNLOAD' ? 'badge-document-download' : ''}"
+                                  th:text="${log.action}">
+    ACTION
+</span>
+
+                </td>
+                <td th:text="${log.details}">Details</td>
+                <td>
+                    <span th:text="${#temporals.format(log.timestamp, 'dd MMM yyyy')}">14 Oct 2025</span>
+                    <br>
+                    <small class="text-muted"
+                           th:text="${#temporals.format(log.timestamp, 'HH:mm:ss')}">10:30</small>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a th:href="@{/users}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Users
+    </a>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function downloadLogsAsCSV() {
+        const table = document.querySelector("#activityLogsTable");
+        if (!table) {
+            alert("No logs table found!");
+            return;
+        }
+
+        const startDate = document.querySelector("#startDate").value;
+        const endDate = document.querySelector("#endDate").value;
+
+        // Convert to Date objects
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+
+        // 🔧 Fix: make end date inclusive (till 23:59:59)
+        if (end) end.setHours(23, 59, 59, 999);
+
+        let csvContent = "";
+        const rows = table.querySelectorAll("tr");
+
+        rows.forEach((row, index) => {
+            const cols = row.querySelectorAll("th, td");
+            if (cols.length === 0) return;
+
+            // Always include header row
+            if (index === 0) {
+                const header = Array.from(cols)
+                    .map(col => `"${col.textContent.trim().replace(/"/g, '""')}"`)
+                    .join(",");
+                csvContent += header + "\n";
+                return;
+            }
+
+            // Get date cell (adjust index if needed)
+            const dateText = cols[4]?.textContent.trim();
+            if (!dateText) return;
+
+            // Try parsing "28 Oct 2025" → Date object
+            let logDate = new Date(dateText);
+            if (isNaN(logDate)) {
+                const [day, month, year] = dateText.split(" ");
+                const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                const monthIndex = monthNames.indexOf(month);
+                if (monthIndex >= 0) {
+                    logDate = new Date(year, monthIndex, day);
+                }
+            }
+
+            // Apply filter (inclusive of both start and end)
+            if (
+                (!start || logDate >= start) &&
+                (!end || logDate <= end)
+            ) {
+                const rowData = Array.from(cols)
+                    .map(col => `"${col.textContent.trim().replace(/"/g, '""')}"`)
+                    .join(",");
+                csvContent += rowData + "\n";
+            }
+        });
+
+        if (csvContent.trim() === "") {
+            alert("No logs found for the selected date range!");
+            return;
+        }
+
+        // Download CSV
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Activity_Logs_${startDate || 'All'}_to_${endDate || 'All'}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+
+
+
+</body>
+</html>

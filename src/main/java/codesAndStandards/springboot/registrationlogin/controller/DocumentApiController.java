@@ -1,0 +1,494 @@
+package codesAndStandards.springboot.registrationlogin.controller;
+
+import codesAndStandards.springboot.registrationlogin.dto.DocumentDto;
+import codesAndStandards.springboot.registrationlogin.dto.DocumentInfoDTO;
+import codesAndStandards.springboot.registrationlogin.entity.Document;
+import codesAndStandards.springboot.registrationlogin.repository.DocumentRepository;
+import codesAndStandards.springboot.registrationlogin.service.DocumentService;
+import codesAndStandards.springboot.registrationlogin.service.LicenseService;
+import codesAndStandards.springboot.registrationlogin.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/documents")
+@RequiredArgsConstructor
+@Slf4j
+public class DocumentApiController {
+
+    private final DocumentRepository documentRepository;
+    private final UserService userService;
+    private final DocumentService documentService;
+
+    @Autowired
+    private LicenseService licenseService;
+
+    /**
+     * ⭐ NEW ENDPOINT - Check if current user has access to a document
+     * GET /api/documents/{id}/check-access
+     * Returns: { "hasAccess": true/false, "message": "..." }
+     */
+    /**
+     * ⭐ ENHANCED - Check if current user has access to a document
+     * GET /api/documents/{id}/check-access
+     * Returns detailed access information for better debugging
+     */
+    /**
+     * ⭐ UPDATED - Check if current user has access to a document
+     * GET /api/documents/{id}/check-access
+     * Uses the SAME access logic as the document library
+     */
+    @GetMapping("/{id}/check-access")
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    public ResponseEntity<Map<String, Object>> checkDocumentAccess(@PathVariable int id) {
+        log.info("=== BOOKMARK ACCESS CHECK (Using Document Library Logic) ===");
+        log.info("Document ID: {}", id);
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // ✅ LICENSE CHECK
+            if (!licenseService.isLicenseValid()) {
+                log.warn("❌ License validation failed");
+                response.put("hasAccess", false);
+                response.put("message", "License expired or not found");
+                response.put("reason", "LICENSE_EXPIRED");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Get current user info
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            Long userId = userService.getLoggedInUserId();
+
+            log.info("User: {} (ID: {})", username, userId);
+
+            // Check if user is Admin
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("Admin"));
+
+            // ✅ ADMIN ALWAYS HAS ACCESS
+            if (isAdmin) {
+                log.info("✅ Admin access granted");
+                response.put("hasAccess", true);
+                response.put("message", "Admin access granted");
+                response.put("role", "Admin");
+                return ResponseEntity.ok(response);
+            }
+
+            // ✅ FOR NON-ADMIN USERS - Use document library access logic
+            log.info("Checking access using document library logic...");
+
+            // Get all accessible document IDs (same as document library)
+            List<Integer> accessibleDocIds = documentService.getAccessibleDocumentIds(userId);
+            log.info("User {} has access to {} documents in library", userId, accessibleDocIds.size());
+
+            // Check if this specific document is accessible
+            boolean hasAccess = accessibleDocIds.contains(id);
+
+            if (hasAccess) {
+                log.info("✅ Access GRANTED - Document {} is in user's accessible documents", id);
+                response.put("hasAccess", true);
+                response.put("message", "Access granted - document is in your library");
+                response.put("totalAccessibleDocs", accessibleDocIds.size());
+                return ResponseEntity.ok(response);
+            } else {
+                log.warn("❌ Access DENIED - Document {} is NOT in user's accessible documents", id);
+
+                // Check if document exists at all
+                try {
+                    documentService.findDocumentById(id);
+                    // Document exists but user doesn't have access
+                    response.put("hasAccess", false);
+                    response.put("message", "You don't have permission to view this document. " +
+                            "Your access may have been removed by an administrator.");
+                    response.put("reason", "NOT_IN_DOCUMENT_LIBRARY");
+                } catch (Exception e) {
+                    // Document doesn't exist
+                    response.put("hasAccess", false);
+                    response.put("message", "Document not found or has been deleted.");
+                    response.put("reason", "DOCUMENT_NOT_FOUND");
+                }
+
+                response.put("totalAccessibleDocs", accessibleDocIds.size());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+        } catch (Exception e) {
+            log.error("❌ Error checking document access for document {}", id, e);
+            response.put("hasAccess", false);
+            response.put("message", "Error checking access: " + e.getMessage());
+            response.put("reason", "ERROR");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get all documents for access control selection
+     * GET /api/documents
+     * ✅ WITH LICENSE VALIDATION
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    public ResponseEntity<?> getAllDocuments() {
+        log.info("REST request to get documents (filtered by group access)");
+
+        // ✅ LICENSE CHECK
+        if (!licenseService.isLicenseValid()) {
+            log.warn("License validation failed for getAllDocuments");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "License expired or not found"));
+        }
+
+        try {
+            Long userId = userService.getLoggedInUserId();
+            List<Document> documents = documentRepository.findAll();
+
+            List<DocumentInfoDTO> documentDTOs = documents.stream()
+                    .map(doc -> DocumentInfoDTO.builder()
+                            .id(doc.getId())
+                            .title(doc.getTitle())
+                            .build())
+                    .collect(Collectors.toList());
+
+            log.info("Returning {} accessible documents", documentDTOs.size());
+            return ResponseEntity.ok(documentDTOs);
+
+        } catch (Exception e) {
+            log.error("Error fetching documents", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to fetch documents"));
+        }
+    }
+
+    /**
+     * Get document by ID
+     * GET /api/documents/{id}
+     * ✅ WITH LICENSE VALIDATION
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    public ResponseEntity<?> getDocumentById(@PathVariable int id) {
+        log.info("REST request to get document : {}", id);
+
+        // ✅ LICENSE CHECK
+        if (!licenseService.isLicenseValid()) {
+            log.warn("License validation failed for getDocumentById");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ErrorResponse("License expired or not found"));
+        }
+
+        try {
+            Document document = documentRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Document not found with ID: " + id));
+
+            DocumentInfoDTO dto = DocumentInfoDTO.builder()
+                    .id(document.getId())
+                    .title(document.getTitle())
+                    .build();
+
+            return ResponseEntity.ok(dto);
+        } catch (RuntimeException e) {
+            log.error("Error fetching document with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error fetching document", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Failed to fetch document"));
+        }
+    }
+
+    /**
+     * Search documents by title or code
+     * GET /api/documents/search?query=xyz
+     * ✅ WITH LICENSE VALIDATION
+     */
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    public ResponseEntity<?> searchDocuments(@RequestParam String query) {
+        log.info("REST request to search documents with query: {}", query);
+
+        // ✅ LICENSE CHECK
+        if (!licenseService.isLicenseValid()) {
+            log.warn("License validation failed for searchDocuments");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "License expired or not found"));
+        }
+
+        try {
+            List<Document> documents = documentRepository.findAll().stream()
+                    .filter(doc ->
+                            (doc.getTitle() != null && doc.getTitle().toLowerCase().contains(query.toLowerCase()))
+                    )
+                    .collect(Collectors.toList());
+
+            List<DocumentInfoDTO> documentDTOs = documents.stream()
+                    .map(doc -> DocumentInfoDTO.builder()
+                            .id(doc.getId())
+                            .title(doc.getTitle())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(documentDTOs);
+        } catch (Exception e) {
+            log.error("Error searching documents", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to search documents"));
+        }
+    }
+
+    /**
+     * Upload single document
+     * POST /api/documents/upload
+     * ✅ WITH LICENSE VALIDATION
+     */
+    @PostMapping("/upload")
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    public ResponseEntity<?> uploadDocument(
+            @ModelAttribute DocumentDto documentDto,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "groupIds", required = false) String groupIds) {
+
+        log.info("REST request to upload document: {}", documentDto.getTitle());
+
+        // ✅ LICENSE CHECK
+        if (!licenseService.isLicenseValid()) {
+            log.warn("License validation failed for uploadDocument");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "License expired or not found"));
+        }
+
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            documentService.saveDocument(documentDto, file, username, groupIds);
+
+            log.info("Document uploaded successfully: {}", documentDto.getTitle());
+            return ResponseEntity.ok(Map.of("message", "Document uploaded successfully!"));
+
+        } catch (Exception e) {
+            log.error("Error uploading document", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Update document
+     * PUT /api/documents/{id}
+     * ✅ WITH LICENSE VALIDATION
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    public ResponseEntity<?> updateDocument(
+            @PathVariable Integer id,
+            @ModelAttribute DocumentDto documentDto,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "groupIds", required = false) String groupIds) {
+
+        log.info("REST request to update document: {}", id);
+
+        // ✅ LICENSE CHECK
+        if (!licenseService.isLicenseValid()) {
+            log.warn("License validation failed for updateDocument");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "License expired or not found"));
+        }
+
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            documentService.updateDocument(id, documentDto, file, username, groupIds);
+
+            log.info("Document updated successfully: {}", id);
+            return ResponseEntity.ok(Map.of("message", "Document updated successfully!"));
+
+        } catch (Exception e) {
+            log.error("Error updating document", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete document
+     * DELETE /api/documents/{id}
+     * ✅ WITH LICENSE VALIDATION
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('Admin')")
+    public ResponseEntity<?> deleteDocument(@PathVariable Integer id) {
+        log.info("REST request to delete document: {}", id);
+
+        // ✅ LICENSE CHECK
+        if (!licenseService.isLicenseValid()) {
+            log.warn("License validation failed for deleteDocument");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "License expired or not found"));
+        }
+
+        try {
+            documentService.deleteDocument(id);
+
+            log.info("Document deleted successfully: {}", id);
+            return ResponseEntity.ok(Map.of("message", "Document deleted successfully"));
+
+        } catch (Exception e) {
+            log.error("Error deleting document", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ⭐ PHASE 1 CHANGE — Replace the bulkUpload method in DocumentApiController.java
+    // Change: strip any file extension from title, not just .pdf
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @PostMapping("/bulk-upload")
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    public ResponseEntity<?> bulkUpload(
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam(value = "groupIds", required = false) String groupIds) {
+
+        log.info("REST request to bulk upload {} files", files.length);
+
+        // Check if license is valid
+        if (!licenseService.isLicenseValid()) {
+            log.warn("License validation failed for bulkUpload");
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "License expired or not found");
+            error.put("message", "Please activate or renew your license");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
+
+        // Check if bulk upload is allowed (ED2 edition only)
+        if (!licenseService.isBulkUploadAllowed()) {
+            log.warn("Bulk upload denied - Edition: {}", licenseService.getCurrentEdition());
+
+            String currentEdition = licenseService.getCurrentEdition();
+            long daysRemaining = licenseService.getDaysRemaining();
+
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Bulk upload feature not available in your edition");
+            error.put("currentEdition", currentEdition != null ? currentEdition : "ED1");
+            error.put("requiredEdition", "ED2");
+            error.put("daysRemaining", daysRemaining);
+            error.put("message", "Please upgrade to ED2 edition to use bulk upload feature.");
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
+
+        // Both checks passed — proceed with bulk upload
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            int successCount = 0;
+            int failedCount = 0;
+            StringBuilder errors = new StringBuilder();
+
+            for (MultipartFile file : files) {
+                try {
+                    DocumentDto documentDto = new DocumentDto();
+                    String fileName = file.getOriginalFilename();
+
+                    if (fileName != null) {
+                        // ⭐ Strip any file extension, not just .pdf
+                        // e.g. "My Document.docx" → "My Document"
+                        //      "Report.xlsx"       → "Report"
+                        //      "Manual.pdf"        → "Manual"
+                        int lastDot = fileName.lastIndexOf(".");
+                        String titleWithoutExtension = lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
+                        documentDto.setTitle(titleWithoutExtension);
+                    }
+
+                    documentService.saveDocument(documentDto, file, username, groupIds);
+                    successCount++;
+                    log.info("Bulk upload: Successfully uploaded {}", fileName);
+
+                } catch (Exception e) {
+                    failedCount++;
+                    errors.append(file.getOriginalFilename())
+                            .append(": ")
+                            .append(e.getMessage())
+                            .append("; ");
+                    log.error("Bulk upload: Failed to upload {}", file.getOriginalFilename(), e);
+                }
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Bulk upload completed");
+            response.put("totalFiles", files.length);
+            response.put("successCount", successCount);
+            response.put("failedCount", failedCount);
+            response.put("edition", licenseService.getCurrentEdition());
+
+            if (failedCount > 0) {
+                response.put("errors", errors.toString());
+            }
+
+            log.info("Bulk upload completed: {} succeeded, {} failed", successCount, failedCount);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Bulk upload error", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Bulk upload failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get license test info
+     * GET /api/documents/license-test
+     */
+    @GetMapping("/license-test")
+    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    public ResponseEntity<?> testLicense() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("licenseValid", licenseService.isLicenseValid());
+        response.put("edition", licenseService.getCurrentEdition());
+        response.put("bulkUploadAllowed", licenseService.isBulkUploadAllowed());
+        response.put("daysRemaining", licenseService.getDaysRemaining());
+
+        if (licenseService.getCurrentLicense() != null) {
+            response.put("expiryDate", licenseService.getCurrentLicense().getExpiryDate().toString());
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Error response class
+    private static class ErrorResponse {
+        private String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    }
+
+}

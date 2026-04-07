@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookmarks - Codes & Standards</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
+
+    <!-- Include Sidebar Styles -->
+    <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
+
+    <style>
+        /* ===========================================
+           CSS VARIABLES
+           =========================================== */
+        :root {
+            --primary-color: #4285f4;
+            --primary-dark: #3367d6;
+            --success-color: #34a853;
+            --success-dark: #2d8e47;
+            --danger-color: #f56565;
+            --danger-dark: #e53e3e;
+            --warning-color: #fbbf24;
+            --warning-dark: #f59e0b;
+            --text-primary: #1a202c;
+            --text-secondary: #718096;
+            --text-muted: #a0aec0;
+            --bg-primary: #f5f7fa;
+            --bg-white: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition-speed: 0.2s;
+        }
+
+        /* ===========================================
+           BASE STYLES
+           =========================================== */
+        body {
+            background-color: var(--bg-primary);
+            margin: 0;
+            padding: 0;
+            padding-top: 70px;
+        }
+
+        /* ===========================================
+           PAGE HEADER SECTION
+           =========================================== */
+        .page-header-section {
+            margin-bottom: 24px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+        }
+
+        .view-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-white);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-speed);
+            color: var(--text-secondary);
+        }
+
+        .view-btn:hover,
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* ===========================================
+           SEARCH AND FILTER SECTION
+           =========================================== */
+        .search-filter-section {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            height: 44px;
+            width: 100%;
+            font-size: 14px;
+            transition: border-color var(--transition-speed);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .filter-dropdown {
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            height: 44px;
+            font-size: 14px;
+            transition: border-color var(--transition-speed);
+        }
+
+        .filter-dropdown:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+        }
+
+        /* ===========================================
+           BOOKMARKS HEADER
+           =========================================== */
+        .bookmarks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+
+        .bookmarks-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .total-count {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ===========================================
+           GRID VIEW - RESPONSIVE
+           =========================================== */
+        .grid-view {
+            display: grid;
+            gap: 20px;
+
+            /* DEFAULT: 1920x1080 - 4 columns */
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .grid-view.hidden {
+            display: none;
+        }
+
+        .bookmark-card-grid {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-speed);
+            border: 1px solid transparent;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bookmark-card-grid:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .bookmark-icon-large {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-color);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+
+        .bookmark-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .bookmark-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .bookmark-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bookmark-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #f7fafc;
+            margin-top: auto;
+        }
+
+        /* ===========================================
+           LIST VIEW
+           =========================================== */
+        .list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .list-view.hidden {
+            display: none;
+        }
+
+        .bookmark-card-list {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-speed);
+            border: 1px solid transparent;
+            position: relative;
+            display: flex;
+            gap: 16px;
+            cursor: pointer;
+        }
+
+        .bookmark-card-list:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .bookmark-icon-list {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-color);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .bookmark-content {
+            flex: 1;
+        }
+
+        /* ===========================================
+           HOVER ACTIONS
+           =========================================== */
+        .bookmark-actions {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+            z-index: 10;
+        }
+
+        .bookmark-card-grid:hover .bookmark-actions,
+        .bookmark-card-list:hover .bookmark-actions {
+            opacity: 1;
+        }
+
+        /* ===========================================
+           BUTTON STYLES
+           =========================================== */
+        .btn-outline-view {
+            background-color: var(--bg-white) !important;
+            border: 1px solid var(--primary-color) !important;
+            color: var(--primary-color) !important;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-speed);
+            padding: 6px 12px;
+        }
+
+        .btn-outline-view:hover {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+            border-color: var(--primary-color) !important;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-primary {
+            background-color: var(--bg-white) !important;
+            border: 1px solid #0d6efd !important;
+            color: #0d6efd !important;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-speed);
+            padding: 6px 12px;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: #0d6efd !important;
+            color: white !important;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-danger {
+            background-color: var(--bg-white) !important;
+            border: 1px solid var(--danger-color) !important;
+            color: var(--danger-color) !important;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-speed);
+            padding: 6px 12px;
+        }
+
+        .btn-outline-danger:hover {
+            background-color: var(--danger-color) !important;
+            color: white !important;
+            transform: translateY(-1px);
+        }
+
+        /* ===========================================
+           EMPTY STATE
+           =========================================== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* ===========================================
+           LOADING STATE
+           =========================================== */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===========================================
+           ALERTS
+           =========================================== */
+        .alert {
+            transition: all 0.4s ease;
+            border-radius: var(--radius-md);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert i {
+            font-size: 20px;
+        }
+
+        /* ===========================================
+           MODAL STYLES
+           =========================================== */
+        .modal-content {
+            border-radius: var(--radius-lg);
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            padding: 20px 20px 0 20px;
+            border: none;
+        }
+
+        .modal-body {
+            padding: 30px 40px;
+        }
+
+        .modal-footer {
+            padding: 0 40px 30px 40px;
+            border: none;
+        }
+
+        /* ===========================================
+           RESPONSIVE BREAKPOINTS
+           =========================================== */
+
+        /* 1768x992 */
+        @media (max-width: 1768px) {
+            .grid-view {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* 1680x1050 */
+        @media (max-width: 1680px) {
+            .grid-view {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* 1600x1024 and 1600x900 */
+        @media (max-width: 1600px) {
+            .grid-view {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .search-filter-section {
+                padding: 18px;
+            }
+        }
+
+        /* 1440x1080 and 1440x900 */
+        @media (max-width: 1440px) {
+            .grid-view {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 18px;
+            }
+
+            .page-title {
+                font-size: 22px;
+            }
+
+            .search-filter-section {
+                padding: 16px;
+            }
+        }
+
+        /* 1366x768 */
+        @media (max-width: 1366px) {
+            .grid-view {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .bookmark-card-grid,
+            .bookmark-card-list {
+                padding: 16px;
+            }
+        }
+
+        /* Tablets and smaller (1024px and below) */
+        @media (max-width: 1024px) {
+            .main-content {
+                padding: 16px !important;
+            }
+
+            .grid-view {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+
+            .search-filter-section {
+                padding: 14px;
+            }
+
+            .bookmark-actions {
+                opacity: 1; /* Always show on tablets */
+            }
+        }
+
+        /* Mobile landscape (768px and below) */
+        @media (max-width: 768px) {
+            .grid-view {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .view-toggle {
+                align-self: flex-end;
+            }
+
+            .page-title {
+                font-size: 18px;
+            }
+
+            .bookmarks-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .search-filter-section .row {
+                gap: 12px;
+            }
+
+            .search-filter-section .col-md-8,
+            .search-filter-section .col-md-4 {
+                width: 100%;
+            }
+
+            .bookmark-card-grid,
+            .bookmark-card-list {
+                padding: 14px;
+            }
+
+            .bookmark-icon-large,
+            .bookmark-icon-list {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .bookmark-title {
+                font-size: 15px;
+            }
+
+            .bookmark-meta {
+                font-size: 12px;
+            }
+
+            .modal-body {
+                padding: 20px 24px;
+            }
+
+            .modal-footer {
+                padding: 0 24px 20px 24px;
+            }
+        }
+
+        /* Mobile portrait (576px and below) */
+        @media (max-width: 576px) {
+            .page-title {
+                font-size: 16px;
+            }
+
+            .breadcrumb {
+                font-size: 12px;
+            }
+
+            .view-btn {
+                width: 36px;
+                height: 36px;
+            }
+
+            .search-box input {
+                height: 40px;
+                font-size: 13px;
+                padding-left: 36px;
+            }
+
+            .search-box i {
+                font-size: 14px;
+                left: 12px;
+            }
+
+            .filter-dropdown {
+                height: 40px;
+                font-size: 13px;
+            }
+
+            .bookmark-card-grid,
+            .bookmark-card-list {
+                padding: 12px;
+            }
+
+            .bookmark-title {
+                font-size: 14px;
+            }
+
+            .bookmark-meta {
+                font-size: 11px;
+                gap: 8px;
+            }
+
+            .bookmark-footer {
+                font-size: 12px;
+            }
+
+            .btn-sm {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+
+            .empty-state {
+                padding: 60px 20px;
+            }
+
+            .empty-state i {
+                font-size: 48px;
+            }
+
+            .empty-state h3 {
+                font-size: 18px;
+            }
+
+            .empty-state p {
+                font-size: 13px;
+            }
+        }
+        /* ==================== MODAL OVERLAY ==================== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+.modal-overlay.active {
+    display: block;
+    animation: overlayFadeIn 0.25s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ==================== CUSTOM MODALS (sidebar-aware) ==================== */
+.custom-modal {
+    display: none;
+    position: fixed;
+    background: white;
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 500px;
+    z-index: 9999;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    max-height: 85vh;
+    overflow: hidden;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    border: none;
+}
+.custom-modal.active {
+    display: flex;
+    animation: modalSlideIn 0.3s ease forwards;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.custom-modal .modal-header {
+    padding: 20px 20px 0 20px;
+    border: none;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.custom-modal .modal-body {
+    padding: 30px 40px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.custom-modal .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-modal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-modal .modal-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 3px;
+}
+.custom-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0,0,0,0.25);
+}
+
+.custom-modal .modal-footer {
+    padding: 0 40px 30px 40px;
+    border: none;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+.modal-close-btn:hover {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .custom-modal .modal-body {
+        padding: 20px 24px;
+    }
+    .custom-modal .modal-footer {
+        padding: 0 24px 20px 24px;
+    }
+}
+         /* Sidebar Icon */
+    .library-icon {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        margin-right: 0px;
+        transition: transform 0.3s ease;
+    }
+    </style>
+</head>
+<body>
+<!-- Include Top Navbar -->
+<div th:replace="~{common/navbar :: navbar}"></div>
+
+<!-- Sidebar + Content -->
+<div class="d-flex">
+    <!-- Include Sidebar -->
+    <div th:replace="~{common/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-grow-1 p-4">
+        <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><img src="/images/bookmark_black_fill.png"
+                                          class="library-icon"
+                                          alt="Document Library Icon"> My Bookmarks</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a th:href="@{/documents}" class="text-decoration-none">
+                                    <i class="bi bi-house me-1"></i> Home
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active">My Bookmarks</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="view-toggle">
+                    <button class="view-btn active" id="gridViewBtn" onclick="toggleView('grid')">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </button>
+                    <button class="view-btn" id="listViewBtn" onclick="toggleView('list')">
+                        <i class="bi bi-list-ul"></i>
+                    </button>
+                </div>
+            </div>
+
+
+        <!-- Alert Messages -->
+        <div id="alertContainer" class="mt-2"></div>
+
+        <!-- Search and Filter -->
+        <div class="search-filter-section">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="form-control" id="searchInput"
+                               placeholder="Search bookmarks, documents, notes...">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select filter-dropdown" id="sortFilter">
+                        <option value="latest">Latest Added</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="title">Document Title</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookmarks Header -->
+        <div class="bookmarks-header">
+            <div class="bookmarks-count" id="showingCount">Showing 0 of 0 bookmarks</div>
+            <div class="total-count" id="totalCount">0 Total Bookmarks</div>
+        </div>
+
+        <!-- Grid View -->
+        <div class="grid-view" id="gridView">
+            <!-- Bookmarks will be dynamically loaded here -->
+        </div>
+
+        <!-- List View -->
+        <div class="list-view hidden" id="listView">
+            <!-- Bookmarks will be dynamically loaded here -->
+        </div>
+    </div>
+</div>
+<!-- ==================== MODAL OVERLAY ==================== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeActiveModal()"></div>
+<!-- Delete Confirmation Modal -->
+<div class="custom-modal" id="deleteModal">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="modal-close-btn" onclick="closeModal('deleteModal')">&times;</button>
+            </div>
+            <div class="modal-body text-center pt-0 pb-4">
+                <div style="width: 70px; height: 70px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="bi bi-trash3" style="font-size: 32px; color: #ef4444;"></i>
+                </div>
+                <h5 style="font-size: 20px; font-weight: 600; color: #1a2332; margin-bottom: 8px;">Delete Bookmark?</h5>
+                <p class="text-muted mb-0">Are you sure you want to delete this bookmark?</p>
+                <p class="text-danger mb-0 mt-2" style="font-size: 13px;">
+                    <i class="bi bi-exclamation-triangle me-1"></i> This action cannot be undone!
+                </p>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+                <button type="button" class="btn btn-secondary px-4" onclick="closeModal('deleteModal')" style="border-radius: 6px;">Cancel</button>
+                <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn" style="border-radius: 6px;">
+                    <i class="bi bi-trash me-2"></i> Delete
+                </button>
+            </div>
+        </div>
+<!-- Edit Bookmark Modal -->
+<div class="custom-modal" id="editModal">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="modal-close-btn" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <div class="modal-body text-center pt-0 pb-4">
+                <div style="width: 70px; height: 70px; background: #fff7ed; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="bi bi-pencil" style="font-size: 32px; color: #f59e0b;"></i>
+                </div>
+                <h5 style="font-size: 20px; font-weight: 600; color: #1a2332;">Edit Bookmark Name</h5>
+                <p class="text-muted mb-3" style="font-size: 14px;">Update the name for this bookmark.</p>
+
+                <input type="text" id="editBookmarkName" class="form-control" placeholder="Enter new name" style="max-width: 400px; margin: 0 auto;">
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+                <button type="button" class="btn btn-secondary px-4" onclick="closeModal('editModal')" style="border-radius: 6px;">Cancel</button>
+                <button type="button" class="btn btn-warning px-4" id="saveEditBtn" style="border-radius: 6px;">
+                    <i class="bi bi-save me-2"></i> Save
+                </button>
+            </div>
+        </div>
+
+
+<!-- ⭐ UPDATED: Access Denied Modal with clearer message -->
+<div class="custom-modal" id="accessDeniedModal">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="modal-close-btn" onclick="closeModal('accessDeniedModal')">&times;</button>
+            </div>
+            <div class="modal-body text-center pt-0 pb-4">
+                <div style="width: 70px; height: 70px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <i class="bi bi-lock-fill" style="font-size: 32px; color: #ef4444;"></i>
+                </div>
+                <h5 style="font-size: 20px; font-weight: 600; color: #1a2332; margin-bottom: 8px;">Access Denied</h5>
+                <p class="text-muted mb-0" id="accessDeniedMessage">You don't have permission to view this document.</p>
+                <div class="alert alert-warning mt-3 mb-0" style="font-size: 13px; text-align: left;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Possible reasons:</strong>
+                    <ul class="mb-0 mt-2" style="padding-left: 20px;">
+                        <li>You were removed from the group</li>
+                        <li>The document was removed from your group</li>
+                        <li>Access permissions were changed</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+<!-- Bootstrap JS -->
+<script src="/js/bootstrap.bundle.min.js"></script>
+<!-- Include Navbar JavaScript -->
+<div th:replace="~{common/navbar :: navbar-js}"></div>
+
+<script>
+    let allBookmarks = [];
+    let filteredBookmarks = [];
+    let bookmarkToDelete = null;
+    let bookmarkToEdit = null;
+    let currentView = 'grid';
+   // ==================== CUSTOM MODAL POSITIONING (sidebar-aware) ====================
+let activeModalId = null;
+
+function centerModalToMainContent(modalId) {
+    const modal = document.getElementById(modalId);
+    const mainContent = document.querySelector('.main-content');
+    if (!modal || !mainContent) return;
+
+    const mainRect = mainContent.getBoundingClientRect();
+    const modalWidth = modal.offsetWidth;
+    const modalHeight = modal.offsetHeight;
+
+    const left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
+    const top = Math.max(80, (window.innerHeight / 2) - (modalHeight / 2));
+
+    modal.style.left = `${left}px`;
+    modal.style.top = `${top}px`;
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const overlay = document.getElementById('modalOverlay');
+    if (!modal || !overlay) return;
+
+    if (activeModalId && activeModalId !== modalId) {
+        closeModal(activeModalId);
+    }
+
+    activeModalId = modalId;
+
+    // Step 1: Make modal visible but invisible to measure dimensions
+    modal.style.visibility = 'hidden';
+    modal.style.display = 'flex';
+
+    // Step 2: Position it correctly while still invisible
+    centerModalToMainContent(modalId);
+
+    // Step 3: Hide it again, remove inline display
+    modal.style.display = '';
+    modal.style.visibility = '';
+
+    // Step 4: Now show it with animation — it will appear at the correct position
+    modal.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const overlay = document.getElementById('modalOverlay');
+
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.left = '';
+        modal.style.top = '';
+    }
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+
+    document.body.style.overflow = '';
+    activeModalId = null;
+}
+
+function closeActiveModal() {
+    if (activeModalId) closeModal(activeModalId);
+}
+
+// Re-center on window resize
+window.addEventListener('resize', function() {
+    if (activeModalId) centerModalToMainContent(activeModalId);
+});
+
+// Escape key closes modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && activeModalId) closeModal(activeModalId);
+});
+
+// Re-center on sidebar toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.querySelector('[data-bs-toggle="offcanvas"]');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            setTimeout(() => {
+                if (activeModalId) centerModalToMainContent(activeModalId);
+            }, 350);
+        });
+    }
+
+    const sidebar = document.querySelector('.sidebar, .offcanvas, [class*="sidebar"]');
+    if (sidebar) {
+        const observer = new MutationObserver(function() {
+            setTimeout(() => {
+                if (activeModalId) centerModalToMainContent(activeModalId);
+            }, 350);
+        });
+        observer.observe(sidebar, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+});
+
+    // Fetch bookmarks on page load
+    window.addEventListener('load', function() {
+        fetchBookmarks();
+    });
+
+    // Fetch bookmarks from backend
+    function fetchBookmarks() {
+        fetch('/bookmarks')
+            .then(response => response.json())
+            .then(bookmarks => {
+                allBookmarks = bookmarks;
+                filteredBookmarks = bookmarks;
+                updateCounts();
+                renderBookmarks();
+            })
+            .catch(error => {
+                console.error('Error loading bookmarks:', error);
+                showError();
+            });
+    }
+
+    // Toggle view
+    function toggleView(view) {
+        currentView = view;
+        const gridView = document.getElementById('gridView');
+        const listView = document.getElementById('listView');
+        const gridBtn = document.getElementById('gridViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+
+        if (view === 'grid') {
+            gridView.classList.remove('hidden');
+            listView.classList.add('hidden');
+            gridBtn.classList.add('active');
+            listBtn.classList.remove('active');
+        } else {
+            gridView.classList.add('hidden');
+            listView.classList.remove('hidden');
+            listBtn.classList.add('active');
+            gridBtn.classList.remove('active');
+        }
+
+        renderBookmarks();
+    }
+
+    // Render bookmarks
+    function renderBookmarks() {
+        const gridContainer = document.getElementById('gridView');
+        const listContainer = document.getElementById('listView');
+
+        if (!filteredBookmarks || filteredBookmarks.length === 0) {
+            const emptyHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-bookmark"></i>
+                    <h3>No bookmarks yet</h3>
+                    <p>Start bookmarking important documents for quick access</p>
+                </div>
+            `;
+            gridContainer.innerHTML = emptyHTML;
+            listContainer.innerHTML = emptyHTML;
+            return;
+        }
+
+        // Render Grid View
+        let gridHTML = '';
+        filteredBookmarks.forEach(bookmark => {
+            const date = formatDate(bookmark.createdAt);
+            const bookmarkName = escapeHtml(bookmark.bookmarkName || bookmark.name || 'Untitled');
+            const documentTitle = escapeHtml(bookmark.documentTitle || 'Document');
+            const pageNumber = bookmark.pageNumber || 1;
+            const escapedBookmarkName = (bookmark.bookmarkName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+
+            gridHTML += `
+                <div class="bookmark-card-grid" onclick="handleCardClick(event, ${bookmark.documentId}, ${pageNumber})">
+                    <div class="bookmark-actions">
+                        <button class="btn btn-sm btn-outline-view me-1" onclick="event.stopPropagation(); viewDocument(${bookmark.documentId}, ${pageNumber})" title="View Document">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation(); openEditModal(${bookmark.id}, '${escapedBookmarkName}')" title="Edit Bookmark">
+                             <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); confirmDelete(${bookmark.id})" title="Delete Bookmark">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="bookmark-icon-large">
+                        <i class="bi bi-bookmark-fill"></i>
+                    </div>
+                    <div class="bookmark-title">${bookmarkName}</div>
+                    <div class="bookmark-meta">
+                        <div class="bookmark-meta-item">
+                            <i class="bi bi-calendar3"></i>
+                            ${date}
+                        </div>
+                    </div>
+                    <div class="bookmark-footer">
+                        <span style="font-size: 13px; color: #718096;">${documentTitle}</span>
+                    </div>
+                </div>
+            `;
+        });
+        gridContainer.innerHTML = gridHTML;
+
+        // Render List View
+        let listHTML = '';
+        filteredBookmarks.forEach(bookmark => {
+            const date = formatDate(bookmark.createdAt);
+            const bookmarkName = escapeHtml(bookmark.bookmarkName || bookmark.name || 'Untitled');
+            const documentTitle = escapeHtml(bookmark.documentTitle || 'Document');
+            const pageNumber = bookmark.pageNumber || 1;
+            const escapedBookmarkName = (bookmark.bookmarkName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+
+            listHTML += `
+                <div class="bookmark-card-list" onclick="handleCardClick(event, ${bookmark.documentId}, ${pageNumber})">
+                    <div class="bookmark-actions">
+                        <button class="btn btn-sm btn-outline-view me-1" onclick="event.stopPropagation(); viewDocument(${bookmark.documentId}, ${pageNumber})" title="View Document">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation(); openEditModal(${bookmark.id}, '${escapedBookmarkName}')" title="Edit Bookmark">
+                             <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); confirmDelete(${bookmark.id})" title="Delete Bookmark">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="bookmark-icon-list">
+                        <i class="bi bi-bookmark-fill"></i>
+                    </div>
+                    <div class="bookmark-content">
+                        <div class="bookmark-title">${bookmarkName}</div>
+                        <div class="bookmark-meta">
+                            <div class="bookmark-meta-item">
+                                <i class="bi bi-calendar3"></i>
+                                ${date}
+                            </div>
+                        </div>
+                        <div class="bookmark-footer">
+                            <span style="font-size: 13px; color: #718096;">${documentTitle}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        listContainer.innerHTML = listHTML;
+    }
+
+    // Handle card click - opens document in new tab
+    function handleCardClick(event, documentId, pageNumber) {
+        if (event.target.closest('.bookmark-actions')) {
+            return;
+        }
+        viewDocument(documentId, pageNumber);
+    }
+
+    // Format date
+    function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return 'N/A';
+        }
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Show error
+    function showError() {
+        const errorHTML = `
+            <div class="empty-state">
+                <i class="bi bi-exclamation-triangle text-danger"></i>
+                <h3>Failed to load bookmarks</h3>
+                <p>Please try refreshing the page</p>
+            </div>
+        `;
+        document.getElementById('gridView').innerHTML = errorHTML;
+        document.getElementById('listView').innerHTML = errorHTML;
+    }
+
+    // Update counts
+    function updateCounts() {
+        const showing = filteredBookmarks.length;
+        const total = allBookmarks.length;
+        document.getElementById('showingCount').textContent = `Showing ${showing} of ${total} bookmarks`;
+        document.getElementById('totalCount').textContent = `${total} Total Bookmarks`;
+    }
+
+    // ⭐ NEW: Check document access before viewing
+    async function checkDocumentAccess(documentId) {
+        try {
+            const response = await fetch(`/api/documents/${documentId}/check-access`);
+            const data = await response.json();
+
+            console.log('Access check result:', data);
+
+            return {
+                hasAccess: data.hasAccess || false,
+                message: data.message || 'Unknown error',
+                reason: data.reason || null
+            };
+        } catch (error) {
+            console.error('Error checking document access:', error);
+            return {
+                hasAccess: false,
+                message: 'Unable to verify access. Please try again.',
+                reason: 'ERROR'
+            };
+        }
+    }
+
+    // ⭐ UPDATED: View document with enhanced access check
+    async function viewDocument(documentId, pageNumber) {
+        if (!documentId) {
+            showAlert('danger', 'Invalid document ID');
+            return;
+        }
+
+        // Show loading indicator
+        showAlert('info', 'Checking access permissions...');
+
+        // Check access first
+        const accessResult = await checkDocumentAccess(documentId);
+
+        // Clear loading alert
+        const alertContainer = document.getElementById('alertContainer');
+        alertContainer.innerHTML = '';
+
+        if (accessResult.hasAccess) {
+            // Access granted - open document
+            console.log('✅ Access granted - opening document');
+            console.log('Access details:', accessResult);
+            window.open(`/DocViewer?id=${documentId}&page=${pageNumber || 1}`, '_blank');
+        } else {
+            // Access denied - show modal with detailed message
+            console.log('❌ Access denied');
+            console.log('Denial reason:', accessResult.reason);
+            console.log('Access details:', accessResult);
+
+            // ⭐ Enhanced message based on reason
+            let message = accessResult.message || "You don't have permission to view this document.";
+
+            if (accessResult.reason === 'NOT_IN_ALLOWED_GROUPS') {
+                message += "\n\nPossible reasons:";
+                message += "\n• You were removed from the group(s) that have access to this document";
+                message += "\n• This document was removed from the group(s) you belong to";
+                message += "\n• Access restrictions were changed by an administrator";
+
+                if (accessResult.requiredGroups) {
+                    message += `\n\nRequired groups: ${accessResult.requiredGroups}`;
+                }
+            }
+
+            document.getElementById('accessDeniedMessage').innerHTML = message.replace(/\n/g, '<br>');
+          openModal('accessDeniedModal');
+        }
+    }
+
+    // Confirm delete - Show modal
+    function confirmDelete(bookmarkId) {
+        bookmarkToDelete = bookmarkId;
+       openModal('deleteModal');
+    }
+
+    // Delete bookmark
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (!bookmarkToDelete) return;
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch(`/bookmarks/${bookmarkToDelete}`, {
+            method: 'DELETE',
+            headers: {
+                [csrfHeader]: csrfToken
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                allBookmarks = allBookmarks.filter(b => b.id !== bookmarkToDelete);
+                filteredBookmarks = filteredBookmarks.filter(b => b.id !== bookmarkToDelete);
+                updateCounts();
+                renderBookmarks();
+              closeModal('deleteModal');
+                bookmarkToDelete = null;
+                showAlert('success', 'Bookmark deleted successfully!');
+            } else {
+                showAlert('danger', 'Failed to delete the bookmark. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting bookmark:', error);
+            showAlert('danger', 'An error occurred while deleting the bookmark.');
+        });
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        filteredBookmarks = allBookmarks.filter(bookmark => {
+            const title = (bookmark.documentTitle || '').toLowerCase();
+            const name = (bookmark.bookmarkName || bookmark.name || '').toLowerCase();
+            const code = (bookmark.documentCode || bookmark.productCode || '').toLowerCase();
+            const description = (bookmark.description || bookmark.notes || '').toLowerCase();
+
+            return title.includes(searchTerm) ||
+                   name.includes(searchTerm) ||
+                   code.includes(searchTerm) ||
+                   description.includes(searchTerm);
+        });
+
+        updateCounts();
+        renderBookmarks();
+    });
+
+    // Sort functionality
+    document.getElementById('sortFilter').addEventListener('change', function() {
+        const sortType = this.value;
+
+        switch(sortType) {
+            case 'latest':
+                filteredBookmarks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'oldest':
+                filteredBookmarks.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
+            case 'title':
+                filteredBookmarks.sort((a, b) => (a.documentTitle || '').localeCompare(b.documentTitle || ''));
+                break;
+        }
+
+        renderBookmarks();
+    });
+
+    // Show alert message
+    function showAlert(type, message) {
+        const alertContainer = document.getElementById('alertContainer');
+        const icon = type === 'success'
+            ? '<i class="bi bi-check-circle-fill me-2"></i>'
+            : type === 'info'
+            ? '<i class="bi bi-info-circle-fill me-2"></i>'
+            : '<i class="bi bi-exclamation-circle-fill me-2"></i>';
+
+        const alertHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${icon}${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        alertContainer.innerHTML = alertHTML;
+
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
+
+    // Go back function
+    function goBack() {
+        if (document.referrer && document.referrer !== window.location.href) {
+            window.history.back();
+        } else {
+            window.location.href = '/documents';
+        }
+    }
+
+    // Open edit modal
+    function openEditModal(id, currentName) {
+        bookmarkToEdit = id;
+        document.getElementById('editBookmarkName').value = currentName || '';
+       openModal('editModal');
+    }
+
+    // Save edited name
+    document.getElementById('saveEditBtn').addEventListener('click', function() {
+        const newName = document.getElementById('editBookmarkName').value.trim();
+        if (!newName) {
+            showAlert('warning', 'Bookmark name cannot be empty.');
+            return;
+        }
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch(`/bookmarks/${bookmarkToEdit}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({ bookmarkName: newName })
+        })
+        .then(response => {
+            if (response.ok) {
+                const bookmark = allBookmarks.find(b => b.id === bookmarkToEdit);
+                if (bookmark) bookmark.bookmarkName = newName;
+                renderBookmarks();
+               closeModal('editModal');
+                showAlert('success', 'Bookmark name updated successfully!');
+            } else {
+                showAlert('danger', 'Failed to update bookmark. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating bookmark:', error);
+            showAlert('danger', 'An error occurred while updating the bookmark.');
+        });
+    });
+</script>
+</body>
+</html>

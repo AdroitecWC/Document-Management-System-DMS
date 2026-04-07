@@ -1,0 +1,92 @@
+* [33md4ed538[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mPavan[m[33m, [m[1;31morigin/Pavan[m[33m)[m add functionality or previewing of all types of files with out libre
+* [33m2e3014b[m add functionality or previewing of all types of files with out libre
+*   [33m8dfcac7[m Merge pull request #65 from LochanAdroitec/master
+[32m|[m[33m\[m  
+[32m|[m *   [33m66707dd[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #64 from LochanAdroitec/Lochan
+[32m|[m [34m|[m[35m\[m  
+[32m|[m [34m|[m * [33m3adf4ba[m[33m ([m[1;31morigin/Lochan[m[33m)[m Document Manager (20/03/2026) Lochan 1. added file types.
+* [34m|[m [35m|[m [33m43d6591[m Merge pull request #63 from LochanAdroitec/master
+[36m|[m[34m\[m[34m|[m [35m|[m 
+[36m|[m * [35m|[m [33mdfc8820[m[33m ([m[1;32mmaster[m[33m)[m Merge pull request #61 from LochanAdroitec/Lochan
+[36m|[m [1;32m|[m[35m\[m[35m|[m 
+[36m|[m [1;32m|[m * [33m707134f[m Document Manager (13/03/2026) Lochan 1. ALL frontend changes has done.
+* [1;32m|[m [1;33m|[m [33m2095a77[m Merge branch 'master' of https://github.com/LochanAdroitec/spring-boot-user-registration-and-Login-main into Pavan
+[1;34m|[m[1;32m\[m[1;32m|[m [1;33m|[m 
+[1;34m|[m * [1;33m|[m [33m75c78c3[m Merge pull request #60 from LochanAdroitec/Lochan
+[1;34m|[m [1;36m|[m[1;33m\[m[1;33m|[m 
+[1;34m|[m [1;36m|[m * [33mfd222ab[m Document Manager (02/03/2026) Lochan 1. settings new feature added. newfiles
+[1;34m|[m * [31m|[m [33m70f3c4c[m Merge pull request #59 from LochanAdroitec/Lochan
+[1;34m|[m [32m|[m[31m\[m[31m|[m 
+[1;34m|[m [32m|[m * [33m5ec61f5[m Document Manager (02/03/2026) Lochan 1. settings new feature added.
+[1;34m|[m * [33m|[m [33m79fdc94[m Merge pull request #58 from LochanAdroitec/Lochan
+[1;34m|[m [34m|[m[33m\[m[33m|[m 
+[1;34m|[m [34m|[m * [33m48cd6ad[m CNS (27/01/2026) Lochan
+[1;34m|[m [34m|[m * [33m40eb53e[m CNS (24/12/2025) Lochan 1. Added licence for the bulk upload and classifications.
+[1;34m|[m * [35m|[m [33mff83319[m Merge pull request #57 from LochanAdroitec/Lochan
+[1;34m|[m [36m|[m[35m\[m[35m|[m 
+[1;34m|[m [36m|[m * [33mfaaca89[m CNS (24/12/2025) Lochan 1. Added licence for the bulk upload and classifications.
+[1;34m|[m * [1;31m|[m [33m7b71ed5[m Merge pull request #56 from LochanAdroitec/Lochan
+[1;34m|[m [1;32m|[m[1;31m\[m[1;31m|[m 
+[1;34m|[m [1;32m|[m * [33mf6bb93a[m CNS (11/12/2025) Lochan 1. Bulk upload self validation is done.
+[1;34m|[m [1;32m|[m *   [33m881a7c9[m Merge pull request #55 from LochanAdroitec/master
+[1;34m|[m [1;32m|[m [1;34m|[m[1;32m\[m  
+[1;34m|[m [1;32m|[m [1;34m|[m[1;32m/[m  
+[1;34m|[m [1;32m|[m[1;32m/[m[1;34m|[m   
+[1;34m|[m * [1;34m|[m   [33m81559e1[m Merge pull request #54 from LochanAdroitec/AJ
+[1;34m|[m [1;36m|[m[31m\[m [1;34m\[m  
+[1;34m|[m [1;36m|[m * [1;34m|[m [33m1c15d3b[m[33m ([m[1;31morigin/AJ[m[33m)[m codes and standards(10/12/2025) Fetching group names in user details
+[1;34m|[m [1;36m|[m * [1;34m|[m   [33mb195646[m Merge pull request #53 from abhayjoshi-adroitec/master
+[1;34m|[m [1;36m|[m [32m|[m[1;36m\[m [1;34m\[m  
+[1;34m|[m [1;36m|[m [32m|[m[1;36m/[m [1;34m/[m  
+[1;34m|[m [1;36m|[m[1;36m/[m[32m|[m [1;34m|[m   
+[1;34m|[m * [32m|[m [1;34m|[m   [33mfc38203[m Merge pull request #52 from abhayjoshi-adroitec/Lochan
+[1;34m|[m [34m|[m[1;34m\[m [32m\[m [1;34m\[m  
+[1;34m|[m [34m|[m [1;34m|[m [32m|[m[1;34m/[m  
+[1;34m|[m [34m|[m [1;34m|[m[1;34m/[m[32m|[m   
+[1;34m|[m [34m|[m * [32m|[m [33mb58df5f[m CNS (09/12/2025) 1. access-control.html UI changes done 2. In activity-logs and user management in frontend added groups in user details. 3. In Docview added groups in document info  both in  frontend and backend Done. 4. Bulk upload frontend changes has Done.
+[1;34m|[m [34m|[m * [32m|[m   [33mc3bc147[m Merge remote-tracking branch 'origin/Lochan' into Lochan
+[1;34m|[m [34m|[m [36m|[m[1;31m\[m [32m\[m  
+[1;34m|[m [34m|[m [36m|[m * [32m\[m   [33m4a3e795[m Merge pull request #51 from abhayjoshi-adroitec/master
+[1;34m|[m [34m|[m [36m|[m [1;32m|[m[34m\[m [32m\[m  
+[1;34m|[m [34m|[m [36m|[m[34m_[m[1;32m|[m[34m/[m [32m/[m  
+[1;34m|[m [34m|[m[34m/[m[36m|[m [1;32m|[m [32m|[m   
+[1;34m|[m * [36m|[m [1;32m|[m [32m|[m   [33m962c55c[m Merge pull request #50 from abhayjoshi-adroitec/AJ
+[1;34m|[m [1;34m|[m[32m\[m [36m\[m [1;32m\[m [32m\[m  
+[1;34m|[m [1;34m|[m [32m|[m [36m|[m[32m_[m[1;32m|[m[32m/[m  
+[1;34m|[m [1;34m|[m [32m|[m[32m/[m[36m|[m [1;32m|[m   
+[1;34m|[m [1;34m|[m * [36m|[m [1;32m|[m [33m96ca8ff[m codes and standards(05/12/2025) Updated user management and upload and edit documents for group access section. Updated docView page.
+[1;34m|[m * [1;35m|[m [36m|[m [1;32m|[m [33m7623181[m Merge pull request #48 from abhayjoshi-adroitec/AJ
+[1;34m|[m [1;36m|[m[1;35m\[m[1;35m|[m [36m|[m [1;32m|[m 
+[1;34m|[m [1;36m|[m [1;35m|[m * [1;32m|[m [33m488bfcc[m Merge remote-tracking branch 'origin/Lochan' into Lochan
+[1;34m|[m [1;36m|[m [1;35m|[m [32m|[m[1;32m\[m[1;32m|[m 
+[1;34m|[m [1;36m|[m [1;35m|[m [32m|[m *   [33mda603fc[m Merge pull request #49 from abhayjoshi-adroitec/AJ
+[1;34m|[m [1;36m|[m [1;35m|[m [32m|[m [34m|[m[1;35m\[m  
+[1;34m|[m [1;36m|[m [1;35m|[m [32m|[m[1;35m_[m[34m|[m[1;35m/[m  
+[1;34m|[m [1;36m|[m [1;35m|[m[1;35m/[m[32m|[m [34m|[m   
+[1;34m|[m [1;36m|[m * [32m|[m [34m|[m [33m2baca3a[m codes and standards(03/12/2025) Access Control based on users, change bulkupload
+[1;34m|[m [1;36m|[m [35m|[m * [34m|[m [33m6a1cde3[m Merge remote-tracking branch 'origin/Lochan' into Lochan
+[1;34m|[m [1;36m|[m [35m|[m [36m|[m[34m\[m[34m|[m 
+[1;34m|[m [1;36m|[m [35m|[m [36m|[m *   [33m1f75b76[m Merge pull request #47 from abhayjoshi-adroitec/AJ
+[1;34m|[m [1;36m|[m [35m|[m [36m|[m [1;32m|[m[35m\[m  
+[1;34m|[m [1;36m|[m [35m|[m [36m|[m[35m_[m[1;32m|[m[35m/[m  
+[1;34m|[m [1;36m|[m [35m|[m[35m/[m[36m|[m [1;32m|[m   
+[1;34m|[m [1;36m|[m * [36m|[m [1;32m|[m [33m077ce0d[m codes and standards(03/12/2025) Started with AccessControlLogic, working for fetching documents and users and now able to create groups with many users and documents but when logged in as a particular user all docs are being listed(only grouped docs should be displayed)
+[1;34m|[m [1;36m|[m * [36m|[m [1;32m|[m   [33m8ded8a2[m Merge pull request #46 from abhayjoshi-adroitec/master
+[1;34m|[m [1;36m|[m [1;34m|[m[1;36m\[m [36m\[m [1;32m\[m  
+[1;34m|[m [1;36m|[m [1;34m|[m[1;36m/[m [36m/[m [1;32m/[m  
+[1;34m|[m [1;36m|[m[1;36m/[m[1;34m|[m [36m|[m [1;32m|[m   
+[1;34m|[m [1;36m|[m [1;34m|[m * [1;32m|[m [33m67fbebf[m icons
+[1;34m|[m [1;36m|[m [1;34m|[m [1;32m|[m[1;32m/[m  
+* [1;36m|[m [1;34m|[m [1;32m|[m [33m4ade305[m Merge pull request #45 from abhayjoshi-adroitec/master
+[1;36m|[m[1;36m\[m[1;36m|[m [1;34m|[m [1;32m|[m 
+[1;36m|[m * [1;34m|[m [1;32m|[m   [33md2fac5e[m Merge pull request #44 from abhayjoshi-adroitec/Lochan
+[1;36m|[m [32m|[m[1;32m\[m [1;34m\[m [1;32m\[m  
+[1;36m|[m [32m|[m [1;32m|[m [1;34m|[m[1;32m/[m  
+[1;36m|[m [32m|[m [1;32m|[m[1;32m/[m[1;34m|[m   
+[1;36m|[m [32m|[m * [1;34m|[m [33m0acc7b7[m  Codes & Standards(01-12-2025)(Lochan). 1. small changes in all page. 2. bulk upload activity log update.
+[1;36m|[m [32m|[m * [1;34m|[m   [33m4b85cad[m Merge pull request #43 from abhayjoshi-adroitec/master
+[1;36m|[m [32m|[m [34m|[m[32m\[m [1;34m\[m  
+[1;36m|[m [32m|[m [34m|[m[32m/[m [1;34m/[m  
+[1;36m|[m [32m|[m[32m/[m[34m|[m [1;34m|[m   
+[1;36m|[m * [34m|[m [1;34m|[m   [33m3947644[m Merge pull request #42 from abhayjoshi-adroitec/AJ
+[1;36m|[m [36m
