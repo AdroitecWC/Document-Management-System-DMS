@@ -1,58 +1,64 @@
 package codesAndStandards.springboot.registrationlogin.entity;
 
+
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "users")
+@Table(
+        name = "Users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "UQ_Users_Email", columnNames = {"email"}),
+                @UniqueConstraint(name = "UQ_Users_Username", columnNames = {"username"})
+        }
+)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long id;
+    private Long userId;
 
-    @Column(name = "first_name", nullable = false)
+    @Column(name = "first_name", length = 150, nullable = true)
     private String firstName;
 
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name", length = 150, nullable = true)
     private String lastName;
 
-    @Column(name = "username", nullable = false, unique = true)
+    @Column(name = "username", length = 50, nullable = false)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name = "password", length = 255, nullable = false)
     private String password;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", length = 150, nullable = false)
     private String email;
 
-    // Many users -> one role
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(
+            name = "role_id",
+            referencedColumnName = "role_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "FK_Users_Roles")
+    )
     private Role role;
 
-    @Column(name = "created_at", columnDefinition = "DATETIME")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = true,
+            columnDefinition = "datetime2 DEFAULT SYSDATETIMEOFFSET()")
+    private LocalDateTime createdAt;
 
-    // Self-referencing relationship
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "created_by")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "created_by",
+            referencedColumnName = "user_id",
+            nullable = true,
+            foreignKey = @ForeignKey(name = "FK_Users_Users_CreatedBy")
+    )
     private User createdBy;
-
-//    @Transient
-//    private List<Long> groupIds;
-
-    // ✅ ADD THIS — link user to groups
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
-    private Set<GroupUser> groupUsers = new HashSet<>();
 }

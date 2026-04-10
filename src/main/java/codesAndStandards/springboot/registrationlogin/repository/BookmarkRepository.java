@@ -16,43 +16,29 @@ import java.util.Optional;
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
     /**
-     * Find all bookmarks for a user and document (can be multiple pages)
+     * Find specific bookmark by user and document
      */
-//    List<Bookmark> findByUserIdAndDocumentIdOrderByPageNumberAsc(Long userId, Integer documentId);
-//    List<Bookmark> findByUserIdAndDocumentId(Long userId, Integer documentId);
-    /**
-     * Find specific bookmark by user, document
-     */
-//    Optional<Bookmark> findByUserIdAndDocumentIdAndPageNumber(Long userId, Integer documentId, Integer pageNumber);
-    Optional<Bookmark> findByUserIdAndDocumentId(Long userId, Integer documentId);
+    Optional<Bookmark> findByUser_UserIdAndDocument_DocumentId(Long userId, Long documentId);
 
     /**
      * Find all bookmarks for a specific user
      */
-    List<Bookmark> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<Bookmark> findByUser_UserIdOrderByCreatedAtDesc(Long userId);
 
     /**
      * Find all bookmarks for a specific document
      */
-//    List<Bookmark> findByDocumentIdOrderByPageNumberAsc(Integer documentId);
-    List<Bookmark> findByDocumentId(Integer documentId);
-    /**
-     * Delete specific bookmark by ID
-     */
-    void deleteById(Long bookmarkId);
-
-
+    List<Bookmark> findByDocument_DocumentId(Long documentId);
 
     /**
-     * Check if bookmark exists for specific page
+     * Check if bookmark exists for user + document
      */
-//    boolean existsByUserIdAndDocumentIdAndPageNumber(Long userId, Integer documentId, Integer pageNumber);
-    boolean existsByUserIdAndDocumentId(Long userId, Integer documentId);
+    boolean existsByUser_UserIdAndDocument_DocumentId(Long userId, Long documentId);
 
     @Procedure(procedureName = "AddBookmark")
     void addBookmark(
             @Param("UserId") Long userId,
-            @Param("DocumentId") Integer documentId,
+            @Param("DocumentId") Long documentId,
             @Param("BookmarkName") String bookmarkName
     );
 
@@ -66,7 +52,5 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     @Modifying
     @Transactional
     @Query("DELETE FROM Bookmark b WHERE b.user.id = :userId AND b.document.id = :documentId")
-    void deleteByUserIdAndDocumentId(@Param("userId") Long userId, @Param("documentId") Integer documentId);
-
-
+    void deleteByUserIdAndDocumentId(@Param("userId") Long userId, @Param("documentId") Long documentId);
 }

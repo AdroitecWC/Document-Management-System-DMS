@@ -6,12 +6,8 @@ import lombok.Data;
 public class DocumentMetadata {
     private String filename;
     private String title;
-    private String productCode;
-    private String edition;
-    private String publishMonth;
-    private String publishYear;
-    private Integer noOfPages;
-    private String notes;
+    private String docTypeName;
+    private String versionNumber;
     private String tags;              // Comma-separated tag names
-    private String classifications;    // Comma-separated classification names
+    private String classifications;   // Comma-separated classification names
 }

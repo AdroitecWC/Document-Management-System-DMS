@@ -26,7 +26,6 @@ public class BulkUploadResult {
         this.errors = new ArrayList<>();
     }
 
-    // ✅ Store filename + title
     public void addSuccess(String filename, String title) {
         this.successfulUploads.put(filename, title);
         this.successCount++;

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface  UserRepository extends JpaRepository<User, Long> {  //changed from Long to Integer
+public interface UserRepository extends JpaRepository<User, Long> {
 
     // Primary method for login - returns User directly for backward compatibility
     User findByUsername(String username);
@@ -20,18 +20,15 @@ public interface  UserRepository extends JpaRepository<User, Long> {  //changed 
     // Check if username exists during registration
     boolean existsByUsername(String username);
 
-    // Email lookup (optional, if needed for password reset or validation)
+    // Email lookup
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
 
-    @Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM users WHERE username = :username", nativeQuery = true)
+    @Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM Users WHERE username = :username", nativeQuery = true)
     int existsByUsernameNative(@Param("username") String username);
 
-    /**
-     * Check if email exists - using native query
-     */
-    @Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM users WHERE email = :email", nativeQuery = true)
+    @Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM Users WHERE email = :email", nativeQuery = true)
     int existsByEmailNative(@Param("email") String email);
 
 }

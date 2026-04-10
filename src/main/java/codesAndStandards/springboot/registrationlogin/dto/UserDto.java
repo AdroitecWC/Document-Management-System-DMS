@@ -30,21 +30,18 @@ public class UserDto {
     @Email
     private String email;
 
-//    @NotEmpty(message = "Password should not be empty")
     private String password;
 
-    // Only store role_id from frontend
-    private Long roleId;
+    // Integer to match Role entity PK type
+    private Integer roleId;
     private String roleName;
 
-    private String createdByUsername; // Who created the user
-    private String createdAt;         // Timestamp in string format
+    private String createdByUsername;
+    private String createdAt;
     private String currentPassword;
     private String newPassword;
     private String confirmPassword;
     private List<Long> groupIds;
 
     private List<GroupListDTO> groups;
-
-
 }

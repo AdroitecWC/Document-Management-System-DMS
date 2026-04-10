@@ -26,6 +26,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+
+
+import codesAndStandards.springboot.registrationlogin.service.DocumentMetadataService;
+import codesAndStandards.springboot.registrationlogin.service.MetadataDefinitionService;
+import codesAndStandards.springboot.registrationlogin.dto.DocumentMetadataDto;
+import codesAndStandards.springboot.registrationlogin.dto.MetadataDefinitionDto;
+
 import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
@@ -312,7 +319,7 @@ public class AuthController {
             if (createdUser != null) {
                 // Save user-group associations - DIRECTLY USE getGroupIds()
                 try {
-                    userService.saveUserGroupAssociations(createdUser.getId(), userDto.getGroupIds());
+                    userService.saveUserGroupAssociations(createdUser.getUserId(), userDto.getGroupIds());
                     logger.info("User-group associations saved for user: {}", userDto.getUsername());
                 } catch (Exception e) {
                     logger.error("Failed to save user-group associations: {}", e.getMessage());
@@ -342,7 +349,7 @@ public class AuthController {
 
                 if (createdUser != null) {
                     try {
-                        userService.saveUserGroupAssociations(createdUser.getId(), userDto.getGroupIds());
+                        userService.saveUserGroupAssociations(createdUser.getUserId(), userDto.getGroupIds());
                         logger.info("User-group associations saved for user: {}", userDto.getUsername());
                     } catch (Exception ex) {
                         logger.error("Failed to save user-group associations: {}", ex.getMessage());
@@ -542,13 +549,19 @@ public class AuthController {
 
             return "redirect:/login?error=userNotFound";
         }
-        UserDto userDto = userService.findUserById(user.getId());
+        UserDto userDto = userService.findUserById(user.getUserId());
         model.addAttribute("user", userDto);
         // Add roles to the model for dropdown (if user can change role in profile)
         List<Role> roles = roleRepository.findAll();
         model.addAttribute("roles", roles);
         return "profile";
     }
+
+    @Autowired
+    private DocumentMetadataService documentMetadataService;
+
+    @Autowired
+    private MetadataDefinitionService metadataDefinitionService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -693,7 +706,7 @@ public class AuthController {
         User loggedInUser = userService.findUserByUsername(adminUsername);
 
         // Prevent self-deletion
-        if (loggedInUser != null && loggedInUser.getId().equals(id)) {
+        if (loggedInUser != null && loggedInUser.getUserId().equals(id)) {
             System.out.println("=== BLOCKED: User trying to delete themselves ===");
 
             // LOG ACTIVITY - USER_DELETE_FAILED
@@ -799,7 +812,7 @@ public class AuthController {
         if (user == null) {
             return "redirect:/login?error=userNotFound";
         }
-        model.addAttribute("user", userService.findUserById(user.getId()));
+        model.addAttribute("user", userService.findUserById(user.getUserId()));
         return "manager";
     }
 
@@ -848,9 +861,13 @@ public class AuthController {
                                  BindingResult result,
                                  @RequestParam("file") MultipartFile file,
 
+
                                  @RequestParam(value = "tagNames", required = false) String tagsJson,
                                  @RequestParam(value = "classificationNames", required = false) String classificationsJson,
                                  @RequestParam(value = "groupIds", required = false) String groupIds,
+                                 @RequestParam(value = "docTypeId", required = false) Long docTypeId,
+                                 @RequestParam(value = "versionNumber", required = false) String versionNumber,
+                                 @RequestParam(value = "metadata", required = false) String metadataJson,
                                  Principal principal,
                                  Model model,
                                  RedirectAttributes redirectAttributes,
@@ -936,9 +953,63 @@ public class AuthController {
             return "upload";
         }
 
-        try {
-            // Save document (tags already set above)
-            documentService.saveDocument(documentDto, file, username, groupIds);
+            try {
+                // Set docTypeId on DTO
+                if (docTypeId != null) {
+                    documentDto.setDocTypeId(docTypeId);
+                }
+                if (versionNumber != null && !versionNumber.trim().isEmpty()) {
+                    documentDto.setVersionNumber(versionNumber.trim());
+                } else {
+                    documentDto.setVersionNumber("1.0");
+                }
+
+                // Save document (tags already set above)
+                documentService.saveDocument(documentDto, file, username, groupIds);
+
+                // Save custom metadata to DocumentMetadata table
+                if (metadataJson != null && !metadataJson.isEmpty()) {
+                    try {
+                        // Find the saved document by title to get its ID
+                        // (saveDocument doesn't return the ID, so we look it up)
+                        List<DocumentDto> allDocs = documentService.findAllDocuments();
+                        Long savedDocumentId = allDocs.stream()
+                                .filter(d -> d.getTitle().equals(documentDto.getTitle()))
+                                .map(DocumentDto::getId)
+                                .findFirst()
+                                .orElse(null);
+
+                        if (savedDocumentId != null) {
+                            Map<String, String> metadataMap = new ObjectMapper().readValue(metadataJson,
+                                    new TypeReference<Map<String, String>>() {});
+
+                            for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
+                                String fieldName = entry.getKey();
+                                String fieldValue = entry.getValue();
+
+                                // Look up metadata definition ID by field name
+                                List<MetadataDefinitionDto> allDefs = metadataDefinitionService.getAllMetadataDefinitions();
+                                Long metadataId = allDefs.stream()
+                                        .filter(def -> def.getFieldName().equals(fieldName))
+                                        .map(MetadataDefinitionDto::getMetadataId)
+                                        .findFirst()
+                                        .orElse(null);
+
+                                if (metadataId != null && fieldValue != null && !fieldValue.trim().isEmpty()) {
+                                    DocumentMetadataDto metaDto = new DocumentMetadataDto();
+                                    metaDto.setDocumentId(savedDocumentId);
+                                    metaDto.setMetadataId(metadataId);
+                                    metaDto.setValue(fieldValue.trim());
+                                    documentMetadataService.saveOrUpdate(metaDto);
+                                }
+                            }
+                            logger.info("Saved {} metadata fields for document '{}'", metadataMap.size(), documentDto.getTitle());
+                        }
+                    } catch (Exception metaEx) {
+                        logger.error("Failed to save custom metadata: {}", metaEx.getMessage());
+                        // Don't fail the upload — metadata is supplementary
+                    }
+                }
 
             // LOG SUCCESS - DOCUMENT_UPLOAD
             activityLogService.logByUsername(
@@ -984,7 +1055,7 @@ public class AuthController {
             throw new RuntimeException("User not found with username: " + username);
         }
 
-        return user.getId();
+        return user.getUserId();
     }
 
     // Helper method to format file size (add to your controller) -AJ
@@ -1019,7 +1090,7 @@ public class AuthController {
 
         // Get logged-in user
         User user = userRepository.findByUsername(principal.getName());
-        Long userId = user.getId();
+        Long userId = user.getUserId();
         String userRole = user.getRole().getRoleName();
 
         List<DocumentDto> documentsToShow;
@@ -1051,7 +1122,7 @@ public class AuthController {
     // Editing only the metadata's of the document -AJ
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
     @GetMapping("/document/edit/{id}")
-    public String showEditForm(@PathVariable("id") Integer id, Model model) {
+    public String showEditForm(@PathVariable("id") Long id, Model model) {
         DocumentDto document = documentService.findDocumentById(id);
         if (document == null) {
             return "redirect:/documents?error=Document not found";
@@ -1089,7 +1160,7 @@ public class AuthController {
     //Tags can be created while updating document also and that will also be stored in Tags table -AJ
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
     @PostMapping("/document/edit/{id}")
-    public String updateDocument(@PathVariable("id") Integer id,
+    public String updateDocument(@PathVariable("id") Long id,
                                  @Valid @ModelAttribute("document") DocumentDto documentDto,
                                  BindingResult result,
                                  @RequestParam(value = "file", required = false) MultipartFile file,
@@ -1168,8 +1239,6 @@ public class AuthController {
             // Get OLD document details BEFORE updating
             DocumentDto oldDoc = documentService.findDocumentById(id);
             String oldTitle = oldDoc.getTitle();
-            String oldProductCode = oldDoc.getProductCode();
-            String oldFilePath = oldDoc.getFilePath();
 
             // Update document including optional file
             documentService.updateDocument(id, documentDto, file, username, groupIds);
@@ -1180,9 +1249,6 @@ public class AuthController {
 
             if (!oldTitle.equals(documentDto.getTitle())) {
                 changes.append(" | Title: '").append(oldTitle).append("' → '").append(documentDto.getTitle()).append("'");
-            }
-            if (!oldProductCode.equals(documentDto.getProductCode())) {
-                changes.append(" | Product Code: '").append(oldProductCode).append("' → '").append(documentDto.getProductCode()).append("'");
             }
             if (file != null && !file.isEmpty()) {
                 changes.append(" | File updated: ").append(file.getOriginalFilename());
@@ -1239,14 +1305,13 @@ public class AuthController {
     //Deleting any document -AJ
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
     @GetMapping("/documents/delete/{id}")
-    public String deleteDocument(@PathVariable Integer id, Principal principal, RedirectAttributes redirectAttributes) {
+    public String deleteDocument(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
         String username = principal != null ? principal.getName() : "Unknown";
 
         try {
             // Get document details BEFORE deleting
             DocumentDto document = documentService.findDocumentById(id);
             String title = document.getTitle();
-            String productCode = document.getProductCode();
 
             // Delete document
             documentService.deleteDocument(id);
@@ -1255,7 +1320,7 @@ public class AuthController {
             activityLogService.logByUsername(
                     username,
                     ActivityLogService.DOCUMENT_DELETE,
-                    String.format("Deleted document: '%s' (Product Code: %s)", title, productCode)
+                    String.format("Deleted document: '%s'", title)
             );
 
             redirectAttributes.addFlashAttribute("success", "Document deleted successfully");
@@ -1293,7 +1358,7 @@ public class AuthController {
     // ─────────────────────────────────────────────────────────────────────────
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
     @GetMapping("/documents/DocView/{id}")
-    public ResponseEntity<Resource> viewDocument(@PathVariable Integer id) {
+    public ResponseEntity<Resource> viewDocument(@PathVariable Long id) {
         try {
             String filePath = documentService.getFilePath(id);
             Path path = Paths.get(filePath);
@@ -1329,7 +1394,7 @@ public class AuthController {
 
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
     @GetMapping("/documents/DocViewer-view/{id}")
-    public ResponseEntity<byte[]> viewDocumentForViewer(@PathVariable Integer id, Principal principal) {
+    public ResponseEntity<byte[]> viewDocumentForViewer(@PathVariable Long id, Principal principal) {
         try {
             DocumentDto document = documentService.findDocumentById(id);
             String filePath = documentService.getFilePath(id);
@@ -1415,7 +1480,7 @@ public class AuthController {
 
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
     @GetMapping("/DocViewer")
-    public String showPdfViewer(@RequestParam Integer id, Model model, Principal principal) {
+    public String showPdfViewer(@RequestParam Long id, Model model, Principal principal) {
         logger.info("===== VIEWER METHOD CALLED =====");
         logger.info("Document ID: " + id);
         logger.info("User: " + principal.getName());
@@ -1451,7 +1516,7 @@ public class AuthController {
             model.addAttribute("username", user.getUsername());
 
             logger.info("Document title: " + document.getTitle());
-            logger.info("Document product code: " + document.getProductCode());
+            logger.info("Document type: " + document.getDocTypeName());
             logger.info("Document tags: " + document.getTagNames());
             logger.info("Document groups: " + groupNames);
             logger.info("Returning viewer template");
@@ -1466,7 +1531,7 @@ public class AuthController {
 
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
     @GetMapping("/documents/info/{id}")
-    public ResponseEntity<?> getDocumentInfo(@PathVariable Integer id, Principal principal) {
+    public ResponseEntity<?> getDocumentInfo(@PathVariable Long id, Principal principal) {
         try {
             DocumentDto document = documentService.findDocumentById(id);
 
@@ -1481,12 +1546,9 @@ public class AuthController {
             Map<String, Object> info = new HashMap<>();
             info.put("id", document.getId());
             info.put("title", document.getTitle());
-            info.put("productCode", document.getProductCode());
-            info.put("edition", document.getEdition());
-//            info.put("publishDate", document.getPublishDate());
-            info.put("publishDate", document.getPublishDate()); // ✅ String (YYYY or YYYY-MM)
-            info.put("noOfPages", document.getNoOfPages());
-            info.put("notes", document.getNotes());
+            info.put("docTypeName", document.getDocTypeName());
+            info.put("fileExtension", document.getFileExtension());
+            info.put("versionNumber", document.getVersionNumber());
             info.put("tagNames", document.getTagNames());
             info.put("classificationNames", document.getClassificationNames());
             info.put("groupNames", groupNames);
@@ -1506,7 +1568,7 @@ public class AuthController {
     // ─────────────────────────────────────────────────────────────────────────
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
     @GetMapping("/documents/download/{id}")
-    public ResponseEntity<byte[]> downloadDocument(@PathVariable Integer id, Principal principal) {
+    public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id, Principal principal) {
         String username = principal != null ? principal.getName() : "Unknown";
 
         try {
@@ -1618,7 +1680,7 @@ public class AuthController {
     //Only complete document can be bookmarked. It is not based on the any specific page in document -AJ
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
     @PostMapping("/documents/bookmark/{id}")
-    public ResponseEntity<?> saveBookmark(@PathVariable Integer id,
+    public ResponseEntity<?> saveBookmark(@PathVariable Long id,
 //                                          @RequestParam int page,
                                           @RequestParam(required = false) String name,
                                           Principal principal) {
@@ -1631,7 +1693,7 @@ public class AuthController {
 
             // Save bookmark (now allows multiple per document)
             BookmarkDto bookmark = bookmarkService.saveBookmark(
-                    user.getId(),
+                    user.getUserId(),
                     id,
 //                    page,
                     bookmarkName
@@ -1661,12 +1723,12 @@ public class AuthController {
 
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
     @GetMapping("/documents/bookmarks/{id}")
-    public ResponseEntity<?> getDocumentBookmarks(@PathVariable Integer id, Principal principal) {
+    public ResponseEntity<?> getDocumentBookmarks(@PathVariable Long id, Principal principal) {
         try {
             User user = userService.findUserByUsername(principal.getName());
 
             // Get ALL bookmarks for this document
-            List<BookmarkDto> bookmarks = bookmarkService.getDocumentBookmarks(user.getId(), id);
+            List<BookmarkDto> bookmarks = bookmarkService.getDocumentBookmarks(user.getUserId(), id);
 
             return ResponseEntity.ok(bookmarks);
 
@@ -1679,22 +1741,22 @@ public class AuthController {
 
     //Cannot bookmark same document by the same user more than one time -AJ
     @GetMapping("/bookmark/check/{documentId}")
-    public ResponseEntity<Boolean> checkIfBookmarked(@PathVariable Integer documentId, Principal principal) {
+    public ResponseEntity<Boolean> checkIfBookmarked(@PathVariable Long documentId, Principal principal) {
         User user = userService.findUserByUsername(principal.getName());
-        boolean isBookmarked = bookmarkService.isDocumentBookmarked(user.getId(), documentId);
+        boolean isBookmarked = bookmarkService.isDocumentBookmarked(user.getUserId(), documentId);
         return ResponseEntity.ok(isBookmarked);
     }
 
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
     @DeleteMapping("/bookmarks/document/{documentId}")
     public ResponseEntity<String> deleteBookmarkByDocument(
-            @PathVariable Integer documentId,
+            @PathVariable Long documentId,
             Principal principal) {
         try {
             logger.info("Delete bookmark request for document: {} by user: {}", documentId, principal.getName());
 
             User user = userService.findUserByUsername(principal.getName());
-            bookmarkService.deleteBookmarkByDocument(user.getId(), documentId);
+            bookmarkService.deleteBookmarkByDocument(user.getUserId(), documentId);
 
             logger.info("Bookmark deleted successfully for document: {} by user: {}", documentId, principal.getName());
             return ResponseEntity.ok("Bookmark deleted successfully");
@@ -1735,7 +1797,7 @@ public class AuthController {
         try {
             User user = userService.findUserByUsername(principal.getName());
 
-            List<BookmarkDto> bookmarks = bookmarkService.getUserBookmarks(user.getId());
+            List<BookmarkDto> bookmarks = bookmarkService.getUserBookmarks(user.getUserId());
 
             return ResponseEntity.ok(bookmarks);
 

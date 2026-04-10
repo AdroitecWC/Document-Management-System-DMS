@@ -136,7 +136,6 @@ public class ApplicationSettingsController {
                     .body(Map.of("error", "Failed to update settings: " + e.getMessage()));
         }
     }
-
     // ==================== TAG POLICIES ====================
 
     @GetMapping("/tag-policies")
@@ -451,7 +450,7 @@ public class ApplicationSettingsController {
                 return ResponseEntity.badRequest().body(Map.of("error", "No users selected"));
 
             // Prevent self-deletion
-            if (currentUser != null) userIds.removeIf(id -> id.equals(currentUser.getId()));
+            if (currentUser != null) userIds.removeIf(id -> id.equals(currentUser.getUserId()));
 
             int deleted = applicationSettingsService.bulkDeleteUsers(userIds, username);
 
@@ -477,8 +476,8 @@ public class ApplicationSettingsController {
         String username = authentication.getName();
         User currentUser = userRepository.findByUsername(username);
         try {
-            List<Integer> documentIds = ((List<?>) payload.get("documentIds"))
-                    .stream().map(id -> Integer.valueOf(id.toString())).collect(Collectors.toList());
+            List<Long> documentIds = ((List<?>) payload.get("documentIds"))
+                    .stream().map(id -> Long.valueOf(id.toString())).collect(Collectors.toList());
             if (documentIds == null || documentIds.isEmpty())
                 return ResponseEntity.badRequest().body(Map.of("error", "No documents selected"));
 

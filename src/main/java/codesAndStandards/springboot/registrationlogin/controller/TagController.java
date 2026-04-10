@@ -216,7 +216,7 @@ public class TagController {
         if (user == null) {
             throw new RuntimeException("User not found with username: " + authentication.getName());
         }
-        return user.getId();
+        return user.getUserId();
     }
 
     private String getCurrentUsername() {

@@ -239,7 +239,7 @@ public class AccessGroupApiController {
      */
     @GetMapping("/by-document/{documentId}")
     @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
-    public ResponseEntity<List<GroupListDTO>> getGroupsByDocument(@PathVariable int documentId) {
+    public ResponseEntity<List<GroupListDTO>> getGroupsByDocument(@PathVariable Long documentId) {
         log.info("REST request to get groups for document : {}", documentId);
         try {
             List<GroupListDTO> groups = groupService.getGroupsByDocumentId(documentId);
@@ -275,7 +275,7 @@ public class AccessGroupApiController {
     @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
     public ResponseEntity<AccessCheckDTO> checkAccess(
             @RequestParam Long userId,
-            @RequestParam int documentId) {
+            @RequestParam Long documentId) {
         log.info("REST request to check access for user {} to document {}", userId, documentId);
         try {
             AccessCheckDTO result = groupService.checkUserAccessToDocument(userId, documentId);
@@ -311,7 +311,7 @@ public class AccessGroupApiController {
     @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<?> addDocumentToGroup(
             @PathVariable Long groupId,
-            @PathVariable int documentId) {
+            @PathVariable Long documentId) {
         log.info("REST request to add document {} to group {}", documentId, groupId);
         try {
             groupService.addDocumentToGroup(groupId, documentId);
@@ -338,7 +338,7 @@ public class AccessGroupApiController {
     @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<?> removeDocumentFromGroup(
             @PathVariable Long groupId,
-            @PathVariable int documentId) {
+            @PathVariable Long documentId) {
         log.info("REST request to remove document {} from group {}", documentId, groupId);
         try {
             groupService.removeDocumentFromGroup(groupId, documentId);
