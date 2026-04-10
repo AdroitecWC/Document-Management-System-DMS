@@ -29,21 +29,9 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     List<Group> findByCreatedByUserId(@Param("userId") Long userId);
 
     /**
-     * Get group with all associations eagerly loaded
+     * Get all groups with creator eagerly loaded
      */
-    @Query("SELECT g FROM Group g " +
-            "LEFT JOIN FETCH g.groupUsers gu " +
-            "LEFT JOIN FETCH gu.user " +
-            "LEFT JOIN FETCH g.groupDocument gd " +
-            "LEFT JOIN FETCH gd.document " +
-            "WHERE g.id = :id")
-    Optional<Group> findByIdWithAssociations(@Param("id") Long id);
-
-    /**
-     * Get all groups with counts
-     */
-    @Query("SELECT g FROM Group g " +
-            "LEFT JOIN FETCH g.createdBy")
+    @Query("SELECT g FROM Group g LEFT JOIN FETCH g.createdBy")
     List<Group> findAllWithCreator();
 
     /**
@@ -53,18 +41,18 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     List<Group> searchByName(@Param("searchTerm") String searchTerm);
 
     /**
-     * Find groups that contain a specific document
+     * Find groups that contain a specific document (through AccessControlLogic)
      */
-    @Query("SELECT  g FROM Group g " +
-            "JOIN g.groupDocument gd " +
-            "WHERE gd.document.id = :documentId")
-    List<Group> findGroupsByDocumentId(@Param("documentId") int documentId);
+    @Query("SELECT DISTINCT g FROM Group g " +
+            "JOIN AccessControlLogic acl ON g.groupId = acl.group.groupId " +
+            "WHERE acl.document.documentId = :documentId")
+    List<Group> findGroupsByDocumentId(@Param("documentId") Long documentId);
 
     /**
-     * Find groups that contain a specific user
+     * Find groups that contain a specific user (through GroupUser)
      */
-    @Query("SELECT g FROM Group g " +
-            "JOIN g.groupUsers gu " +
-            "WHERE gu.user.id = :userId")
+    @Query("SELECT DISTINCT g FROM Group g " +
+            "JOIN GroupUser gu ON g.groupId = gu.group.groupId " +
+            "WHERE gu.user.userId = :userId")
     List<Group> findGroupsByUserId(@Param("userId") Long userId);
 }

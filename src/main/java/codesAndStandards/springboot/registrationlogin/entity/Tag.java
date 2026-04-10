@@ -1,35 +1,41 @@
 package codesAndStandards.springboot.registrationlogin.entity;
 
+
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "tags")
+@Table(
+        name = "Tags",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "UQ_Tags_TagName", columnNames = {"tag_name"})
+        }
+)
 public class Tag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id")
-    private Long id;
+    private Long tagId;
 
-    @Column(name = "tag_name", nullable = false, unique = true)
+    @Column(name = "tag_name", length = 510, nullable = false)
     private String tagName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(
+            name = "created_by",
+            referencedColumnName = "user_id",
+            nullable = true,
+            foreignKey = @ForeignKey(name = "FK_Tags_Users_CreatedBy")
+    )
     private User createdBy;
 
     @CreationTimestamp
@@ -37,19 +43,15 @@ public class Tag {
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updated_by")
+    @JoinColumn(
+            name = "updated_by",
+            referencedColumnName = "user_id",
+            nullable = true,
+            foreignKey = @ForeignKey(name = "FK_Tags_Users_UpdatedBy")
+    )
     private User updatedBy;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = true)
     private LocalDateTime updatedAt;
-
-    // REMOVED mappedBy - this side now owns the relationship
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "DocumentTags",
-            joinColumns = @JoinColumn(name = "tag_id"),
-            inverseJoinColumns = @JoinColumn(name = "document_id")
-    )
-    private Set<Document> documents = new HashSet<>();
 }

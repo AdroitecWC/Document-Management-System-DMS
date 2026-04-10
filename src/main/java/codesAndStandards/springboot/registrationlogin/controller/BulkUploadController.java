@@ -295,7 +295,8 @@ public class BulkUploadController {
                     duration,
                     result.getSuccessCount(),
                     result.getFailedCount());
-            
+
+       
             // ✅ LOG INDIVIDUAL DOCUMENT UPLOADS
             if (result.getSuccessfulUploads() != null && !result.getSuccessfulUploads().isEmpty()) {
                 for (Map.Entry<String, String> entry : result.getSuccessfulUploads().entrySet()) {

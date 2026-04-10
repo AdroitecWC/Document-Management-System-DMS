@@ -22,22 +22,23 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     List<Tag> findByUpdatedBy(User user);
 
-
     @Query("SELECT t FROM Tag t LEFT JOIN FETCH t.createdBy LEFT JOIN FETCH t.updatedBy ORDER BY t.createdAt DESC")
     List<Tag> findAllWithCreatorAndUpdater();
 
-    @Query("SELECT t FROM Tag t LEFT JOIN FETCH t.documents WHERE t.id = :id")
-    Optional<Tag> findByIdWithDocuments(Long id);
-
     @Query("SELECT t FROM Tag t LEFT JOIN FETCH t.createdBy LEFT JOIN FETCH t.updatedBy WHERE t.id = :id")
-    Optional<Tag> findByIdWithUsers(Long id);
+    Optional<Tag> findByIdWithUsers(@Param("id") Long id);
 
-    // NOT required for this(only for registrationlogin)
-//    @Modifying
-//    @Query("UPDATE Tag t SET t.createdBy = null WHERE t.createdBy.id = :userId")
-//    void clearCreatedByUser(@Param("userId") Long userId);
-//
-//    @Modifying
-//    @Query("UPDATE Tag t SET t.updatedBy = null WHERE t.updatedBy.id = :userId")
-//    void clearUpdatedByUser(@Param("userId") Long userId);
+    /**
+     * Find all document IDs that have a given tag (query through join table)
+     */
+    @Query("SELECT dt.document.id FROM DocumentTag dt WHERE dt.tag.id = :tagId")
+    List<Long> findDocumentIdsByTagId(@Param("tagId") Long tagId);
+
+    @Modifying
+    @Query("UPDATE Tag t SET t.createdBy = null WHERE t.createdBy.id = :userId")
+    void clearCreatedByUser(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("UPDATE Tag t SET t.updatedBy = null WHERE t.updatedBy.id = :userId")
+    void clearUpdatedByUser(@Param("userId") Long userId);
 }

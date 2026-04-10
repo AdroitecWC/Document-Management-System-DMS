@@ -54,7 +54,7 @@ public interface GroupUserRepository extends JpaRepository<GroupUser, Long> {
     void deleteByGroupId(@Param("groupId") Long groupId);
 
     /**
-     * Delete all groups for a user - FIXED VERSION
+     * Delete all groups for a user
      */
     @Modifying
     @Transactional
@@ -62,11 +62,11 @@ public interface GroupUserRepository extends JpaRepository<GroupUser, Long> {
     void deleteByUserId(@Param("userId") Long userId);
 
     /**
-     * Insert user-group association - FIXED VERSION
+     * Insert user-group association
      */
     @Modifying
     @Transactional
-    @Query(value = "INSERT INTO GroupUser (user_id, groupId, created_by, created_at) " +
+    @Query(value = "INSERT INTO GroupUser (user_id, group_id, created_by, created_at) " +
             "VALUES (:userId, :groupId, :createdBy, GETDATE())", nativeQuery = true)
     void insertUserGroup(@Param("userId") Long userId,
                          @Param("groupId") Long groupId,

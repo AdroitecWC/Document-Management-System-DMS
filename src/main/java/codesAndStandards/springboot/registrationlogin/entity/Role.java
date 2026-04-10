@@ -1,29 +1,29 @@
 package codesAndStandards.springboot.registrationlogin.entity;
 
+
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "Roles")
+@Table(
+        name = "Roles",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "UQ_Roles_RoleName", columnNames = {"role_name"})
+        }
+)
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "role_id")
-    private Long id;
+    private Integer roleId;
 
-    @Column(name = "role_name", nullable = false, unique = true)
+    // Check constraint enforced at DB level: 'Viewer', 'Manager', 'Admin', 'Super Admin'
+    @Column(name = "role_name", length = 50, nullable = false)
     private String roleName;
-
-    // One role -> many users
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<User> users = new ArrayList<>();
 }
-

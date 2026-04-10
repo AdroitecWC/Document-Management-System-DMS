@@ -25,13 +25,14 @@ public interface ClassificationRepository extends JpaRepository<Classification, 
     @Query("SELECT c FROM Classification c LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy ORDER BY c.createdAt DESC")
     List<Classification> findAllWithCreatorAndUpdater();
 
-    @Query("SELECT c FROM Classification c LEFT JOIN FETCH c.documents WHERE c.id = :id")
-    Optional<Classification> findByIdWithDocuments(Long id);
-
     @Query("SELECT c FROM Classification c LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy WHERE c.id = :id")
-    Optional<Classification> findByIdWithUsers(Long id);
+    Optional<Classification> findByIdWithUsers(@Param("id") Long id);
 
-    //NOT required for now(only for registrationlogin)
+    /**
+     * Find all documents that have a given classification (query through join table)
+     */
+    @Query("SELECT dc.document.id FROM DocumentClassification dc WHERE dc.classification.id = :classificationId")
+    List<Long> findDocumentIdsByClassificationId(@Param("classificationId") Long classificationId);
 
     @Modifying
     @Query("UPDATE Classification c SET c.createdBy = null WHERE c.createdBy.id = :userId")

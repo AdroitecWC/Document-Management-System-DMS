@@ -23,9 +23,8 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     List<ActivityLog> findByUserOrderByTimestampDesc(User user);
 
     // Count today's logs
-    // Count today's logs - FIXED QUERY
     @Query("SELECT COUNT(al) FROM ActivityLog al WHERE al.timestamp >= :startOfDay AND al.timestamp < :endOfDay")
-    Long countTodayLogs(LocalDateTime startOfDay, LocalDateTime endOfDay);
+    Long countTodayLogs(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
 
     @Modifying
     @Transactional

@@ -1,7 +1,5 @@
 package codesAndStandards.springboot.registrationlogin.dto;
 
-
-
 import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +36,6 @@ public class BulkUploadValidationResult {
     public static class ValidationIssue {
         private String title;
         private String description;
-        private String type; // error or warning
+        private String type;
     }
 }

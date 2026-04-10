@@ -9,18 +9,13 @@ import java.io.IOException;
 /**
  * Utility class to generate Excel template for bulk upload
  *
- * Excel Template Structure:
- * -------------------------
- * Column A: filename (REQUIRED) - e.g., "document1.pdf"
- * Column B: title (REQUIRED) - e.g., "Product Manual v2.1"
- * Column C: productCode (REQUIRED) - e.g., "PM-001"
- * Column D: edition (OPTIONAL) - e.g., "1.0", "2.1"
- * Column E: publishMonth (OPTIONAL) - e.g., "01" to "12"
- * Column F: publishYear (REQUIRED) - e.g., "2024"
- * Column G: noOfPages (OPTIONAL) - e.g., 150
- * Column H: notes (OPTIONAL) - e.g., "Updated version with new specifications"
- * Column I: tags (OPTIONAL) - e.g., "manual,technical,v2" (comma-separated)
- * Column J: classifications (OPTIONAL) - e.g., "Engineering,Safety" (comma-separated)
+ * Excel Template Structure (New Schema):
+ * ----------------------------------------
+ * Column A: Title (REQUIRED) - e.g., "Product Manual v2.1"
+ * Column B: Document Type (REQUIRED) - e.g., "Standard", "Policy", "Manual"
+ * Column C: Version Number (OPTIONAL) - e.g., "1.0", "2.1"
+ * Column D: Tags (OPTIONAL) - e.g., "manual,technical,v2" (comma-separated)
+ * Column E: Classifications (OPTIONAL) - e.g., "Engineering,Safety" (comma-separated)
  */
 public class BulkUploadTemplateGenerator {
 
@@ -49,14 +44,9 @@ public class BulkUploadTemplateGenerator {
 
             // Define headers
             String[] headers = {
-//                    "Filename *",
                     "Title *",
-                    "Product Code *",
-                    "Edition",
-                    "Publish Month",
-                    "Publish Year *",
-                    "No. of Pages",
-                    "Notes",
+                    "Document Type *",
+                    "Version Number",
                     "Tags (comma-separated)",
                     "Classifications (comma-separated)"
             };
@@ -66,20 +56,15 @@ public class BulkUploadTemplateGenerator {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
                 cell.setCellStyle(headerStyle);
-                sheet.setColumnWidth(i, 4000); // Set column width
+                sheet.setColumnWidth(i, 6000);
             }
 
             // Create example row
             Row exampleRow = sheet.createRow(1);
             String[] exampleData = {
-//                    "document1.pdf",
                     "Product Manual v2.1",
-                    "PM-001",
-                    "2.1",
-                    "06",
-                    "2024",
-                    "150",
-                    "Updated version with new specifications",
+                    "Standard",
+                    "1.0",
                     "manual,technical,v2",
                     "Engineering,Safety"
             };
@@ -105,24 +90,22 @@ public class BulkUploadTemplateGenerator {
             String[] instructions = {
                     "1. Fill in the 'Documents' sheet with your document information",
                     "2. Fields marked with * are REQUIRED",
-                    "3. Filename should match exactly with the PDF filename you're uploading",
-                    "4. Publish Month should be 01-12 (01=January, 12=December)",
-                    "5. Tags and Classifications should be comma-separated (e.g., 'tag1,tag2,tag3')",
-                    "6. Remove the example row before uploading",
-                    "7. You can upload multiple PDF files or a single ZIP file containing all PDFs",
-                    "8. Make sure all filenames in Excel match the PDF files you're uploading",
+                    "3. Each row corresponds to one uploaded file (matched by order)",
+                    "4. Tags and Classifications should be comma-separated (e.g., 'tag1,tag2,tag3')",
+                    "5. Remove the example row before uploading",
+                    "6. You can upload multiple files or a single ZIP file containing all files",
                     "",
                     "FIELD DESCRIPTIONS:",
-                    "- Filename: Exact name of the PDF file (e.g., 'document1.pdf')",
-                    "- Title: Document title",
-                    "- Product Code: Unique product code",
-                    "- Edition: Version/edition of the document (optional)",
-                    "- Publish Month: Month of publication (01-12, optional)",
-                    "- Publish Year: Year of publication (required)",
-                    "- No. of Pages: Number of pages in the document (optional)",
-                    "- Notes: Additional notes or description (optional)",
-                    "- Tags: Comma-separated tags (optional)",
-                    "- Classifications: Comma-separated classifications (optional)"
+                    "- Title: Document title (required)",
+                    "- Document Type: The type/category of document - must match an existing Document Type (required)",
+                    "- Version Number: Version identifier (e.g., '1.0', '2.1') (optional, defaults to '1.0')",
+                    "- Tags: Comma-separated tags (optional, new tags will be created automatically)",
+                    "- Classifications: Comma-separated classifications (optional, new classifications will be created automatically)",
+                    "",
+                    "SUPPORTED FILE TYPES:",
+                    "- Documents: PDF, DOC, DOCX, ODT, RTF, TXT",
+                    "- Spreadsheets: XLS, XLSX, CSV",
+                    "- Presentations: PPT, PPTX"
             };
 
             for (String instruction : instructions) {
@@ -130,7 +113,7 @@ public class BulkUploadTemplateGenerator {
                 row.createCell(0).setCellValue(instruction);
             }
 
-            instructionsSheet.setColumnWidth(0, 15000);
+            instructionsSheet.setColumnWidth(0, 20000);
 
             // Write to file
             try (FileOutputStream fileOut = new FileOutputStream(outputPath)) {

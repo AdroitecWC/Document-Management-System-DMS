@@ -1,5 +1,6 @@
 package codesAndStandards.springboot.registrationlogin.entity;
 
+
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -13,47 +14,44 @@ import java.time.LocalDateTime;
 @Table(
         name = "AccessControlLogic",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "UQ_AccessControlLogic",
-                        columnNames = {"document_id", "groupId"}
-                )
+                @UniqueConstraint(name = "UQ_AccessControlLogic_DocumentId_GroupId", columnNames = {"document_id", "group_id"})
         }
 )
 public class AccessControlLogic {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "accessId")
+    @Column(name = "access_id")
     private Long accessId;
 
-    // FK: Document
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "document_id",
             referencedColumnName = "document_id",
-            foreignKey = @ForeignKey(name = "FK_AccessControlLogic_Document")
+            nullable = false,
+            foreignKey = @ForeignKey(name = "FK_AccessControlLogic_Documents")
     )
     private Document document;
 
-    // FK: Group
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "groupId",
-            referencedColumnName = "groupId",
-            foreignKey = @ForeignKey(name = "FK_AccessControlLogic_Group")
+            name = "group_id",
+            referencedColumnName = "group_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "FK_AccessControlLogic_Groups")
     )
     private Group group;
 
-    // FK: Created By User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "created_by",
-            nullable = true,
             referencedColumnName = "user_id",
-            foreignKey = @ForeignKey(name = "FK_AccessControlLogic_User")
+            nullable = true,
+            foreignKey = @ForeignKey(name = "FK_AccessControlLogic_Users")
     )
     private User createdBy;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false,
+            columnDefinition = "datetime DEFAULT GETDATE()")
     private LocalDateTime createdAt;
 }

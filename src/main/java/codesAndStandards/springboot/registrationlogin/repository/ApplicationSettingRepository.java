@@ -1,6 +1,6 @@
 package codesAndStandards.springboot.registrationlogin.repository;
 
-import codesAndStandards.springboot.registrationlogin.entity.ApplicationSettings;
+import codesAndStandards.springboot.registrationlogin.entity.ApplicationSetting;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,12 +9,12 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface ApplicationSettingsRepository extends JpaRepository<ApplicationSettings, Long> {
+public interface ApplicationSettingRepository extends JpaRepository<ApplicationSetting, Long> {
 
     /**
      * Find a setting by its name
      */
-    Optional<ApplicationSettings> findBySettingName(String settingName);
+    Optional<ApplicationSetting> findBySettingName(String settingName);
 
     /**
      * Check if a setting exists by name
@@ -24,6 +24,6 @@ public interface ApplicationSettingsRepository extends JpaRepository<Application
     /**
      * Get setting value by name (returns value directly)
      */
-    @Query("SELECT s.settingValue FROM ApplicationSettings s WHERE s.settingName = :name")
+    @Query("SELECT s.settingValue FROM ApplicationSetting s WHERE s.settingName = :name")
     String getSettingValue(@Param("name") String settingName);
 }

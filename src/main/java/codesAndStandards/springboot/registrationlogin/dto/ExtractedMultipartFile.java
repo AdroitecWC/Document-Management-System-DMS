@@ -3,11 +3,6 @@ package codesAndStandards.springboot.registrationlogin.dto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-//Below modules are used from java.io
-//import java.io.File;
-//import java.io.FileInputStream;
-//import java.io.IOException;
-//import java.io.InputStream;
 import java.nio.file.Files;
 
 public class ExtractedMultipartFile implements MultipartFile {
@@ -32,7 +27,30 @@ public class ExtractedMultipartFile implements MultipartFile {
 
     @Override
     public String getContentType() {
-        return "application/pdf";
+        // Detect content type from file extension instead of hardcoding PDF
+        try {
+            String mimeType = Files.probeContentType(file.toPath());
+            if (mimeType != null) {
+                return mimeType;
+            }
+        } catch (IOException ignored) {
+        }
+        // Fallback based on extension
+        if (filename != null) {
+            String lower = filename.toLowerCase();
+            if (lower.endsWith(".pdf")) return "application/pdf";
+            if (lower.endsWith(".doc")) return "application/msword";
+            if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            if (lower.endsWith(".xls")) return "application/vnd.ms-excel";
+            if (lower.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            if (lower.endsWith(".ppt")) return "application/vnd.ms-powerpoint";
+            if (lower.endsWith(".pptx")) return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            if (lower.endsWith(".odt")) return "application/vnd.oasis.opendocument.text";
+            if (lower.endsWith(".rtf")) return "application/rtf";
+            if (lower.endsWith(".txt")) return "text/plain";
+            if (lower.endsWith(".csv")) return "text/csv";
+        }
+        return "application/octet-stream";
     }
 
     @Override
