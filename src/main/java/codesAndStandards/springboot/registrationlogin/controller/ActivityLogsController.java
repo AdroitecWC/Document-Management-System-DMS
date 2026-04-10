@@ -49,7 +49,7 @@ public class ActivityLogsController {
         Map<Long, User> userMap = new HashMap<>();
         for (ActivityLog log : logs) {
             if (log.getUser() != null) {
-                Long userId = log.getUser().getId();
+                Long userId = log.getUser().getUserId();
                 if (!userMap.containsKey(userId)) {
                     User user = userRepository.findById(userId).orElse(null);
                     userMap.put(userId, user);

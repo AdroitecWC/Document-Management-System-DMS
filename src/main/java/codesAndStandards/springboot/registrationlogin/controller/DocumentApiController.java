@@ -53,7 +53,7 @@ public class DocumentApiController {
      */
     @GetMapping("/{id}/check-access")
     @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
-    public ResponseEntity<Map<String, Object>> checkDocumentAccess(@PathVariable int id) {
+    public ResponseEntity<Map<String, Object>> checkDocumentAccess(@PathVariable Long id) {
         log.info("=== BOOKMARK ACCESS CHECK (Using Document Library Logic) ===");
         log.info("Document ID: {}", id);
 
@@ -93,7 +93,7 @@ public class DocumentApiController {
             log.info("Checking access using document library logic...");
 
             // Get all accessible document IDs (same as document library)
-            List<Integer> accessibleDocIds = documentService.getAccessibleDocumentIds(userId);
+            List<Long> accessibleDocIds = documentService.getAccessibleDocumentIds(userId);
             log.info("User {} has access to {} documents in library", userId, accessibleDocIds.size());
 
             // Check if this specific document is accessible
@@ -159,8 +159,10 @@ public class DocumentApiController {
 
             List<DocumentInfoDTO> documentDTOs = documents.stream()
                     .map(doc -> DocumentInfoDTO.builder()
-                            .id(doc.getId())
+                            .id(doc.getDocumentId())
                             .title(doc.getTitle())
+                            .docTypeName(doc.getDocumentType() != null ? doc.getDocumentType().getDocTypeName() : null)
+                            .fileExtension(doc.getFileExtension())
                             .build())
                     .collect(Collectors.toList());
 
@@ -181,7 +183,7 @@ public class DocumentApiController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
-    public ResponseEntity<?> getDocumentById(@PathVariable int id) {
+    public ResponseEntity<?> getDocumentById(@PathVariable Long id) {
         log.info("REST request to get document : {}", id);
 
         // ✅ LICENSE CHECK
@@ -196,7 +198,7 @@ public class DocumentApiController {
                     .orElseThrow(() -> new RuntimeException("Document not found with ID: " + id));
 
             DocumentInfoDTO dto = DocumentInfoDTO.builder()
-                    .id(document.getId())
+                    .id(document.getDocumentId())
                     .title(document.getTitle())
                     .build();
 
@@ -238,7 +240,7 @@ public class DocumentApiController {
 
             List<DocumentInfoDTO> documentDTOs = documents.stream()
                     .map(doc -> DocumentInfoDTO.builder()
-                            .id(doc.getId())
+                            .id(doc.getDocumentId())
                             .title(doc.getTitle())
                             .build())
                     .collect(Collectors.toList());
@@ -296,7 +298,7 @@ public class DocumentApiController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
     public ResponseEntity<?> updateDocument(
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @ModelAttribute DocumentDto documentDto,
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "groupIds", required = false) String groupIds) {
@@ -333,7 +335,7 @@ public class DocumentApiController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('Admin')")
-    public ResponseEntity<?> deleteDocument(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
         log.info("REST request to delete document: {}", id);
 
         // ✅ LICENSE CHECK

@@ -1,5 +1,6 @@
 package codesAndStandards.springboot.registrationlogin.entity;
 
+
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -13,49 +14,44 @@ import java.time.LocalDateTime;
 @Table(
         name = "GroupUser",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "UQ_UserGroup",
-                        columnNames = {"user_id", "groupId"}
-                )
+                @UniqueConstraint(name = "UQ_GroupUser_UserId_GroupId", columnNames = {"user_id", "group_id"})
         }
 )
 public class GroupUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "groupUserId")
+    @Column(name = "group_user_id")
     private Long groupUserId;
 
-    // FK: User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "user_id",
             referencedColumnName = "user_id",
             nullable = true,
-            foreignKey = @ForeignKey(name = "FK_GroupUser_User")
+            foreignKey = @ForeignKey(name = "FK_GroupUser_Users_UserId")
     )
     private User user;
 
-    // FK: Group
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "groupId",
-            referencedColumnName = "groupId",
-            nullable = true,
-            foreignKey = @ForeignKey(name = "FK_GroupUser_Group")
+            name = "group_id",
+            referencedColumnName = "group_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "FK_GroupUser_Groups")
     )
     private Group group;
 
-    // created_by WITHOUT FK constraint
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "created_by",
+            referencedColumnName = "user_id",
             nullable = true,
-//            referencedColumnName = "user_id",
-            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+            foreignKey = @ForeignKey(name = "FK_GroupUser_Users_CreatedBy")
     )
     private User createdBy;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false,
+            columnDefinition = "datetime DEFAULT GETDATE()")
     private LocalDateTime createdAt;
 }

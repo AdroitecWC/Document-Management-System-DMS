@@ -34,7 +34,7 @@ public class PdfConvertController {
 
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin', 'Viewer')")
     @GetMapping("/documents/pdf-convert/{id}")
-    public ResponseEntity<?> convertToPdf(@PathVariable Integer id) {
+    public ResponseEntity<?> convertToPdf(@PathVariable Long id) {
         File tempDir    = null;
         File tempInput  = null;
         File tempOutput = null;

@@ -23,26 +23,25 @@ public interface UserService {
 
     void deleteUserById(Long userId);
 
-    // Methods using stored procedures
     void saveUserWithStoredProcedure(UserDto userDto) throws RuntimeException;
 
-    // Add these two new methods to the interface
     void editUserByAdminWithStoredProcedure(String username, UserDto userDto) throws RuntimeException;
+
     void editUserProfileWithStoredProcedure(String username, UserDto userDto) throws RuntimeException;
 
     void deleteUserWithStoredProcedure(String username) throws RuntimeException;
 
     boolean existsByUsername(String username);
 
-    /**
-     * Check if email exists
-     */
     boolean existsByEmail(String email);
+
     Optional<User> findById(Long id);
 
     Long getLoggedInUserId();
-    void saveUserGroupAssociations(Long userId, List<Long> groupIds);
-    void updateUserGroupAssociations(Long userId, List<Long> groupIds);
-    List<GroupListDTO> getUserGroups(Long userId);
 
+    void saveUserGroupAssociations(Long userId, List<Long> groupIds);
+
+    void updateUserGroupAssociations(Long userId, List<Long> groupIds);
+
+    List<GroupListDTO> getUserGroups(Long userId);
 }

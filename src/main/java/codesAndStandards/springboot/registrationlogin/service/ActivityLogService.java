@@ -90,7 +90,11 @@ public class ActivityLogService {
 
     public void log(User user, String action, String details) {
         try {
-            ActivityLog log = new ActivityLog(user, action, details);
+            ActivityLog log = ActivityLog.builder()
+                    .user(user)
+                    .action(action)
+                    .details(details)
+                    .build();
             activityLogRepository.save(log);
         } catch (Exception e) {
             System.err.println("Failed to log activity: " + e.getMessage());

@@ -1,11 +1,13 @@
 package codesAndStandards.springboot.registrationlogin.service.Impl;
 
 import codesAndStandards.springboot.registrationlogin.dto.ApplicationSettingsDto;
-import codesAndStandards.springboot.registrationlogin.entity.ApplicationSettings;
+import codesAndStandards.springboot.registrationlogin.entity.ApplicationSetting;
 import codesAndStandards.springboot.registrationlogin.entity.Document;
+import codesAndStandards.springboot.registrationlogin.entity.DocumentVersion;
 import codesAndStandards.springboot.registrationlogin.entity.User;
-import codesAndStandards.springboot.registrationlogin.repository.ApplicationSettingsRepository;
+import codesAndStandards.springboot.registrationlogin.repository.ApplicationSettingRepository;
 import codesAndStandards.springboot.registrationlogin.repository.DocumentRepository;
+import codesAndStandards.springboot.registrationlogin.repository.DocumentVersionRepository;
 import codesAndStandards.springboot.registrationlogin.repository.UserRepository;
 import codesAndStandards.springboot.registrationlogin.service.ApplicationSettingsService;
 import codesAndStandards.springboot.registrationlogin.service.DocumentService;
@@ -28,13 +30,16 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     private static final Logger logger = LoggerFactory.getLogger(ApplicationSettingsServiceImpl.class);
 
     @Autowired
-    private ApplicationSettingsRepository settingsRepository;
+    private ApplicationSettingRepository settingsRepository;
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private DocumentRepository documentRepository;
+
+    @Autowired
+    private DocumentVersionRepository documentVersionRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -55,7 +60,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         dto.setRepositoryPath(repositoryPath);
         dto.setMaxFileSizeMb(getSettingAsInteger("max_file_size_mb", 50));
         dto.setAllowedFiles(getSetting("allowed_files"));
-        ApplicationSettings lastUpdated = settingsRepository.findBySettingName("max_file_size_mb").orElse(null);
+        ApplicationSetting lastUpdated = settingsRepository.findBySettingName("max_file_size_mb").orElse(null);
         if (lastUpdated != null) {
             dto.setUpdatedAt(lastUpdated.getUpdatedAt());
             if (lastUpdated.getUpdatedBy() != null) {
@@ -69,7 +74,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Transactional(readOnly = true)
     public String getSetting(String settingName) {
         return settingsRepository.findBySettingName(settingName)
-                .map(ApplicationSettings::getSettingValue)
+                .map(ApplicationSetting::getSettingValue)
                 .orElse(null);
     }
 
@@ -83,7 +88,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Override
     @Transactional
     public void updateRepositorySettings(Integer maxFileSizeMb, String allowedFiles, String username, boolean skipFileCheck) throws Exception {
-        logger.info("Updating repository settings - MaxSize: {}MB, Formats: {}, User: {}, SkipCheck: {}", maxFileSizeMb, allowedFiles, username, skipFileCheck);
+        logger.info("Updating repository settings - MaxSize: {}MB, Formats: {}, User: {}", maxFileSizeMb, allowedFiles, username);
 
         if (maxFileSizeMb == null || maxFileSizeMb < 1 || maxFileSizeMb > 1000)
             throw new IllegalArgumentException("Max file size must be between 1 and 1000 MB");
@@ -98,7 +103,9 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
             if (currentMaxSize != null && maxFileSizeMb < currentMaxSize) {
                 int affectedFilesCount = countFilesExceedingSize(maxFileSizeMb);
                 if (affectedFilesCount > 0)
-                    throw new IllegalStateException(String.format("Cannot reduce max file size to %dMB. %d existing file(s) exceed this limit.", maxFileSizeMb, affectedFilesCount));
+                    throw new IllegalStateException(String.format(
+                            "Cannot reduce max file size to %dMB. %d existing file(s) exceed this limit.",
+                            maxFileSizeMb, affectedFilesCount));
             }
         }
 
@@ -108,8 +115,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
                 .map(String::trim).map(String::toUpperCase).filter(s -> !s.isEmpty())
                 .collect(Collectors.joining(","));
         saveSettingValue("allowed_files", cleanedFormats, user);
-
-        logger.info("✅ Repository settings updated successfully by user: {}", username);
     }
 
     @Override
@@ -118,7 +123,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         if (format == null || format.trim().isEmpty()) return false;
         String allowedFiles = getSetting("allowed_files");
         if (allowedFiles == null) return false;
-        return Arrays.asList(allowedFiles.split(",")).stream()
+        return Arrays.stream(allowedFiles.split(","))
                 .anyMatch(f -> f.trim().equalsIgnoreCase(format.trim()));
     }
 
@@ -140,15 +145,16 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     public int countFilesExceedingSize(int newMaxSizeMb) {
         try {
             long maxSizeBytes = (long) newMaxSizeMb * 1024 * 1024;
-            List<Document> allDocs = documentRepository.findAll();
+            // Check file sizes via DocumentVersion file paths
+            List<DocumentVersion> allVersions = documentVersionRepository.findAll();
             int count = 0;
-            for (Document doc : allDocs) {
-                if (doc.getFilePath() != null) {
+            for (DocumentVersion ver : allVersions) {
+                if (ver.getFilePath() != null) {
                     try {
-                        File file = new File(doc.getFilePath());
+                        File file = new File(ver.getFilePath());
                         if (file.exists() && file.length() > maxSizeBytes) count++;
                     } catch (Exception e) {
-                        logger.warn("Could not check size for: {}", doc.getFilePath());
+                        logger.warn("Could not check size for: {}", ver.getFilePath());
                     }
                 }
             }
@@ -177,7 +183,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         User user = userRepository.findByUsername(username);
         if (user == null) throw new RuntimeException("User not found: " + username);
         saveSettingValue("max_tags_per_document", String.valueOf(maxTagsPerDocument), user);
-        logger.info("✅ Tag policies updated by: {}", username);
     }
 
     @Override
@@ -202,58 +207,29 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Override
     @Transactional
     public void updateWatermarkSettings(Boolean watermarkEnabled, Integer watermarkOpacity,
-                                        String watermarkPosition, Integer watermarkFontSize,
-                                        String username) throws Exception {
-        if (watermarkEnabled == null)
-            throw new IllegalArgumentException("Watermark enabled status is required");
-        if (watermarkOpacity == null || watermarkOpacity < 0 || watermarkOpacity > 100)
-            throw new IllegalArgumentException("Watermark opacity must be between 0 and 100");
-
-        // Font size validation
-        if (watermarkFontSize == null || watermarkFontSize < 12 || watermarkFontSize > 72)
-            throw new IllegalArgumentException("Watermark font size must be between 12 and 72");
-
-        List<String> validPositions = Arrays.asList("Diagonal", "TopLeft", "TopRight", "BottomLeft", "BottomRight", "Center");
-        if (watermarkPosition == null || !validPositions.contains(watermarkPosition))
-            throw new IllegalArgumentException("Invalid watermark position");
-
+                                         String watermarkPosition, Integer watermarkFontSize, String username) throws Exception {
         User user = userRepository.findByUsername(username);
         if (user == null) throw new RuntimeException("User not found: " + username);
-
         saveSettingValue("watermark_enabled", watermarkEnabled ? "1" : "0", user);
-        saveSettingValue("watermark_opacity", String.valueOf(watermarkOpacity), user);
-        saveSettingValue("watermark_position", watermarkPosition, user);
-        saveSettingValue("watermark_font_size", String.valueOf(watermarkFontSize), user);
-
-        logger.info("✅ Watermark settings updated by: {}", username);
+        if (watermarkOpacity != null) saveSettingValue("watermark_opacity", String.valueOf(watermarkOpacity), user);
+        if (watermarkPosition != null) saveSettingValue("watermark_position", watermarkPosition, user);
+        if (watermarkFontSize != null) saveSettingValue("watermark_font_size", String.valueOf(watermarkFontSize), user);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Boolean isWatermarkEnabled() {
-        return getSettingAsBoolean("watermark_enabled", false);
-    }
+    public Boolean isWatermarkEnabled() { return getSettingAsBoolean("watermark_enabled", true); }
 
     @Override
-    @Transactional(readOnly = true)
-    public Integer getWatermarkOpacity() {
-        return getSettingAsInteger("watermark_opacity", 30);
-    }
+    public Integer getWatermarkOpacity() { return getSettingAsInteger("watermark_opacity", 30); }
 
     @Override
-    @Transactional(readOnly = true)
-    public String getWatermarkPosition() {
-        String position = getSetting("watermark_position");
-        return position != null ? position : "Diagonal";
-    }
+    public String getWatermarkPosition() { String v = getSetting("watermark_position"); return v != null ? v : "Diagonal"; }
 
     @Override
-    @Transactional(readOnly = true)
-    public Integer getWatermarkFontSize() {
-        return getSettingAsInteger("watermark_font_size", 24);
-    }
+    public Integer getWatermarkFontSize() { return getSettingAsInteger("watermark_font_size", 48); }
 
-    // ==================== SECURITY & ACCESS ====================
+    // ==================== SECURITY ====================
+
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getSecuritySettings() {
@@ -274,13 +250,13 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
                                        Integer minPasswordLength, Boolean requireUppercase,
                                        Boolean requireLowercase, Boolean requireNumber,
                                        Boolean requireSpecialChar, String username) throws Exception {
-        logger.info("Updating security settings by user: {}", username);
         User user = userRepository.findByUsername(username);
         if (user == null) throw new RuntimeException("User not found: " + username);
         if (sessionTimeoutHours == null || sessionTimeoutHours < 1 || sessionTimeoutHours > 72)
             throw new IllegalArgumentException("Session timeout must be between 1 and 72 hours");
         if (minPasswordLength == null || minPasswordLength < 4 || minPasswordLength > 32)
             throw new IllegalArgumentException("Min password length must be between 4 and 32");
+
         saveSettingValue("session_timeout_hours", String.valueOf(sessionTimeoutHours), user);
         saveSettingValue("enforce_password_policy", enforcePasswordPolicy ? "1" : "0", user);
         saveSettingValue("min_password_length", String.valueOf(minPasswordLength), user);
@@ -288,14 +264,10 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         saveSettingValue("require_lowercase", requireLowercase ? "1" : "0", user);
         saveSettingValue("require_number", requireNumber ? "1" : "0", user);
         saveSettingValue("require_special_char", requireSpecialChar ? "1" : "0", user);
-        logger.info("✅ Security settings updated by: {}", username);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Boolean isPasswordPolicyEnforced() {
-        return getSettingAsBoolean("enforce_password_policy", false);
-    }
+    public Boolean isPasswordPolicyEnforced() { return getSettingAsBoolean("enforce_password_policy", false); }
 
     @Override
     @Transactional(readOnly = true)
@@ -324,7 +296,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Override
     @Transactional
     public void updateActivityLoggingSettings(Boolean activityLoggingEnabled, Integer logRetentionDays, String username) throws Exception {
-        logger.info("Updating activity logging settings by user: {}", username);
         User user = userRepository.findByUsername(username);
         if (user == null) throw new RuntimeException("User not found: " + username);
         if (logRetentionDays != null && (logRetentionDays < 1 || logRetentionDays > 3650))
@@ -332,20 +303,13 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         saveSettingValue("activity_logging_enabled", activityLoggingEnabled ? "1" : "0", user);
         if (activityLoggingEnabled && logRetentionDays != null)
             saveSettingValue("log_retention_days", String.valueOf(logRetentionDays), user);
-        logger.info("✅ Activity logging settings updated by: {}", username);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Boolean isActivityLoggingEnabled() {
-        return getSettingAsBoolean("activity_logging_enabled", true);
-    }
+    public Boolean isActivityLoggingEnabled() { return getSettingAsBoolean("activity_logging_enabled", true); }
 
     @Override
-    @Transactional(readOnly = true)
-    public Integer getLogRetentionDays() {
-        return getSettingAsInteger("log_retention_days", 90);
-    }
+    public Integer getLogRetentionDays() { return getSettingAsInteger("log_retention_days", 90); }
 
     // ==================== BULK DELETE ====================
 
@@ -359,15 +323,14 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Override
     @Transactional
     public int bulkDeleteUsers(List<Long> userIds, String adminUsername) throws Exception {
-        logger.warn("⚠️ BULK DELETE USERS - Admin: {}, Count: {}", adminUsername, userIds.size());
+        logger.warn("BULK DELETE USERS - Admin: {}, Count: {}", adminUsername, userIds.size());
         int deleted = 0;
         for (Long userId : userIds) {
             try {
                 userRepository.deleteById(userId);
                 deleted++;
-                logger.info("✅ Deleted user ID: {}", userId);
             } catch (Exception e) {
-                logger.error("❌ Failed to delete user ID: {} - {}", userId, e.getMessage());
+                logger.error("Failed to delete user ID: {} - {}", userId, e.getMessage());
             }
         }
         return deleted;
@@ -375,16 +338,15 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
 
     @Override
     @Transactional
-    public int bulkDeleteDocuments(List<Integer> documentIds, String adminUsername) throws Exception {
-        logger.warn("⚠️ BULK DELETE DOCUMENTS - Admin: {}, Count: {}", adminUsername, documentIds.size());
+    public int bulkDeleteDocuments(List<Long> documentIds, String adminUsername) throws Exception {
+        logger.warn("BULK DELETE DOCUMENTS - Admin: {}, Count: {}", adminUsername, documentIds.size());
         int deleted = 0;
-        for (Integer docId : documentIds) {
+        for (Long docId : documentIds) {
             try {
                 documentService.deleteDocument(docId);
                 deleted++;
-                logger.info("✅ Deleted document ID: {}", docId);
             } catch (Exception e) {
-                logger.error("❌ Failed to delete document ID: {} - {}", docId, e.getMessage());
+                logger.error("Failed to delete document ID: {} - {}", docId, e.getMessage());
             }
         }
         return deleted;
@@ -396,7 +358,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
                 .filter(u -> !u.getUsername().equals(currentUsername))
                 .map(u -> {
                     Map<String, Object> map = new LinkedHashMap<>();
-                    map.put("id", u.getId());
+                    map.put("id", u.getUserId());
                     map.put("username", u.getUsername());
                     map.put("email", u.getEmail());
                     map.put("roleName", u.getRole() != null ? u.getRole().getRoleName() : "Unknown");
@@ -410,10 +372,10 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         return documentRepository.findAll().stream()
                 .map(d -> {
                     Map<String, Object> map = new LinkedHashMap<>();
-                    map.put("id", d.getId());
+                    map.put("id", d.getDocumentId());
                     map.put("title", d.getTitle());
-                    map.put("productCode", d.getProductCode());
-                    map.put("edition", d.getEdition());
+                    map.put("docTypeName", d.getDocumentType() != null ? d.getDocumentType().getDocTypeName() : "Unknown");
+                    map.put("fileExtension", d.getFileExtension());
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -422,13 +384,12 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     // ==================== PRIVATE HELPERS ====================
 
     private void saveSettingValue(String settingName, String value, User user) {
-        ApplicationSettings setting = settingsRepository
+        ApplicationSetting setting = settingsRepository
                 .findBySettingName(settingName)
                 .orElseThrow(() -> new RuntimeException("Setting '" + settingName + "' not found in DB"));
         setting.setSettingValue(value);
         setting.setUpdatedBy(user);
         settingsRepository.save(setting);
-        logger.info("✅ Updated {} = {}", settingName, value);
     }
 
     public Integer getSettingAsInteger(String settingName, Integer defaultValue) {

@@ -39,7 +39,7 @@ public class PandocHtmlController {
 
     @PreAuthorize("hasAnyAuthority('Manager', 'Admin', 'Viewer')")
     @GetMapping("/documents/pandoc-preview/{id}")
-    public ResponseEntity<?> pandocPreview(@PathVariable Integer id) {
+    public ResponseEntity<?> pandocPreview(@PathVariable Long id) {
         File tempDir   = null;
         File inputFile = null;
         try {

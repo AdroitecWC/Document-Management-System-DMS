@@ -7,10 +7,6 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO for transferring application settings data
- * Contains only Repository settings for now (other sections to be added later)
- */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,15 +14,14 @@ import java.time.LocalDateTime;
 public class ApplicationSettingsDto {
 
     // Repository Settings
-    private String repositoryPath;  // Read-only from application.properties
+    private String repositoryPath;
     private Integer maxFileSizeMb;
-    private String allowedFiles;  // Comma-separated: "PDF,DOC,DOCX"
+    private String allowedFiles;
 
     // Metadata
     private LocalDateTime updatedAt;
     private String updatedByUsername;
 
-    // Helper: Get allowed formats as array
     public String[] getAllowedFormatsArray() {
         if (allowedFiles == null || allowedFiles.trim().isEmpty()) {
             return new String[0];
@@ -34,7 +29,6 @@ public class ApplicationSettingsDto {
         return allowedFiles.split(",");
     }
 
-    // Helper: Check if a format is allowed
     public boolean isFormatAllowed(String format) {
         if (allowedFiles == null || format == null) {
             return false;

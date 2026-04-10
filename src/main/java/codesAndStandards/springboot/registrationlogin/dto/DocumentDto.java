@@ -1,7 +1,5 @@
 package codesAndStandards.springboot.registrationlogin.dto;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -15,44 +13,31 @@ import java.util.List;
 @AllArgsConstructor
 public class DocumentDto {
 
-    private Integer id;
+    private Long id;
 
     private String title;
 
-    private String productCode;
+    // Document Type (from DocumentTypes table)
+    private Long docTypeId;
+    private String docTypeName;
 
-    private String edition;
+    // File info
+    private String fileExtension;
 
-    // Stored as YYYY or YYYY-MM
-    private String publishDate;
+    // Current version info (from DocumentVersion table)
+    private String filePath;
+    private String versionNumber;
+    private Long currentVersionId;
 
-    // Used separately in upload form (year and month dropdowns)
-    private String publishYear;
-    private String publishMonth;
+    // All versions (for version history display)
+    private List<DocumentVersionDto> versions;
 
-    @NotNull(message = "Number of pages is required")
-    @Min(value = 1, message = "Number of pages must be at least 1")
-    private Integer noOfPages;
-
-    private String notes;
-
+    // Tags and Classifications
     private List<TagDto> tags;
     private List<ClassificationDto> classifications;
 
-    private String filePath;
-
-    // ⭐ NEW: File type/extension in UPPERCASE (e.g. "PDF", "DOCX", "XLSX", "PPTX", "TXT", "RTF", etc.)
-    // Populated from Document entity. Fallback to "PDF" for legacy documents.
-    private String fileType;
-
-    private String uploadedAt;
-
-    private String uploadedByUsername;
-
-    // Comma-separated tag names (used for form binding and stored procedure)
+    // Comma-separated names (used for form binding and stored procedures)
     private String tagNames;
-
-    // Comma-separated classification names
     private String classificationNames;
 
     // Comma-separated group IDs (used in upload/edit forms)
@@ -61,38 +46,51 @@ public class DocumentDto {
     // Resolved group names (used for display in viewer/info panel)
     private String groupNames;
 
-    // ⭐ Convenience helpers for the viewer and document library
+    // Upload info
+    private String uploadedAt;
+    private String uploadedByUsername;
+    private Long uploadedByUserId;
+
+    // File type helpers (derived from fileExtension)
+
+    public String getFileType() {
+        return fileExtension != null ? fileExtension.toUpperCase().replace(".", "") : "PDF";
+    }
 
     public boolean isPdf() {
-        return "PDF".equalsIgnoreCase(fileType);
+        return "PDF".equalsIgnoreCase(getFileType());
     }
 
     public boolean isWordDoc() {
-        return "DOC".equalsIgnoreCase(fileType)
-                || "DOCX".equalsIgnoreCase(fileType)
-                || "ODT".equalsIgnoreCase(fileType);
+        String ft = getFileType();
+        return "DOC".equalsIgnoreCase(ft)
+                || "DOCX".equalsIgnoreCase(ft)
+                || "ODT".equalsIgnoreCase(ft);
     }
 
     public boolean isSpreadsheet() {
-        return "XLS".equalsIgnoreCase(fileType)
-                || "XLSX".equalsIgnoreCase(fileType)
-                || "CSV".equalsIgnoreCase(fileType);
+        String ft = getFileType();
+        return "XLS".equalsIgnoreCase(ft)
+                || "XLSX".equalsIgnoreCase(ft)
+                || "CSV".equalsIgnoreCase(ft);
     }
 
     public boolean isPresentation() {
-        return "PPT".equalsIgnoreCase(fileType)
-                || "PPTX".equalsIgnoreCase(fileType);
+        String ft = getFileType();
+        return "PPT".equalsIgnoreCase(ft)
+                || "PPTX".equalsIgnoreCase(ft);
     }
 
     public boolean isTextFile() {
-        return "TXT".equalsIgnoreCase(fileType)
-                || "RTF".equalsIgnoreCase(fileType);
+        String ft = getFileType();
+        return "TXT".equalsIgnoreCase(ft)
+                || "RTF".equalsIgnoreCase(ft);
     }
 
-    // ⭐ Returns a human-friendly label for the file type (used in document library badges)
     public String getFileTypeLabel() {
-        if (fileType == null) return "PDF";
-        switch (fileType.toUpperCase()) {
+        String ft = getFileType();
+        if (ft == null) return "PDF";
+        switch (ft) {
             case "PDF":  return "PDF";
             case "DOC":
             case "DOCX": return "Word";
@@ -104,14 +102,14 @@ public class DocumentDto {
             case "PPTX": return "PowerPoint";
             case "TXT":  return "Text";
             case "RTF":  return "RTF";
-            default:     return fileType.toUpperCase();
+            default:     return ft;
         }
     }
 
-    // ⭐ Returns a Bootstrap color class for the file type badge (used in document library)
     public String getFileTypeBadgeClass() {
-        if (fileType == null) return "danger";
-        switch (fileType.toUpperCase()) {
+        String ft = getFileType();
+        if (ft == null) return "danger";
+        switch (ft) {
             case "PDF":  return "danger";
             case "DOC":
             case "DOCX":

@@ -1,8 +1,15 @@
 package codesAndStandards.springboot.registrationlogin.entity;
 
+
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "ActivityLog")
 public class ActivityLog {
@@ -13,68 +20,21 @@ public class ActivityLog {
     private Long logId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, referencedColumnName = "user_id")
+    @JoinColumn(
+            name = "user_id",
+            referencedColumnName = "user_id",
+            nullable = true,
+            foreignKey = @ForeignKey(name = "FK_ActivityLog_Users")
+    )
     private User user;
 
-    @Column(name = "action", nullable = false, length = 50)
+    @Column(name = "action", length = 50, nullable = false)
     private String action;
 
-    @Column(name = "details", columnDefinition = "TEXT")
+    @Column(name = "details", columnDefinition = "nvarchar(MAX)", nullable = true)
     private String details;
 
-    @Column(name = "timestamp", nullable = false)
+    @Column(name = "timestamp", nullable = true,
+            columnDefinition = "datetime DEFAULT GETDATE()")
     private LocalDateTime timestamp;
-
-    // Constructor
-    public ActivityLog() {
-        this.timestamp = LocalDateTime.now();
-    }
-
-    public ActivityLog(User user, String action, String details) {
-        this.user = user;
-        this.action = action;
-        this.details = details;
-        this.timestamp = LocalDateTime.now();
-    }
-
-    // Getters and Setters
-    public Long getLogId() {
-        return logId;
-    }
-
-    public void setLogId(Long logId) {
-        this.logId = logId;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getAction() {
-        return action;
-    }
-
-    public void setAction(String action) {
-        this.action = action;
-    }
-
-    public String getDetails() {
-        return details;
-    }
-
-    public void setDetails(String details) {
-        this.details = details;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
 }

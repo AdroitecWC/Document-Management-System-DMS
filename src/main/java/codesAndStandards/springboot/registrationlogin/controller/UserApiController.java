@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserApiController {
 
-    private static final Logger logger = LoggerFactory.getLogger(DocumentServiceImpl.class);
+    private static final Logger logger =LoggerFactory.getLogger(UserApiController.class);
 
     private final UserRepository userRepository;
     private final UserService userService;
@@ -132,11 +132,11 @@ public class UserApiController {
         }
 
         return UserInfoDTO.builder()
-                .id(user.getId())
+                .id(user.getUserId())
                 .username(user.getUsername() != null ? user.getUsername() : "")
                 .email(user.getEmail() != null ? user.getEmail() : "")
                 .role(roleName)
-                .department(fullName) // Using department field to store full name for display
+//                .department(fullName) // Using department field to store full name for display
                 .build();
     }
 
