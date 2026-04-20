@@ -1920,63 +1920,6 @@ window.addEventListener('load', function() {
     }
 
     // ==================== FORM SUBMISSION ====================
-<!--    document.getElementById('uploadForm').addEventListener('submit', async function(e) {-->
-<!--    e.preventDefault();-->
-
-<!--    if (!uploadedFile) {-->
-<!--        showCustomAlert('Please upload a file before submitting.');-->
-<!--        return;-->
-<!--    }-->
-
-<!--    // Collect metadata-->
-<!--    const metadata = {};-->
-<!--    document.querySelectorAll('.dynamic-meta-field').forEach(field => {-->
-<!--        if (field.value.trim()) {-->
-<!--            metadata[field.dataset.fieldName] = field.value.trim();-->
-<!--        }-->
-<!--    });-->
-<!--    document.getElementById('metadataField').value = JSON.stringify(metadata);-->
-
-<!--    const submitBtn = document.getElementById('submitBtn');-->
-<!--    submitBtn.disabled = true;-->
-<!--    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';-->
-
-<!--    try {-->
-<!--        const formData = new FormData(this);-->
-<!--        // Ensure the file is attached-->
-<!--        formData.set('file', uploadedFile);-->
-
-<!--        const response = await fetch('/upload', {-->
-<!--            method: 'POST',-->
-<!--            body: formData,-->
-<!--            headers: {-->
-<!--                // Don't set Content-Type — browser sets it with boundary for multipart-->
-<!--            }-->
-<!--        });-->
-
-<!--        if (response.redirected) {-->
-<!--            // Success — server redirected (flash message will show on new page)-->
-<!--            formChanged = false;-->
-<!--            isSubmitting = true;-->
-<!--            window.location.href = response.url;-->
-<!--        } else if (!response.ok) {-->
-<!--            throw new Error('Upload failed with status: ' + response.status);-->
-<!--        } else {-->
-<!--            // Success without redirect-->
-<!--            formChanged = false;-->
-<!--            isSubmitting = true;-->
-<!--            window.location.href = '/upload';-->
-<!--        }-->
-<!--    } catch (error) {-->
-<!--        console.error('Upload failed:', error);-->
-<!--        showCustomAlert('Upload failed: ' + error.message + '. You can try again.');-->
-
-<!--        // Re-enable button for retry-->
-<!--        submitBtn.disabled = false;-->
-<!--        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Upload Document';-->
-<!--    }-->
-<!--});-->
-
 document.getElementById('uploadForm').addEventListener('submit', function(e) {
     if (!uploadedFile) {
         e.preventDefault();

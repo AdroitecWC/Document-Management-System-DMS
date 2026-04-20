@@ -95,7 +95,7 @@ public class ActivityLogService {
                     .action(action)
                     .details(details)
                     .build();
-            activityLogRepository.save(log);
+            activityLogRepository.saveAndFlush(log);
         } catch (Exception e) {
             System.err.println("Failed to log activity: " + e.getMessage());
         }

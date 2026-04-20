@@ -1,8 +1,8 @@
 package codesAndStandards.springboot.registrationlogin.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Getter
@@ -28,13 +28,13 @@ public class ActivityLog {
     )
     private User user;
 
-    @Column(name = "action", length = 50, nullable = false)
+    @Column(name = "action", length = 100, nullable = false)
     private String action;
 
-    @Column(name = "details", columnDefinition = "nvarchar(MAX)", nullable = true)
+    @Column(name = "details", nullable = true)
     private String details;
 
-    @Column(name = "timestamp", nullable = true,
-            columnDefinition = "datetime DEFAULT GETDATE()")
+    @CreationTimestamp
+    @Column(name = "timestamp", nullable = true, updatable = false)
     private LocalDateTime timestamp;
 }

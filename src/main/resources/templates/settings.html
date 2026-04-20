@@ -457,6 +457,20 @@
                             <div class="settings-menu-item-desc">Configure document storage and file size</div>
                         </div>
                     </a>
+                    <a href="#" class="settings-menu-item" data-section="doctypes">
+                        <i class="bi bi-diagram-3"></i>
+                        <div class="settings-menu-item-text">
+                            <div>Document Types</div>
+                            <div class="settings-menu-item-desc">Configure document types and their metadata</div>
+                        </div>
+                    </a>
+                    <a href="#" class="settings-menu-item" data-section="metadata">
+                        <i class="bi bi-database"></i>
+                        <div class="settings-menu-item-text">
+                            <div>Metadata Management</div>
+                            <div class="settings-menu-item-desc">Manage reusable metadata fields</div>
+                        </div>
+                    </a>
                     <a href="#" class="settings-menu-item" data-section="tags">
                         <i class="bi bi-tags"></i>
                         <div class="settings-menu-item-text">
@@ -554,13 +568,13 @@
                                         <span style="font-size:11px;color:#9ca3af;display:block;">OpenDocument Text</span>
                                     </label>
                                 </div>
-<!--                                <div class="checkbox-item">-->
-<!--                                    <input type="checkbox" id="format_txt" value="TXT" class="format-checkbox">-->
-<!--                                    <label for="format_txt">-->
-<!--                                        <span style="color:#6b7280;font-weight:700;">.txt</span>-->
-<!--                                        <span style="font-size:11px;color:#9ca3af;display:block;">Plain Text</span>-->
-<!--                                    </label>-->
-<!--                                </div>-->
+                                <!--                                <div class="checkbox-item">-->
+                                <!--                                    <input type="checkbox" id="format_txt" value="TXT" class="format-checkbox">-->
+                                <!--                                    <label for="format_txt">-->
+                                <!--                                        <span style="color:#6b7280;font-weight:700;">.txt</span>-->
+                                <!--                                        <span style="font-size:11px;color:#9ca3af;display:block;">Plain Text</span>-->
+                                <!--                                    </label>-->
+                                <!--                                </div>-->
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="format_rtf" value="RTF" class="format-checkbox">
                                     <label for="format_rtf">
@@ -584,13 +598,13 @@
                                         <span style="font-size:11px;color:#9ca3af;display:block;">Excel 97–2003</span>
                                     </label>
                                 </div>
-<!--                                <div class="checkbox-item">-->
-<!--                                    <input type="checkbox" id="format_csv" value="CSV" class="format-checkbox">-->
-<!--                                    <label for="format_csv">-->
-<!--                                        <span style="color:#16a34a;font-weight:700;">.csv</span>-->
-<!--                                        <span style="font-size:11px;color:#9ca3af;display:block;">CSV Spreadsheet</span>-->
-<!--                                    </label>-->
-<!--                                </div>-->
+                                <!--                                <div class="checkbox-item">-->
+                                <!--                                    <input type="checkbox" id="format_csv" value="CSV" class="format-checkbox">-->
+                                <!--                                    <label for="format_csv">-->
+                                <!--                                        <span style="color:#16a34a;font-weight:700;">.csv</span>-->
+                                <!--                                        <span style="font-size:11px;color:#9ca3af;display:block;">CSV Spreadsheet</span>-->
+                                <!--                                    </label>-->
+                                <!--                                </div>-->
 
                                 <!-- ── Presentations ── -->
                                 <div class="checkbox-item">
@@ -822,18 +836,18 @@
                         </div><!-- end watermarkConfigSection -->
 
                         <!-- How Watermarks Work info box -->
-<!--                        <div class="watermark-info-box">-->
-<!--                            <div class="info-icon"><i class="bi bi-lightbulb-fill"></i></div>-->
-<!--                            <div class="info-content">-->
-<!--                                <h6 class="mb-2" style="font-weight:600;">How Watermarks Work</h6>-->
-<!--                                <ul class="info-list">-->
-<!--                                    <li>Applied automatically when users download documents</li>-->
-<!--                                    <li>Includes username and download timestamp</li>-->
-<!--                                    <li>Changes only affect new downloads</li>-->
-<!--                                    <li>Helps track document distribution</li>-->
-<!--                                </ul>-->
-<!--                            </div>-->
-<!--                        </div>-->
+                        <!--                        <div class="watermark-info-box">-->
+                        <!--                            <div class="info-icon"><i class="bi bi-lightbulb-fill"></i></div>-->
+                        <!--                            <div class="info-content">-->
+                        <!--                                <h6 class="mb-2" style="font-weight:600;">How Watermarks Work</h6>-->
+                        <!--                                <ul class="info-list">-->
+                        <!--                                    <li>Applied automatically when users download documents</li>-->
+                        <!--                                    <li>Includes username and download timestamp</li>-->
+                        <!--                                    <li>Changes only affect new downloads</li>-->
+                        <!--                                    <li>Helps track document distribution</li>-->
+                        <!--                                </ul>-->
+                        <!--                            </div>-->
+                        <!--                        </div>-->
 
                         <div class="d-flex gap-3 mt-4">
                             <button type="submit" class="btn btn-save-modern" style="background:#1e3a5f;color:#fff;"><i class="bi bi-check-circle me-2"></i>Save Changes</button>
@@ -1005,6 +1019,49 @@
                         </ul>
                     </div>
                 </div>
+                <!-- ==================== DOCUMENT TYPES MANAGEMENT ==================== -->
+                <div class="settings-card" id="doctypesSection" style="display:none;">
+                    <div class="settings-header">
+                        <div class="settings-icon"><i class="bi bi-diagram-3"></i></div>
+                        <div>
+                            <h3 class="settings-title">Document Types</h3>
+                            <p class="settings-subtitle">Configure document types and their metadata fields</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <p class="text-muted mb-0" style="font-size:14px;">Define document types and assign metadata fields to them.</p>
+                        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;" onclick="openDocTypeModal()">
+                            <i class="bi bi-plus-circle me-2"></i>Add Document Type
+                        </button>
+                    </div>
+
+                    <div id="docTypesList">
+                        <div class="text-center text-muted py-4">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- ==================== METADATA MANAGEMENT ==================== -->
+                <div class="settings-card" id="metadataSection" style="display:none;">
+                    <div class="settings-header">
+                        <div class="settings-icon"><i class="bi bi-database"></i></div>
+                        <div>
+                            <h3 class="settings-title">Metadata Management</h3>
+                            <p class="settings-subtitle">Manage reusable metadata fields for document types</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <p class="text-muted mb-0" style="font-size:14px;">Create reusable metadata fields that can be assigned to document types.</p>
+                        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;" onclick="openMetadataModal()">
+                            <i class="bi bi-plus-circle me-2"></i>Add Metadata Field
+                        </button>
+                    </div>
+
+                    <div id="metadataFieldsList" class="row g-3">
+                        <div class="col-12 text-center text-muted py-4">Loading...</div>
+                    </div>
+                </div>
 
                 <!-- ==================== WATERMARK FULLSCREEN PREVIEW MODAL ==================== -->
                 <div class="modal fade" id="wmFullscreenModal" tabindex="-1">
@@ -1073,96 +1130,175 @@
 <div class="modal-overlay-custom" id="modalOverlay" onclick="closeActiveSettingsModal()"></div>
 <!-- ==================== CONFIRMATION MODAL ==================== -->
 <div class="custom-modal" id="confirmationModal">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Confirm File Size Reduction</h5>
-                <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('confirmationModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p id="confirmationMessage"></p>
-                <p class="text-muted mb-0"><small>Existing files will remain accessible, but new uploads cannot exceed the new limit.</small></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('confirmationModal')">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="confirmSave()"><i class="bi bi-check-circle me-2"></i>Continue Anyway</button>
-            </div>
-        </div>
+    <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Confirm File Size Reduction</h5>
+        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('confirmationModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p id="confirmationMessage"></p>
+        <p class="text-muted mb-0"><small>Existing files will remain accessible, but new uploads cannot exceed the new limit.</small></p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('confirmationModal')">Cancel</button>
+        <button type="button" class="btn btn-warning" onclick="confirmSave()"><i class="bi bi-check-circle me-2"></i>Continue Anyway</button>
+    </div>
+</div>
 <!-- ==================== PASSWORD VERIFY MODAL ==================== -->
 <div class="custom-modal" id="passwordVerifyModal">
-            <div class="modal-header" style="background:#1e3a5f;color:white;">
-                <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Admin Authentication Required</h5>
-                <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('passwordVerifyModal')" style="color:white;">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted mb-3">Please enter your password to confirm this bulk delete operation.</p>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Your Password</label>
-                    <input type="password" class="form-control" id="adminPasswordInput" placeholder="Enter your password">
-                    <div id="passwordError" class="text-danger mt-1" style="display:none;font-size:14px;">
-                        <i class="bi bi-exclamation-circle me-1"></i>Incorrect password. Please try again.
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('passwordVerifyModal')">Cancel</button>
-                <button type="button" class="btn fw-bold" id="verifyPasswordBtn" style="background:#1e3a5f;color:white;" onclick="verifyPasswordAndProceed()">
-                    <i class="bi bi-unlock me-2"></i>Verify & Continue
-                </button>
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Admin Authentication Required</h5>
+        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('passwordVerifyModal')" style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p class="text-muted mb-3">Please enter your password to confirm this bulk delete operation.</p>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Your Password</label>
+            <input type="password" class="form-control" id="adminPasswordInput" placeholder="Enter your password">
+            <div id="passwordError" class="text-danger mt-1" style="display:none;font-size:14px;">
+                <i class="bi bi-exclamation-circle me-1"></i>Incorrect password. Please try again.
             </div>
         </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('passwordVerifyModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" id="verifyPasswordBtn" style="background:#1e3a5f;color:white;" onclick="verifyPasswordAndProceed()">
+            <i class="bi bi-unlock me-2"></i>Verify & Continue
+        </button>
+    </div>
+</div>
 
 
 <!-- ==================== BULK DELETE SELECTION MODAL ==================== -->
 <div class="custom-modal modal-lg" id="bulkDeleteModal">
-            <div class="modal-header" style="background:#1e3a5f;color:white;">
-                <h5 class="modal-title" id="bulkDeleteModalTitle"><i class="bi bi-people me-2"></i>Select Items to Delete</h5>
-                <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('bulkDeleteModal')" style="color:white;">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height:500px;overflow-y:auto;">
-                <div class="alert d-flex align-items-center mb-3" style="background:#fff7ed;border:1px solid #fed7aa;">
-                    <i class="bi bi-exclamation-triangle-fill me-2" style="color:#f59e0b;"></i>
-                    <span id="bulkDeleteWarningText" style="color:#92400e;font-size:14px;">Warning: This action cannot be undone.</span>
-                </div>
-                <div class="d-flex align-items-center justify-content-between mb-3 p-2 border rounded">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="selectAllItems" onchange="toggleSelectAll()">
-                        <label class="form-check-label fw-bold" for="selectAllItems">Select All</label>
-                    </div>
-                    <span class="badge" style="background:#1e3a5f;font-size:13px;" id="selectedCountBadge">0 selected</span>
-                </div>
-                <div id="bulkDeleteItemsList"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('bulkDeleteModal')">Cancel</button>
-                <button type="button" class="btn fw-bold" id="confirmBulkDeleteBtn" style="background:#dc2626;color:white;" onclick="executeBulkDelete()" disabled>
-                    <i class="bi bi-trash3 me-2"></i>
-                    <span id="deleteButtonText">Delete Selected (0)</span>
-                </button>
-            </div>
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title" id="bulkDeleteModalTitle"><i class="bi bi-people me-2"></i>Select Items to Delete</h5>
+        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('bulkDeleteModal')" style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height:500px;overflow-y:auto;">
+        <div class="alert d-flex align-items-center mb-3" style="background:#fff7ed;border:1px solid #fed7aa;">
+            <i class="bi bi-exclamation-triangle-fill me-2" style="color:#f59e0b;"></i>
+            <span id="bulkDeleteWarningText" style="color:#92400e;font-size:14px;">Warning: This action cannot be undone.</span>
         </div>
+        <div class="d-flex align-items-center justify-content-between mb-3 p-2 border rounded">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAllItems" onchange="toggleSelectAll()">
+                <label class="form-check-label fw-bold" for="selectAllItems">Select All</label>
+            </div>
+            <span class="badge" style="background:#1e3a5f;font-size:13px;" id="selectedCountBadge">0 selected</span>
+        </div>
+        <div id="bulkDeleteItemsList"></div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('bulkDeleteModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" id="confirmBulkDeleteBtn" style="background:#dc2626;color:white;" onclick="executeBulkDelete()" disabled>
+            <i class="bi bi-trash3 me-2"></i>
+            <span id="deleteButtonText">Delete Selected (0)</span>
+        </button>
+    </div>
+</div>
 
 <!-- ==================== BULK DELETE FINAL CONFIRM MODAL ==================== -->
 <div class="custom-modal" id="bulkDeleteConfirmModal">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Final Confirmation</h5>
-            </div>
-            <div class="modal-body">
-                <p id="finalConfirmText" class="fw-bold"></p>
-                <p class="text-muted">This action is permanent and cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('bulkDeleteConfirmModal')">Cancel</button>
-                <button type="button" class="btn btn-danger fw-bold" onclick="confirmAndDelete()">
-                    <i class="bi bi-trash3 me-2"></i>Yes, Delete Permanently
-                </button>
-            </div>
+    <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Final Confirmation</h5>
+    </div>
+    <div class="modal-body">
+        <p id="finalConfirmText" class="fw-bold"></p>
+        <p class="text-muted">This action is permanent and cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('bulkDeleteConfirmModal')">Cancel</button>
+        <button type="button" class="btn btn-danger fw-bold" onclick="confirmAndDelete()">
+            <i class="bi bi-trash3 me-2"></i>Yes, Delete Permanently
+        </button>
+    </div>
+</div>
+<!-- ==================== DOCUMENT TYPE MODAL ==================== -->
+<div class="custom-modal modal-lg" id="docTypeModal">
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title" id="docTypeModalTitle"><i class="bi bi-diagram-3 me-2"></i>Add Document Type</h5>
+        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('docTypeModal')" style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="docTypeIdField">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="docTypeNameField" placeholder="e.g., Resume, Invoice, Contract">
         </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold">Description</label>
+            <textarea class="form-control" id="docTypeDescField" rows="2" placeholder="Brief description of this document type"></textarea>
+        </div>
+        <div class="mb-2">
+            <label class="form-label fw-bold">Metadata Fields</label>
+            <p class="text-muted mb-2" style="font-size:13px;">Select which metadata fields apply to this document type. Toggle "Required" for mandatory fields.</p>
+        </div>
+        <div id="docTypeMetadataList" style="max-height:300px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;">
+            <div class="text-center text-muted py-3">Loading fields...</div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('docTypeModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;" onclick="saveDocType()">
+            <i class="bi bi-check-circle me-2"></i>Save
+        </button>
+    </div>
+</div>
+
+<!-- ==================== METADATA FIELD MODAL ==================== -->
+<div class="custom-modal" id="metadataModal">
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title" id="metadataModalTitle"><i class="bi bi-database me-2"></i>Add Metadata Field</h5>
+        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('metadataModal')" style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="metadataIdField">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Field Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="metadataNameField" placeholder="e.g., Candidate Name, Contract Value">
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Field Type <span class="text-danger">*</span></label>
+            <select class="form-control" id="metadataTypeField">
+                <option value="text">Text</option>
+                <option value="number">Number</option>
+                <option value="date">Date</option>
+                <option value="textarea">Textarea</option>
+                <option value="dropdown">Dropdown</option>
+            </select>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('metadataModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;" onclick="saveMetadataField()">
+            <i class="bi bi-check-circle me-2"></i>Save
+        </button>
+    </div>
+</div>
+
+<!-- ==================== DELETE CONFIRM MODAL (shared for DocType + Metadata) ==================== -->
+<div class="custom-modal" id="genericDeleteModal">
+    <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete</h5>
+    </div>
+    <div class="modal-body">
+        <p id="genericDeleteText" class="fw-bold"></p>
+        <p class="text-muted mb-0">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('genericDeleteModal')">Cancel</button>
+        <button type="button" class="btn btn-danger fw-bold" id="genericDeleteConfirmBtn">
+            <i class="bi bi-trash me-2"></i>Delete
+        </button>
+    </div>
+</div>
 
 
 <script src="/js/bootstrap.bundle.min.js"></script>
 <div th:replace="~{common/navbar :: navbar-js}"></div>
 <script th:inline="javascript">var contextPath = /*[[@{/}]]*/ '/';</script>
 
-<script>
+<script th:inline="none">
     // ==================== GLOBAL VARIABLES ====================
     let pendingUpdate = null;
     let confirmationModal = null;
@@ -1349,11 +1485,13 @@ document.addEventListener('keydown', function(e) {
         document.querySelectorAll('.settings-card').forEach(c => c.style.display = 'none');
         const sectionMap = {
             'repository': { id: 'repositorySection',  load: loadSettings },
-            'tags':       { id: 'tagPoliciesSection',  load: loadTagPolicies },
-            'watermark':  { id: 'watermarkSection',    load: loadWatermarkSettings },
-            'security':   { id: 'securitySection',     load: loadSecuritySettings },
-            'logging':    { id: 'loggingSection',      load: loadLoggingSettings },
-            'bulkdelete': { id: 'bulkdeleteSection',   load: null }
+            'doctypes':   { id: 'doctypesSection',    load: loadDocTypes },
+            'metadata':   { id: 'metadataSection',    load: loadMetadataFields },
+            'tags':       { id: 'tagPoliciesSection', load: loadTagPolicies },
+            'watermark':  { id: 'watermarkSection',   load: loadWatermarkSettings },
+            'security':   { id: 'securitySection',    load: loadSecuritySettings },
+            'logging':    { id: 'loggingSection',     load: loadLoggingSettings },
+            'bulkdelete': { id: 'bulkdeleteSection',  load: null }
         };
         const s = sectionMap[section];
         if (s) {
@@ -1797,8 +1935,8 @@ document.addEventListener('keydown', function(e) {
         }
         container.innerHTML = items.map(item => {
             const title    = isUsers ? item.username  : item.title;
-            const subtitle = isUsers ? item.email     : (item.productCode || '');
-            const badge    = isUsers ? item.roleName  : (item.edition     || '');
+            const subtitle = isUsers ? item.email     : (item.docTypeName || '-');
+            const badge    = isUsers ? item.roleName  : (item.versionNumber ? 'v' + item.versionNumber : '');
             return `<div class="border rounded p-3 mb-2 d-flex align-items-center bulk-item" id="item_${item.id}"
                         style="cursor:pointer;transition:all 0.2s;" onclick="toggleItemSelection(${item.id})">
                 <input class="form-check-input me-3 item-checkbox" type="checkbox" id="check_${item.id}"
@@ -1880,6 +2018,237 @@ document.addEventListener('keydown', function(e) {
             selectedItems = new Set();
         }).catch(err => { showLoading(false); showAlert('danger', 'Failed to delete: ' + err.message); });
     }
+
+    // ==================== DOCUMENT TYPES MANAGEMENT ====================
+let allMetadataFields = [];
+let allDocTypes = [];
+
+async function loadDocTypes() {
+    showLoading(true);
+    try {
+        const [typesRes, fieldsRes] = await Promise.all([
+            fetch(contextPath + 'api/document-types'),
+            fetch(contextPath + 'api/metadata-definitions')
+        ]);
+        allDocTypes = await typesRes.json();
+        allMetadataFields = await fieldsRes.json();
+        renderDocTypesList();
+    } catch (e) {
+        showAlert('danger', 'Failed to load document types');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function renderDocTypesList() {
+    const container = document.getElementById('docTypesList');
+    if (!allDocTypes || allDocTypes.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4">No document types yet. Click "Add Document Type" to create one.</div>';
+        return;
+    }
+    container.innerHTML = allDocTypes.map(t => `
+        <div class="border rounded p-3 mb-3" style="border:1px solid #e5e7eb !important;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-text me-2" style="color:#1e3a5f;"></i>${escapeHtml(t.docTypeName)}</h6>
+                    <p class="text-muted mb-2" style="font-size:13px;">${escapeHtml(t.description || 'No description')}</p>
+                    <span class="badge" style="background:#eef2ff;color:#1e3a5f;font-size:11px;">${(t.metadataFieldIds || []).length} Fields</span>
+                </div>
+                <div>
+                    <button class="btn btn-sm" style="color:#3b82f6;" onclick="openDocTypeModal(${t.docTypeId})" title="Edit"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm" style="color:#dc2626;" onclick="confirmDeleteDocType(${t.docTypeId}, '${escapeHtml(t.docTypeName).replace(/'/g,"\\'")}')" title="Delete"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function openDocTypeModal(docTypeId) {
+    document.getElementById('docTypeIdField').value = docTypeId || '';
+    document.getElementById('docTypeModalTitle').innerHTML = docTypeId
+        ? '<i class="bi bi-pencil me-2"></i>Edit Document Type'
+        : '<i class="bi bi-diagram-3 me-2"></i>Add Document Type';
+
+    let existing = { docTypeName: '', description: '', metadataFieldIds: [], mandatoryFieldIds: [] };
+    if (docTypeId) {
+        try {
+            const r = await fetch(contextPath + 'api/document-types/' + docTypeId);
+            existing = await r.json();
+        } catch (e) {}
+    }
+    document.getElementById('docTypeNameField').value = existing.docTypeName || '';
+    document.getElementById('docTypeDescField').value = existing.description || '';
+
+    // Render metadata fields with checkboxes + mandatory toggles
+    if (!allMetadataFields || allMetadataFields.length === 0) {
+        try { const r = await fetch(contextPath + 'api/metadata-definitions'); allMetadataFields = await r.json(); } catch(e){}
+    }
+    const list = document.getElementById('docTypeMetadataList');
+    if (!allMetadataFields || allMetadataFields.length === 0) {
+        list.innerHTML = '<div class="text-muted text-center py-3">No metadata fields exist. Create some in "Metadata Management" first.</div>';
+    } else {
+        // metadataDefinitions comes back with { metadataId, fieldName, fieldType, mandatory }
+    const assigned = existing.metadataDefinitions || [];
+    const assignedIds = assigned.map(m => m.metadataId);
+    const mandatoryIds = assigned.filter(m => m.mandatory).map(m => m.metadataId);
+        list.innerHTML = allMetadataFields.map(f => {
+            const isChecked = assignedIds.includes(f.metadataId);
+            const isMandatory = mandatoryIds.includes(f.metadataId);
+            return `
+                <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
+                    <div class="form-check">
+                        <input class="form-check-input dt-meta-check" type="checkbox" value="${f.metadataId}" id="dtMeta_${f.metadataId}" ${isChecked?'checked':''}>
+                        <label class="form-check-label" for="dtMeta_${f.metadataId}">
+                            ${escapeHtml(f.fieldName)} <span class="badge bg-secondary" style="font-size:10px;">${escapeHtml(f.fieldType)}</span>
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input dt-meta-required" type="checkbox" data-meta-id="${f.metadataId}" ${isMandatory?'checked':''}>
+                        <label class="form-check-label text-muted" style="font-size:12px;">Required</label>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+    openSettingsModal('docTypeModal');
+}
+
+async function saveDocType() {
+    const id = document.getElementById('docTypeIdField').value;
+    const name = document.getElementById('docTypeNameField').value.trim();
+    const desc = document.getElementById('docTypeDescField').value.trim();
+    if (!name) { showAlert('danger', 'Name is required'); return; }
+
+    const metadataFieldIds = Array.from(document.querySelectorAll('.dt-meta-check:checked')).map(cb => parseInt(cb.value));
+    const mandatoryFieldIds = Array.from(document.querySelectorAll('.dt-meta-required:checked')).map(cb => parseInt(cb.dataset.metaId));
+
+    const payload = { docTypeName: name, description: desc, metadataFieldIds, mandatoryFieldIds };
+    const url = id ? (contextPath + 'api/document-types/' + id) : (contextPath + 'api/document-types');
+    const method = id ? 'PUT' : 'POST';
+    showLoading(true);
+    try {
+        const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if (!r.ok) throw new Error(await r.text());
+        showAlert('success', 'Document type saved!');
+        closeSettingsModal('docTypeModal');
+        loadDocTypes();
+    } catch (e) {
+        showAlert('danger', 'Failed to save: ' + e.message);
+    } finally { showLoading(false); }
+}
+
+function confirmDeleteDocType(id, name) {
+    document.getElementById('genericDeleteText').textContent = `Delete document type "${name}"?`;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/document-types/' + id, { method:'DELETE' });
+            if (!r.ok) throw new Error(await r.text());
+            showAlert('success', 'Deleted');
+            loadDocTypes();
+        } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+// ==================== METADATA MANAGEMENT ====================
+async function loadMetadataFields() {
+    showLoading(true);
+    try {
+        const r = await fetch(contextPath + 'api/metadata-definitions');
+        allMetadataFields = await r.json();
+        renderMetadataList();
+    } catch (e) {
+        showAlert('danger', 'Failed to load metadata fields');
+    } finally { showLoading(false); }
+}
+
+function renderMetadataList() {
+    const container = document.getElementById('metadataFieldsList');
+    if (!allMetadataFields || allMetadataFields.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted py-4">No metadata fields yet. Click "Add Metadata Field" to create one.</div>';
+        return;
+    }
+    const typeColors = { text:'#3b82f6', number:'#16a34a', date:'#a855f7', textarea:'#ec4899', dropdown:'#f59e0b' };
+    container.innerHTML = allMetadataFields.map(f => {
+        const color = typeColors[(f.fieldType||'').toLowerCase()] || '#6b7280';
+        return `
+        <div class="col-md-6">
+            <div class="border rounded p-3 h-100" style="border:1px solid #e5e7eb !important;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-2">${escapeHtml(f.fieldName)}</h6>
+                        <span class="badge" style="background:${color}20;color:${color};font-size:11px;">${escapeHtml(f.fieldType)}</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm" style="color:#3b82f6;" onclick="openMetadataModal(${f.metadataId})" title="Edit"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm" style="color:#dc2626;" onclick="confirmDeleteMetadata(${f.metadataId}, '${escapeHtml(f.fieldName).replace(/'/g,"\\'")}')" title="Delete"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function openMetadataModal(metadataId) {
+    document.getElementById('metadataIdField').value = metadataId || '';
+    document.getElementById('metadataModalTitle').innerHTML = metadataId
+        ? '<i class="bi bi-pencil me-2"></i>Edit Metadata Field'
+        : '<i class="bi bi-database me-2"></i>Add Metadata Field';
+
+    let existing = { fieldName:'', fieldType:'text' };
+    if (metadataId) {
+        try {
+            const r = await fetch(contextPath + 'api/metadata-definitions/' + metadataId);
+            existing = await r.json();
+        } catch (e) {}
+    }
+    document.getElementById('metadataNameField').value = existing.fieldName || '';
+    document.getElementById('metadataTypeField').value = (existing.fieldType || 'text').toLowerCase();
+    openSettingsModal('metadataModal');
+}
+
+async function saveMetadataField() {
+    const id = document.getElementById('metadataIdField').value;
+    const name = document.getElementById('metadataNameField').value.trim();
+    const type = document.getElementById('metadataTypeField').value;
+    if (!name) { showAlert('danger', 'Field name is required'); return; }
+
+    const payload = { fieldName: name, fieldType: type };
+    const url = id ? (contextPath + 'api/metadata-definitions/' + id) : (contextPath + 'api/metadata-definitions');
+    const method = id ? 'PUT' : 'POST';
+    showLoading(true);
+    try {
+        const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if (!r.ok) throw new Error(await r.text());
+        showAlert('success', 'Metadata field saved!');
+        closeSettingsModal('metadataModal');
+        loadMetadataFields();
+    } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function confirmDeleteMetadata(id, name) {
+    document.getElementById('genericDeleteText').textContent = `Delete metadata field "${name}"?`;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/metadata-definitions/' + id, { method:'DELETE' });
+            if (!r.ok) throw new Error(await r.text());
+            showAlert('success', 'Deleted');
+            loadMetadataFields();
+        } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[c]));
+}
 
     // ==================== UTILITIES ====================
     function showAlert(type, message) {

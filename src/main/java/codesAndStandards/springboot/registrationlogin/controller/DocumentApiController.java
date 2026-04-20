@@ -7,6 +7,7 @@ import codesAndStandards.springboot.registrationlogin.repository.DocumentReposit
 import codesAndStandards.springboot.registrationlogin.service.DocumentService;
 import codesAndStandards.springboot.registrationlogin.service.LicenseService;
 import codesAndStandards.springboot.registrationlogin.service.UserService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,6 +144,7 @@ public class DocumentApiController {
      */
     @GetMapping
     @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @Transactional
     public ResponseEntity<?> getAllDocuments() {
         log.info("REST request to get documents (filtered by group access)");
 

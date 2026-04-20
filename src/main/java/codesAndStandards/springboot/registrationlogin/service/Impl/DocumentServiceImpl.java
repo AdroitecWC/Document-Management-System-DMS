@@ -186,6 +186,7 @@ public class DocumentServiceImpl implements DocumentService {
                         file.getSize() / (1024 * 1024), maxFileSizeMB));
             }
 
+
             String originalFileName = file.getOriginalFilename();
             String fileExtension = extractFileExtension(originalFileName);
             String fileType = extractFileType(originalFileName);
@@ -226,6 +227,17 @@ public class DocumentServiceImpl implements DocumentService {
             documentVersionRepository.save(newVersion);
 
             logger.info("New version {} created for document {}", versionNumber, id);
+        }
+        // Update version number on existing latest version if no new file uploaded
+        if (file == null || file.isEmpty()) {
+            String versionNumber = documentDto.getVersionNumber();
+            if (versionNumber != null && !versionNumber.trim().isEmpty()) {
+                documentVersionRepository.findLatestByDocumentId(id).ifPresent(latestVersion -> {
+                    latestVersion.setVersionNumber(versionNumber.trim());
+                    documentVersionRepository.save(latestVersion);
+                    logger.info("Updated version number to '{}' for document {}", versionNumber, id);
+                });
+            }
         }
 
         // Update metadata via stored procedure
@@ -402,7 +414,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         return dto;
     }
-
+    @Transactional
     @Override
     public List<DocumentDto> findDocumentsAccessibleByUser(Long userId) {
         List<Document> docs = documentRepository.findDocumentsAccessibleByUser(userId);

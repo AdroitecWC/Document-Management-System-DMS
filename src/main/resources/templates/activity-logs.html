@@ -292,7 +292,7 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
         data-timestamp=${log.timestamp},
         data-date=${#temporals.format(log.timestamp,'yyyy-MM-dd')},
         data-action=${log.action},
-        data-user-id=${log.user != null ? log.user.id : ''}">
+        data-user-id=${log.user != null ? log.user.userId : ''}">
                         <td th:text="${log.logId}">1</td>
 
                         <td>
@@ -300,7 +300,7 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
                                 <a href="javascript:void(0)"
                                    class="user-pill user-link"
                                    th:text="${log.user != null ? log.user.username : 'Deleted User'}"
-                                   th:attr="data-user-id=${log.user != null ? log.user.id : 0}"
+                                   th:attr="data-user-id=${log.user != null ? log.user.userId : 0}"
                                    th:classappend="${log.user == null ? 'disabled-link' : ''}"
                                    th:style="${log.user == null ? 'cursor: default; color: #6c757d; pointer-events: none;' : ''}">
                                     User
