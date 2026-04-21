@@ -953,63 +953,63 @@ public class AuthController {
             return "upload";
         }
 
-            try {
-                // Set docTypeId on DTO
-                if (docTypeId != null) {
-                    documentDto.setDocTypeId(docTypeId);
-                }
-                if (versionNumber != null && !versionNumber.trim().isEmpty()) {
-                    documentDto.setVersionNumber(versionNumber.trim());
-                } else {
-                    documentDto.setVersionNumber("1.0");
-                }
+        try {
+            // Set docTypeId on DTO
+            if (docTypeId != null) {
+                documentDto.setDocTypeId(docTypeId);
+            }
+            if (versionNumber != null && !versionNumber.trim().isEmpty()) {
+                documentDto.setVersionNumber(versionNumber.trim());
+            } else {
+                documentDto.setVersionNumber("1.0");
+            }
 
-                // Save document (tags already set above)
-                documentService.saveDocument(documentDto, file, username, groupIds);
+            // Save document (tags already set above)
+            documentService.saveDocument(documentDto, file, username, groupIds);
 
-                // Save custom metadata to DocumentMetadata table
-                if (metadataJson != null && !metadataJson.isEmpty()) {
-                    try {
-                        // Find the saved document by title to get its ID
-                        // (saveDocument doesn't return the ID, so we look it up)
-                        List<DocumentDto> allDocs = documentService.findAllDocuments();
-                        Long savedDocumentId = allDocs.stream()
-                                .filter(d -> d.getTitle().equals(documentDto.getTitle()))
-                                .map(DocumentDto::getId)
-                                .findFirst()
-                                .orElse(null);
+            // Save custom metadata to DocumentMetadata table
+            if (metadataJson != null && !metadataJson.isEmpty()) {
+                try {
+                    // Find the saved document by title to get its ID
+                    // (saveDocument doesn't return the ID, so we look it up)
+                    List<DocumentDto> allDocs = documentService.findAllDocuments();
+                    Long savedDocumentId = allDocs.stream()
+                            .filter(d -> d.getTitle().equals(documentDto.getTitle()))
+                            .map(DocumentDto::getId)
+                            .findFirst()
+                            .orElse(null);
 
-                        if (savedDocumentId != null) {
-                            Map<String, String> metadataMap = new ObjectMapper().readValue(metadataJson,
-                                    new TypeReference<Map<String, String>>() {});
+                    if (savedDocumentId != null) {
+                        Map<String, String> metadataMap = new ObjectMapper().readValue(metadataJson,
+                                new TypeReference<Map<String, String>>() {});
 
-                            for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
-                                String fieldName = entry.getKey();
-                                String fieldValue = entry.getValue();
+                        for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
+                            String fieldName = entry.getKey();
+                            String fieldValue = entry.getValue();
 
-                                // Look up metadata definition ID by field name
-                                List<MetadataDefinitionDto> allDefs = metadataDefinitionService.getAllMetadataDefinitions();
-                                Long metadataId = allDefs.stream()
-                                        .filter(def -> def.getFieldName().equals(fieldName))
-                                        .map(MetadataDefinitionDto::getMetadataId)
-                                        .findFirst()
-                                        .orElse(null);
+                            // Look up metadata definition ID by field name
+                            List<MetadataDefinitionDto> allDefs = metadataDefinitionService.getAllMetadataDefinitions();
+                            Long metadataId = allDefs.stream()
+                                    .filter(def -> def.getFieldName().equals(fieldName))
+                                    .map(MetadataDefinitionDto::getMetadataId)
+                                    .findFirst()
+                                    .orElse(null);
 
-                                if (metadataId != null && fieldValue != null && !fieldValue.trim().isEmpty()) {
-                                    DocumentMetadataDto metaDto = new DocumentMetadataDto();
-                                    metaDto.setDocumentId(savedDocumentId);
-                                    metaDto.setMetadataId(metadataId);
-                                    metaDto.setValue(fieldValue.trim());
-                                    documentMetadataService.saveOrUpdate(metaDto);
-                                }
+                            if (metadataId != null && fieldValue != null && !fieldValue.trim().isEmpty()) {
+                                DocumentMetadataDto metaDto = new DocumentMetadataDto();
+                                metaDto.setDocumentId(savedDocumentId);
+                                metaDto.setMetadataId(metadataId);
+                                metaDto.setValue(fieldValue.trim());
+                                documentMetadataService.saveOrUpdate(metaDto);
                             }
-                            logger.info("Saved {} metadata fields for document '{}'", metadataMap.size(), documentDto.getTitle());
                         }
-                    } catch (Exception metaEx) {
-                        logger.error("Failed to save custom metadata: {}", metaEx.getMessage());
-                        // Don't fail the upload — metadata is supplementary
+                        logger.info("Saved {} metadata fields for document '{}'", metadataMap.size(), documentDto.getTitle());
                     }
+                } catch (Exception metaEx) {
+                    logger.error("Failed to save custom metadata: {}", metaEx.getMessage());
+                    // Don't fail the upload — metadata is supplementary
                 }
+            }
 
             // LOG SUCCESS - DOCUMENT_UPLOAD
             activityLogService.logByUsername(
@@ -1167,6 +1167,7 @@ public class AuthController {
                                  @RequestParam(value = "tagNames", required = false) String tagsJson,
                                  @RequestParam(value = "classificationNames", required = false) String classificationsJson,
                                  @RequestParam(value = "groupIds", required = false) String groupIds,
+                                 @RequestParam(value = "metadata", required = false) String metadataJson, // ADD THIS
                                  Principal principal,
                                  Model model,
                                  RedirectAttributes redirectAttributes,
@@ -1242,6 +1243,41 @@ public class AuthController {
 
             // Update document including optional file
             documentService.updateDocument(id, documentDto, file, username, groupIds);
+
+
+            // Update custom metadata
+            if (metadataJson != null && !metadataJson.isEmpty()) {
+                try {
+                    Map<String, String> metadataMap = new ObjectMapper().readValue(metadataJson,
+                            new TypeReference<Map<String, String>>() {});
+
+                    List<MetadataDefinitionDto> allDefs = metadataDefinitionService.getAllMetadataDefinitions();
+
+                    for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
+                        String fieldName = entry.getKey();
+                        String fieldValue = entry.getValue();
+
+                        Long metadataId = allDefs.stream()
+                                .filter(def -> def.getFieldName().equals(fieldName))
+                                .map(MetadataDefinitionDto::getMetadataId)
+                                .findFirst()
+                                .orElse(null);
+
+                        if (metadataId != null) {
+                            DocumentMetadataDto metaDto = new DocumentMetadataDto();
+                            metaDto.setDocumentId(id);
+                            metaDto.setMetadataId(metadataId);
+                            metaDto.setValue(fieldValue != null ? fieldValue.trim() : "");
+                            documentMetadataService.saveOrUpdate(metaDto);
+                            logger.info("Updated metadata '{}' = '{}' for document ID {}", fieldName, fieldValue, id);
+                        }
+                    }
+                    logger.info("Saved {} metadata fields for document ID {}", metadataMap.size(), id);
+                } catch (Exception metaEx) {
+                    logger.error("Failed to save metadata during document edit: {}", metaEx.getMessage());
+                    // Don't fail the whole update — metadata is supplementary
+                }
+            }
 
             // Build change log
             StringBuilder changes = new StringBuilder();

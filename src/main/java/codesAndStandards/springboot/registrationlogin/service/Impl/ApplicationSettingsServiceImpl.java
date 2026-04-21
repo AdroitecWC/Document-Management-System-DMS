@@ -207,7 +207,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Override
     @Transactional
     public void updateWatermarkSettings(Boolean watermarkEnabled, Integer watermarkOpacity,
-                                         String watermarkPosition, Integer watermarkFontSize, String username) throws Exception {
+                                        String watermarkPosition, Integer watermarkFontSize, String username) throws Exception {
         User user = userRepository.findByUsername(username);
         if (user == null) throw new RuntimeException("User not found: " + username);
         saveSettingValue("watermark_enabled", watermarkEnabled ? "1" : "0", user);
@@ -366,7 +366,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
                 })
                 .collect(Collectors.toList());
     }
-
+    @Transactional(readOnly = true)
     @Override
     public List<Map<String, Object>> getAllDocumentsForBulkDelete() {
         return documentRepository.findAll().stream()

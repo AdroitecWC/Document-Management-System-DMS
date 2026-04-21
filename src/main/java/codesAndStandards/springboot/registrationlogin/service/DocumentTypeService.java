@@ -1,12 +1,14 @@
 package codesAndStandards.springboot.registrationlogin.service;
 
 import codesAndStandards.springboot.registrationlogin.dto.DocumentTypeDto;
+import codesAndStandards.springboot.registrationlogin.entity.MetadataDefinition;
 import codesAndStandards.springboot.registrationlogin.dto.MetadataDefinitionDto;
 import codesAndStandards.springboot.registrationlogin.entity.DocumentType;
 import codesAndStandards.springboot.registrationlogin.entity.DocumentTypeMetadata;
 import codesAndStandards.springboot.registrationlogin.repository.DocumentRepository;
 import codesAndStandards.springboot.registrationlogin.repository.DocumentTypeMetadataRepository;
 import codesAndStandards.springboot.registrationlogin.repository.DocumentTypeRepository;
+import codesAndStandards.springboot.registrationlogin.repository.MetadataDefinitionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class DocumentTypeService {
     private final DocumentTypeRepository documentTypeRepository;
     private final DocumentTypeMetadataRepository documentTypeMetadataRepository;
     private final DocumentRepository documentRepository;
+    private final MetadataDefinitionRepository metadataDefinitionRepository;
 
     @Transactional(readOnly = true)
     public List<DocumentTypeDto> getAllDocumentTypes() {
@@ -50,7 +53,37 @@ public class DocumentTypeService {
                 .build();
 
         DocumentType saved = documentTypeRepository.save(docType);
+
+        // Save metadata field associations
+        saveMetadataAssociations(saved, dto.getMetadataFieldIds(), dto.getMandatoryFieldIds());
+
         return mapToDto(saved);
+    }
+    /**
+     * Save metadata field associations for a document type.
+     * Inserts rows into DocumentTypeMetadata join table with mandatory flag.
+     */
+    private void saveMetadataAssociations(DocumentType docType, List<Long> fieldIds, List<Long> mandatoryIds) {
+        if (fieldIds == null || fieldIds.isEmpty()) return;
+
+        List<Long> mandatorySet = mandatoryIds != null ? mandatoryIds : List.of();
+
+        for (Long metadataId : fieldIds) {
+            MetadataDefinition metaDef = metadataDefinitionRepository.findById(metadataId)
+                    .orElseThrow(() -> new IllegalArgumentException("Metadata field not found: " + metadataId));
+
+            DocumentTypeMetadata.DocumentTypeMetadataId pk =
+                    new DocumentTypeMetadata.DocumentTypeMetadataId(docType.getDocTypeId(), metadataId);
+
+            DocumentTypeMetadata link = DocumentTypeMetadata.builder()
+                    .id(pk)
+                    .documentType(docType)
+                    .metadataDefinition(metaDef)
+                    .mandatory(mandatorySet.contains(metadataId))
+                    .build();
+
+            documentTypeMetadataRepository.save(link);
+        }
     }
 
     @Transactional
@@ -67,6 +100,11 @@ public class DocumentTypeService {
         docType.setDescription(dto.getDescription());
 
         DocumentType updated = documentTypeRepository.save(docType);
+
+        // Delete existing associations and save new ones
+        documentTypeMetadataRepository.deleteByDocTypeId(id);
+        saveMetadataAssociations(updated, dto.getMetadataFieldIds(), dto.getMandatoryFieldIds());
+
         return mapToDto(updated);
     }
 

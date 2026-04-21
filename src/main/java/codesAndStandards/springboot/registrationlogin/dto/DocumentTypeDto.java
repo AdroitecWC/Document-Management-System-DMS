@@ -17,6 +17,10 @@ public class DocumentTypeDto {
     private String description;
     private Integer documentCount;
 
-    // Associated metadata definitions for this type
+    // Used on GET responses — full metadata details with mandatory flag
     private List<MetadataDefinitionDto> metadataDefinitions;
+
+    // Used on POST/PUT request body
+    private List<Long> metadataFieldIds;
+    private List<Long> mandatoryFieldIds;
 }
