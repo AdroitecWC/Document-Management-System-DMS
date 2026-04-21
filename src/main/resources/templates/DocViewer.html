@@ -13,13 +13,11 @@
     <script th:if="${documentId}" th:inline="javascript">
         window.documentId = /*[[${documentId}]]*/ null;
         window.userRole = /*[[${userRole}]]*/ 'Viewer';
-        window.documentInfo = {
+       window.documentInfo = {
             title: /*[[${document != null ? document.title : 'Document'}]]*/ 'Document',
-            productCode: /*[[${document != null ? document.productCode : 'N/A'}]]*/ 'N/A',
-            edition: /*[[${document != null ? document.edition : 'N/A'}]]*/ 'N/A',
-            publishDate: /*[[${document != null ? document.publishDate : 'N/A'}]]*/ 'N/A',
-            totalPages: /*[[${document != null ? document.noOfPages : 0}]]*/ 0,
-            notes: /*[[${document != null ? document.notes : 'No notes available'}]]*/ 'No notes available',
+            docTypeName: /*[[${document != null ? document.docTypeName : 'N/A'}]]*/ 'N/A',
+            versionNumber: /*[[${document != null ? document.versionNumber : '1.0'}]]*/ '1.0',
+            fileExtension: /*[[${document != null ? document.fileExtension : ''}]]*/ '',
             tagNames: /*[[${document != null ? document.tagNames : ''}]]*/ '',
             classificationNames: /*[[${document != null ? document.classificationNames : ''}]]*/ '',
             groupNames: /*[[${document != null ? document.groupNames : ''}]]*/ '',
@@ -449,6 +447,36 @@
         body.light-mode .download-status-text { color: #64748b; }
         .download-complete-icon { color: #48bb78; font-size: 24px; animation: checkPop 0.4s ease; }
         @keyframes checkPop { 0% { transform:scale(0); } 70% { transform:scale(1.2); } 100% { transform:scale(1); } }
+
+        .custom-meta-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.custom-meta-item:last-child {
+    border-bottom: none;
+}
+.custom-meta-label {
+    font-size: 11px;
+    color: #9aa0a6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+    font-weight: 500;
+}
+.custom-meta-value {
+    font-size: 13px;
+    color: #e8eaed;
+    font-weight: 500;
+}
+body.light-mode .custom-meta-item {
+    border-bottom-color: #e2e8f0;
+}
+body.light-mode .custom-meta-label {
+    color: #718096;
+}
+body.light-mode .custom-meta-value {
+    color: #2d3748;
+}
     </style>
 </head>
 <body>
@@ -539,14 +567,16 @@
     <div class="sidebar" id="sidebar">
         <h2 class="sidebar-title">Document Info</h2>
         <div class="info-item"><div class="info-label">Title</div><div class="info-value" id="sidebarTitle">Loading...</div></div>
-        <div class="info-item"><div class="info-label">Product Code</div><div class="info-value" id="sidebarProductCode">Loading...</div></div>
-        <div class="info-item"><div class="info-label">Edition</div><div class="info-value" id="sidebarEdition">Loading...</div></div>
-        <div class="info-item"><div class="info-label">Publication Date</div><div class="info-value format-date" id="sidebarPublishDate">Loading...</div></div>
+        <div class="info-item"><div class="info-label">Document Type</div><div class="info-value" id="sidebarDocType">Loading...</div></div>
+        <div class="info-item"><div class="info-label">Version</div><div class="info-value" id="sidebarVersion">Loading...</div></div>
         <div class="info-item"><div class="info-label">File Type</div><div class="info-value" id="sidebarFileType">-</div></div>
         <div class="info-item"><div class="info-label">Tags</div><div class="info-tags" id="sidebarTags"><span class="empty-state-text">No tags</span></div></div>
         <div class="info-item"><div class="info-label">Classifications</div><div class="info-tags" id="sidebarClassifications"><span class="empty-state-text">No classifications</span></div></div>
         <div class="info-item"><div class="info-label">Groups</div><div class="info-tags" id="sidebarGroups"><span class="empty-state-text">No groups assigned</span></div></div>
-        <div class="info-item"><div class="info-label">Notes</div><div class="info-notes" id="sidebarNotes"><span class="empty-state-text">No notes available</span></div></div>
+        <div class="info-item" id="customMetadataSection" style="display:none;">
+            <div class="info-label">Custom Metadata</div>
+            <div id="sidebarCustomMetadata"></div>
+        </div>
     </div>
 </div>
 
@@ -1827,32 +1857,67 @@
     }
 
     // ==================== DOCUMENT INFO ====================
-    function updateDocumentInfo(info) {
-        const title = info.title || 'Document';
-        const productCode = info.productCode || '';
-        const edition = info.edition || '';
-        const totalPages = info.totalPages || info.noOfPages || 0;
-        const fileType = info.fileType || 'PDF';
-        document.getElementById('topDocTitle').textContent = title;
-        document.getElementById('topDocMeta').textContent = `${productCode} \u2022 v${edition} \u2022 ${totalPages} pages`;
-        document.getElementById('sidebarTitle').textContent = title;
-        document.getElementById('sidebarProductCode').textContent = productCode || 'N/A';
-        document.getElementById('sidebarEdition').textContent = edition || 'N/A';
-        document.getElementById('sidebarPublishDate').textContent = info.publishDate || 'N/A';
-        document.getElementById('sidebarFileType').textContent = fileType;
-        const notesContainer = document.getElementById('sidebarNotes');
-        if (info.notes && info.notes.trim() && info.notes!=='No notes available') notesContainer.textContent = info.notes;
-        else notesContainer.innerHTML = '<span class="empty-state-text">No notes available</span>';
-        const tagsContainer = document.getElementById('sidebarTags');
-        if (info.tagNames && info.tagNames.trim()) tagsContainer.innerHTML = info.tagNames.split(',').map(t=>`<span class="tag-badge">${t.trim()}</span>`).join('');
-        else tagsContainer.innerHTML = '<span class="empty-state-text">No tags</span>';
-        const clsContainer = document.getElementById('sidebarClassifications');
-        if (info.classificationNames && info.classificationNames.trim()) clsContainer.innerHTML = info.classificationNames.split(',').map(c=>`<span class="classification-badge">${c.trim()}</span>`).join('');
-        else clsContainer.innerHTML = '<span class="empty-state-text">No classifications</span>';
-        const groupsContainer = document.getElementById('sidebarGroups');
-        if (info.groupNames && info.groupNames.trim()) groupsContainer.innerHTML = info.groupNames.split(',').map(g=>`<span class="group-badge">${g.trim()}</span>`).join('');
-        else groupsContainer.innerHTML = '<span class="empty-state-text">No groups assigned</span>';
+   function updateDocumentInfo(info) {
+    const title = info.title || 'Document';
+    const docTypeName = info.docTypeName || '-';
+    const versionNumber = info.versionNumber || '1.0';
+    const fileType = info.fileType || 'PDF';
+
+    document.getElementById('topDocTitle').textContent = title;
+    document.getElementById('topDocMeta').textContent = `${docTypeName} \u2022 v${versionNumber} \u2022 ${fileType}`;
+
+    document.getElementById('sidebarTitle').textContent = title;
+    document.getElementById('sidebarDocType').textContent = docTypeName;
+    document.getElementById('sidebarVersion').textContent = versionNumber;
+    document.getElementById('sidebarFileType').textContent = fileType;
+
+    const tagsContainer = document.getElementById('sidebarTags');
+    if (info.tagNames && info.tagNames.trim()) tagsContainer.innerHTML = info.tagNames.split(',').map(t=>`<span class="tag-badge">${t.trim()}</span>`).join('');
+    else tagsContainer.innerHTML = '<span class="empty-state-text">No tags</span>';
+
+    const clsContainer = document.getElementById('sidebarClassifications');
+    if (info.classificationNames && info.classificationNames.trim()) clsContainer.innerHTML = info.classificationNames.split(',').map(c=>`<span class="classification-badge">${c.trim()}</span>`).join('');
+    else clsContainer.innerHTML = '<span class="empty-state-text">No classifications</span>';
+
+    const groupsContainer = document.getElementById('sidebarGroups');
+    if (info.groupNames && info.groupNames.trim()) groupsContainer.innerHTML = info.groupNames.split(',').map(g=>`<span class="group-badge">${g.trim()}</span>`).join('');
+    else groupsContainer.innerHTML = '<span class="empty-state-text">No groups assigned</span>';
+
+    // Load custom metadata from API
+    loadCustomMetadata();
+}
+
+async function loadCustomMetadata() {
+    if (!documentId) return;
+    try {
+        const response = await fetch(`/api/document-metadata/by-document/${documentId}`);
+        if (!response.ok) return;
+        const metadataList = await response.json();
+
+        const section = document.getElementById('customMetadataSection');
+        const container = document.getElementById('sidebarCustomMetadata');
+
+        if (!metadataList || metadataList.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        container.innerHTML = '';
+
+        metadataList.forEach(meta => {
+            const item = document.createElement('div');
+            item.className = 'custom-meta-item';
+            item.innerHTML = `
+                <div class="custom-meta-label">${escapeHtml(meta.fieldName || '-')}</div>
+                <div class="custom-meta-value">${escapeHtml(meta.value || '-')}</div>
+            `;
+            container.appendChild(item);
+        });
+    } catch (error) {
+        console.error('Error loading custom metadata:', error);
     }
+}
 
     function formatDateToDDMMMYYYY(dateStr) {
         if (!dateStr || dateStr==='-' || dateStr==='N/A') return dateStr;
