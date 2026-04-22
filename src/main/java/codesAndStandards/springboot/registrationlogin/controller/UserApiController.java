@@ -35,7 +35,7 @@ public class UserApiController {
      * GET /api/users
      */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<List<UserInfoDTO>> getAllUsers() {
         log.info("REST request to get all users for access control");
         try {
@@ -58,7 +58,7 @@ public class UserApiController {
      * GET /api/users/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         log.info("REST request to get user : {}", id);
         try {
@@ -86,7 +86,7 @@ public class UserApiController {
      * GET /api/users/search?query=xyz
      */
     @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<List<UserInfoDTO>> searchUsers(@RequestParam String query) {
         log.info("REST request to search users with query: {}", query);
         try {
@@ -142,7 +142,7 @@ public class UserApiController {
 
 
     @GetMapping("/apis/users/{userId}/groups")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<List<GroupListDTO>> getUserGroups(@PathVariable Long userId) {
         logger.info("REST request to get groups for user: {}", userId);
         try {

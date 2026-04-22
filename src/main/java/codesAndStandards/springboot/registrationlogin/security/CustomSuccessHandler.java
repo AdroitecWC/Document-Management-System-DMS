@@ -19,21 +19,20 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
 
-        Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
+        Set<String> authorities = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
 
-        if (roles.contains("Admin")) {
+        // Now we use the PBAC action to determine if they can view documents.
+        // As long as they have DOCUMENT_VIEW, they can log in.
+        // We still keep the admin check as a fallback.
+        if (authorities.contains("Admin") || authorities.contains("DOCUMENT_VIEW")) {
             response.sendRedirect("/documents");
-        } else if (roles.contains("Manager")) {
+        } else if (authorities.contains("Manager")) {
             response.sendRedirect("/documents");
-        } else if (roles.contains("Viewer")) {
+        } else if (authorities.contains("Viewer")) {
             response.sendRedirect("/documents");
         }
-//        else {
-//            response.sendRedirect("/profile");
-//        }
         else {
             response.sendRedirect("/login?error=unauthorized");
         }
     }
 }
-

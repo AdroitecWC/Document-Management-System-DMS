@@ -16,7 +16,7 @@ public class AccessControlPageController {
      * Display Access Control Management page
      */
     @GetMapping("/access-control")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public String accessControlPage(Model model) {
         log.info("Displaying Access Control Management page");
         return "access-control";

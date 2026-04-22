@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@PreAuthorize("hasAnyAuthority('Admin','Manager','Viewer')")
+@PreAuthorize("hasAuthority('ACTIVITY_LOG_VIEW')")
 public class ActivityLogsController {
 
     @Autowired
