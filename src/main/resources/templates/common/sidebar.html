@@ -18,7 +18,7 @@
             <h6 class="sidebar-section-title text-uppercase text-white-50 mb-3">Library</h6>
             <hr>
             <ul class="nav flex-column">
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('DOCUMENT_VIEW')">
                     <a th:href="@{/documents}" class="nav-link text-white" title="Document Library">
                         <img src="/images/library.png"
                              class="sidebar-icon-image"
@@ -26,7 +26,7 @@
                         <span class="sidebar-text">Document Library</span>
                     </a>
                 </li>
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('BOOKMARK_VIEW')">
                     <a th:href="@{/my-bookmarks}" class="nav-link text-white" title="My Bookmarks">
                         <img src="/images/bookmark_white_fill.png"
                              class="sidebar-icon-image"
@@ -38,11 +38,11 @@
         </div>
 
         <!-- Management Section (Admin & Manager) -->
-        <div class="mb-4" sec:authorize="hasAnyAuthority('Admin', 'Manager')">
+        <div class="mb-4" sec:authorize="hasAnyAuthority('DOCUMENT_UPLOAD', 'TAG_VIEW', 'CLASSIFICATION_VIEW')">
             <h6 class="sidebar-section-title text-uppercase text-white-50 mb-3">Management</h6>
             <hr>
             <ul class="nav flex-column">
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('DOCUMENT_UPLOAD')">
                     <a th:href="@{/upload}" class="nav-link text-white" title="Upload Document">
                         <img src="/images/upload_doc_white_fill.png"
                              class="sidebar-icon-image"
@@ -50,7 +50,7 @@
                         <span class="sidebar-text">Upload Document</span>
                     </a>
                 </li>
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('TAG_VIEW')">
                     <a th:href="@{/tags-management}" class="nav-link text-white" title="Tags Management">
                         <img src="/images/tag_white_fill.png"
                              class="sidebar-icon-image"
@@ -58,7 +58,7 @@
                         <span class="sidebar-text">Tags</span>
                     </a>
                 </li>
-                <li class="nav-item mb-2" id="classification-mgmt-container">
+                <li class="nav-item mb-2" id="classification-mgmt-container" sec:authorize="hasAuthority('CLASSIFICATION_VIEW')">
                     <a th:href="@{/classifications-management}" id="classificationMgmtLink" class="nav-link text-white" title="Classifications Management">
                         <img src="/images/classification_white_fill.png"
                              class="sidebar-icon-image"
@@ -71,11 +71,11 @@
         </div>
 
         <!-- Administration Section (Admin only) -->
-        <div class="mb-4" sec:authorize="hasAuthority('Admin')">
+        <div class="mb-4" sec:authorize="hasAnyAuthority('DOCUMENT_BULK_UPLOAD', 'USER_VIEW', 'GROUP_VIEW', 'METADATA_VIEW', 'ACTIVITY_LOG_VIEW')">
             <h6 class="sidebar-section-title text-uppercase text-white-50 mb-3">Administration</h6>
             <hr>
             <ul class="nav flex-column">
-                <li class="nav-item mb-2" id="bulk-upload-container">
+                <li class="nav-item mb-2" id="bulk-upload-container" sec:authorize="hasAuthority('DOCUMENT_BULK_UPLOAD')">
                     <a th:href="@{/bulk-upload}" id="bulkUploadLink" class="nav-link text-white" title="Bulk Upload Documents">
                         <img src="/images/bulk_upload_white_fill.png"
                              class="sidebar-icon-image"
@@ -84,7 +84,7 @@
                         <span id="edition-badge" class="edition-badge" style="display: none;"></span>
                     </a>
                 </li>
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('USER_VIEW')">
                     <a th:href="@{/users}" class="nav-link text-white" title="User Management">
                         <img src="/images/user_management_white_fill.png"
                              class="sidebar-icon-image"
@@ -92,7 +92,7 @@
                         <span class="sidebar-text">User Management</span>
                     </a>
                 </li>
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('GROUP_VIEW')">
                     <a th:href="@{/access-control}" class="nav-link text-white" title="Access Control">
                         <img src="/images/access_control_white_fill.png"
                              class="sidebar-icon-image"
@@ -100,7 +100,7 @@
                         <span class="sidebar-text">Access Control</span>
                     </a>
                 </li>
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('METADATA_VIEW')">
                     <a th:href="@{/settings}" class="nav-link text-white" title="Settings">
                         <img src="/images/setting_white_fill.png"
                              class="sidebar-icon-image"
@@ -108,7 +108,7 @@
                         <span class="sidebar-text">Settings</span>
                     </a>
                 </li>
-                <li class="nav-item mb-2">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('ACTIVITY_LOG_VIEW')">
                     <a th:href="@{/activity-logs}" class="nav-link text-white" title="Activity Logs">
                         <img src="/images/Activity_logs_white_fill.png"
                              class="sidebar-icon-image"

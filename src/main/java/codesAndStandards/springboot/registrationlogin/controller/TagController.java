@@ -35,6 +35,7 @@ public class TagController {
     private final UserService userService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('TAG_CREATE')")
     public ResponseEntity<TagDto> createTag(@Valid @RequestBody TagDto tagDto) {
         String username = getCurrentUsername();
         try {
@@ -56,6 +57,7 @@ public class TagController {
 
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('TAG_UPDATE')")
     public ResponseEntity<TagDto> updateTag(@PathVariable Long id, @Valid @RequestBody TagDto tagDto) {
         String username = getCurrentUsername();
         try {
@@ -91,6 +93,7 @@ public class TagController {
 
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('TAG_DELETE')")
     public ResponseEntity<Map<String, String>> deleteTag(@PathVariable Long id) {
         String username = getCurrentUsername();
         try {
@@ -132,22 +135,25 @@ public class TagController {
     // 🔹 Remaining methods (unchanged below) -----------------------------------------------------
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     public ResponseEntity<TagDto> getTagById(@PathVariable Long id) {
         return ResponseEntity.ok(tagService.getTagById(id));
     }
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     @GetMapping
     public ResponseEntity<List<TagDto>> getAllTags() {
         return ResponseEntity.ok(tagService.getAllTags());
     }
 
     @GetMapping("/my-tags")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     public ResponseEntity<List<TagDto>> getMyTags() {
         return ResponseEntity.ok(tagService.getTagsByUser(getCurrentUserId()));
     }
 
     @GetMapping("/my-edited-tags")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     public ResponseEntity<List<TagDto>> getMyEditedTags() {
         return ResponseEntity.ok(tagService.getTagsEditedByUser(getCurrentUserId()));
     }
@@ -159,6 +165,7 @@ public class TagController {
      * Returns list of documents with id and title
      */
     @GetMapping("/{id}/documents")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     public ResponseEntity<List<Map<String, Object>>> getDocumentsByTag(@PathVariable Long id) {
         try {
             List<Map<String, Object>> documents = tagService.getDocumentsByTagId(id);
@@ -181,6 +188,7 @@ public class TagController {
      * Example response: ["safety", "quality", "design", "manufacturing"]
      */
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     public ResponseEntity<List<String>> getAllTagNames() {
         try {
             logger.debug("Fetching all tag names for bulk upload");

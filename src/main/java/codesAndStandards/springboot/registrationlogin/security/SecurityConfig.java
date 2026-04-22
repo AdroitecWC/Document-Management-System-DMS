@@ -55,49 +55,51 @@ public class SecurityConfig {
                         // ========================================
 
                         // Bulk upload - Admin only
-                        .requestMatchers("/bulk-upload").hasAuthority("Admin")  // ← ADD THIS LINE
+                        .requestMatchers("/bulk-upload").hasAuthority("DOCUMENT_BULK_UPLOAD")  // ← ADD THIS LINE
                         // Upload endpoint
-                        .requestMatchers("/upload").hasAnyAuthority("Admin", "Manager")
+                        .requestMatchers("/upload").hasAuthority("DOCUMENT_UPLOAD")
 
                         // Document API
                         .requestMatchers(HttpMethod.GET, "/api/documents/**")
-                        .hasAnyAuthority("Admin", "Manager", "User")
+                        .hasAuthority("DOCUMENT_VIEW")
 
                         // User API
                         .requestMatchers(HttpMethod.GET, "/api/users/**")
-                        .hasAnyAuthority("Admin", "Manager")
+                        .hasAuthority("USER_VIEW")
 
                         // Access Groups API
                         .requestMatchers(HttpMethod.GET, "/api/access-groups/**")
-                        .hasAnyAuthority("Admin", "Manager", "User")
+                        .hasAuthority("GROUP_VIEW")
                         .requestMatchers("/api/access-groups/**")
-                        .hasAuthority("Admin")
+                        .hasAuthority("GROUP_UPDATE")
 
                         // Documents pages
-                        .requestMatchers("/documents").hasAnyAuthority("Admin","Manager","Viewer")
-                        .requestMatchers("/documents/**").hasAnyAuthority("Admin","Manager","Viewer")
-                        .requestMatchers("/my-bookmarks").hasAnyAuthority("Admin","Manager","Viewer")
-                        .requestMatchers("/DocViewer").hasAnyAuthority("Admin","Manager","Viewer")
+                        .requestMatchers("/documents").hasAuthority("DOCUMENT_VIEW")
+                        .requestMatchers("/documents/**").hasAuthority("DOCUMENT_VIEW")
+                        .requestMatchers("/my-bookmarks").hasAuthority("BOOKMARK_VIEW")
+                        .requestMatchers("/DocViewer").hasAuthority("DOCUMENT_VIEW")
 
                         // Activity logs - Admin only
-                        .requestMatchers("/activity-logs").hasAuthority("Admin")
+                        .requestMatchers("/activity-logs").hasAuthority("ACTIVITY_LOG_VIEW")
 
                         // Tags and Classifications management
-                        .requestMatchers("/tags-management","/classifications-management").hasAnyAuthority("Admin","Manager")
-                        .requestMatchers("/api/tags/**","/api/classifications/**").hasAnyAuthority("Admin","Manager")
+                        .requestMatchers("/tags-management").hasAuthority("TAG_VIEW")
+                        .requestMatchers("/classifications-management").hasAuthority("CLASSIFICATION_VIEW")
+                        .requestMatchers("/api/tags/**").hasAuthority("TAG_VIEW")
+                        .requestMatchers("/api/classifications/**").hasAuthority("CLASSIFICATION_VIEW")
 
                         // Admin only endpoints
-                        .requestMatchers("/users", "/users/**").hasAuthority("Admin")
-                        .requestMatchers("/add", "/add/**").hasAuthority("Admin")
-                        .requestMatchers("/edit/**").hasAuthority("Admin")
-                        .requestMatchers("/delete/**").hasAuthority("Admin")
+                        .requestMatchers("/users", "/users/**").hasAuthority("USER_VIEW")
+                        .requestMatchers("/add", "/add/**").hasAuthority("USER_CREATE")
+                        .requestMatchers("/edit/**").hasAuthority("USER_UPDATE")
+                        .requestMatchers("/delete/**").hasAuthority("USER_DELETE")
 
                         // Manager endpoints
-                        .requestMatchers("/manager", "/manager/**").hasAuthority("Manager")
-                        .requestMatchers("/manager/documents/**").hasAuthority("Manager")
+                        .requestMatchers("/manager", "/manager/**").hasAuthority("DOCUMENT_UPDATE")
+                        .requestMatchers("/manager/documents/**").hasAuthority("DOCUMENT_UPDATE")
 
                         // Viewer endpoints
-                        .requestMatchers("/viewer", "/viewer/**").hasAuthority("Viewer")
+                        .requestMatchers("/viewer", "/viewer/**").hasAuthority("DOCUMENT_VIEW")
 
                         // Profile accessible by all authenticated users
                         .requestMatchers("/profile", "/profile/**").authenticated()

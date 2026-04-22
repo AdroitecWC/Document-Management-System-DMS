@@ -86,7 +86,7 @@ public class BulkUploadController {
      * Now accepts a list of filenames and their corresponding page counts.
      */
     @PostMapping("/generate-template")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_BULK_UPLOAD')")
     public ResponseEntity<?> generateTemplate(
             @RequestParam(value = "filenames", required = false) List<String> filenames,
             @RequestParam(value = "pageCounts", required = false) List<String> pageCounts) {
@@ -139,7 +139,7 @@ public class BulkUploadController {
      * ✅ WITH LICENSE AND EDITION VALIDATION
      */
     @GetMapping("/download-template")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_BULK_UPLOAD')")
     public ResponseEntity<?> downloadBlankTemplate() {
 
         // ✅ CHECK LICENSE EDITION FIRST
@@ -175,7 +175,7 @@ public class BulkUploadController {
      * ✅ WITH LICENSE AND EDITION VALIDATION
      */
     @PostMapping("/validate")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_BULK_UPLOAD')")
     @ResponseBody
     public ResponseEntity<?> validateBulkUpload(
             @RequestParam(value = "pdfFiles", required = false) MultipartFile[] pdfFiles,
@@ -240,7 +240,7 @@ public class BulkUploadController {
      * ✅ WITH LICENSE AND EDITION VALIDATION
      */
     @PostMapping("/process")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_BULK_UPLOAD')")
     @ResponseBody
     public ResponseEntity<?> processBulkUpload(
             @RequestParam(value = "pdfFiles", required = false) MultipartFile[] pdfFiles,

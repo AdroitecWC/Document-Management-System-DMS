@@ -29,7 +29,7 @@ public class DocumentTypeController {
      * READ-ONLY — all editions
      */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_TYPE_VIEW')")
     public ResponseEntity<?> getAllDocumentTypes() {
         try {
             List<DocumentTypeDto> types = documentTypeService.getAllDocumentTypes();
@@ -46,7 +46,7 @@ public class DocumentTypeController {
      * Used by bulk upload dropdowns
      */
     @GetMapping("/names")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_TYPE_VIEW')")
     public ResponseEntity<List<String>> getAllDocumentTypeNames() {
         try {
             List<DocumentTypeDto> types = documentTypeService.getAllDocumentTypes();
@@ -66,7 +66,7 @@ public class DocumentTypeController {
      * Get document type by ID (with metadata definitions)
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_TYPE_VIEW')")
     public ResponseEntity<?> getDocumentTypeById(@PathVariable Long id) {
         try {
             DocumentTypeDto type = documentTypeService.getDocumentTypeById(id);
@@ -82,7 +82,7 @@ public class DocumentTypeController {
      * Create new document type — Admin only, ED2 only
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')") // Using METADATA_UPDATE for managing structure
     public ResponseEntity<?> createDocumentType(@RequestBody DocumentTypeDto dto) {
         if (!licenseService.isLicenseValid()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -116,7 +116,7 @@ public class DocumentTypeController {
      * Update document type — Admin only, ED2 only
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> updateDocumentType(@PathVariable Long id, @RequestBody DocumentTypeDto dto) {
         if (!licenseService.isLicenseValid()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -147,7 +147,7 @@ public class DocumentTypeController {
      * Delete document type — Admin only, ED2 only
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> deleteDocumentType(@PathVariable Long id) {
         if (!licenseService.isLicenseValid()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
