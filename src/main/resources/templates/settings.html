@@ -834,21 +834,6 @@
                             <!-- END LIVE PREVIEW PANEL -->
 
                         </div><!-- end watermarkConfigSection -->
-
-                        <!-- How Watermarks Work info box -->
-                        <!--                        <div class="watermark-info-box">-->
-                        <!--                            <div class="info-icon"><i class="bi bi-lightbulb-fill"></i></div>-->
-                        <!--                            <div class="info-content">-->
-                        <!--                                <h6 class="mb-2" style="font-weight:600;">How Watermarks Work</h6>-->
-                        <!--                                <ul class="info-list">-->
-                        <!--                                    <li>Applied automatically when users download documents</li>-->
-                        <!--                                    <li>Includes username and download timestamp</li>-->
-                        <!--                                    <li>Changes only affect new downloads</li>-->
-                        <!--                                    <li>Helps track document distribution</li>-->
-                        <!--                                </ul>-->
-                        <!--                            </div>-->
-                        <!--                        </div>-->
-
                         <div class="d-flex gap-3 mt-4">
                             <button type="submit" class="btn btn-save-modern" style="background:#1e3a5f;color:#fff;"><i class="bi bi-check-circle me-2"></i>Save Changes</button>
                             <button type="button" class="btn btn-secondary btn-reset-modern" onclick="loadWatermarkSettings()"><i class="bi bi-arrow-clockwise me-2"></i>Reset</button>
@@ -931,32 +916,18 @@
                         <div class="settings-icon"><i class="bi bi-activity"></i></div>
                         <div>
                             <h3 class="settings-title">Activity Logging</h3>
-                            <p class="settings-subtitle">Configure logging and retention policies</p>
+                            <p class="settings-subtitle">Configure log retention policies</p>
                         </div>
                     </div>
                     <form id="loggingSettingsForm">
-                        <div class="mb-3 p-3 border rounded">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <label class="form-label fw-bold mb-1"><i class="bi bi-journal-check me-2"></i>Enable Activity Logging</label>
-                                    <p class="helper-text mb-0">Track user actions and system events</p>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="activityLoggingEnabled"
-                                           style="width:50px;height:25px;" onchange="toggleLogRetention()">
-                                </div>
-                            </div>
-                        </div>
-                        <div id="logRetentionSection" style="display:none;">
-                            <div class="mb-4 p-3 border rounded" style="background:#f8fafc;border-left:4px solid #667eea !important;">
-                                <label class="form-label fw-bold"><i class="bi bi-calendar-range me-2"></i>Log Retention (days)</label>
-                                <input type="number" class="form-control" id="logRetentionDays" min="10" max="3650" value="90" style="max-width:150px;">
-                                <p class="helper-text mt-2"><i class="bi bi-info-circle me-1"></i>Logs older than this will be automatically deleted (<strong>minimum 10 days</strong>, max 3650 days)</p>
-                            </div>
+                        <div class="mb-4 p-3 border rounded" style="background:#f8fafc;border-left:4px solid #667eea !important;">
+                            <label class="form-label fw-bold"><i class="bi bi-calendar-range me-2"></i>Log Retention (days)</label>
+                            <input type="number" class="form-control" id="logRetentionDays" min="10" max="3650" value="90" style="max-width:150px;">
+                            <p class="helper-text mt-2"><i class="bi bi-info-circle me-1"></i>Logs older than this will be automatically deleted (<strong>minimum 10 days</strong>, max 3650 days)</p>
                         </div>
                         <div class="alert alert-info d-flex align-items-start" role="alert">
                             <i class="bi bi-lightbulb me-3" style="font-size:1.5rem;"></i>
-                            <div><strong>Note:</strong> Disabling activity logging will stop recording new user actions. Existing logs will be preserved.</div>
+                            <div><strong>Note:</strong> Activity logging is always enabled. All user actions and system events are tracked automatically.</div>
                         </div>
                         <div class="d-flex gap-3 mt-4">
                             <button type="submit" class="btn btn-save" style="background:#1e3a5f;color:#fff;"><i class="bi bi-check-circle me-2"></i>Save Changes</button>
@@ -1428,28 +1399,27 @@ document.addEventListener('keydown', function(e) {
         });
 
         document.getElementById('loggingSettingsForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const enabled      = document.getElementById('activityLoggingEnabled').checked;
-            const retentionInput = document.getElementById('logRetentionDays');
-            const retentionVal = parseInt(retentionInput.value);
-            if (enabled && (isNaN(retentionVal) || retentionVal < 10)) {
-                showAlert('danger', 'Log retention must be at least 10 days.');
-                retentionInput.value = 10;
-                return;
-            }
-            const payload = {
-                activityLoggingEnabled: enabled,
-                logRetentionDays: enabled ? retentionVal : null
-            };
-            showLoading(true);
-            fetch(contextPath + 'api/settings/logging', {
-                method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-            }).then(r => r.json()).then(data => {
-                if (data.success) { showAlert('success', 'Activity logging settings saved!'); loadLoggingSettings(); }
-                else throw new Error(data.error);
-                showLoading(false);
-            }).catch(err => { showAlert('danger', 'Failed to save: ' + err.message); showLoading(false); });
-        });
+    e.preventDefault();
+    const retentionInput = document.getElementById('logRetentionDays');
+    const retentionVal = parseInt(retentionInput.value);
+    if (isNaN(retentionVal) || retentionVal < 10) {
+        showAlert('danger', 'Log retention must be at least 10 days.');
+        retentionInput.value = 10;
+        return;
+    }
+    const payload = {
+        activityLoggingEnabled: true,
+        logRetentionDays: retentionVal
+    };
+    showLoading(true);
+    fetch(contextPath + 'api/settings/logging', {
+        method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+    }).then(r => r.json()).then(data => {
+        if (data.success) { showAlert('success', 'Log retention settings saved!'); loadLoggingSettings(); }
+        else throw new Error(data.error);
+        showLoading(false);
+    }).catch(err => { showAlert('danger', 'Failed to save: ' + err.message); showLoading(false); });
+});
 
         document.querySelectorAll('.settings-menu-item').forEach(item => {
             item.addEventListener('click', function(e) {
@@ -1861,15 +1831,13 @@ document.addEventListener('keydown', function(e) {
     }
 
     function loadLoggingSettings() {
-        showLoading(true);
-        fetch(contextPath + 'api/settings/logging').then(r => r.json()).then(data => {
-            document.getElementById('activityLoggingEnabled').checked = data.activityLoggingEnabled || false;
-            const days = Math.max(10, data.logRetentionDays || 90);
-            document.getElementById('logRetentionDays').value = days;
-            toggleLogRetention();
-            showLoading(false);
-        }).catch(() => { showAlert('danger', 'Failed to load logging settings'); showLoading(false); });
-    }
+    showLoading(true);
+    fetch(contextPath + 'api/settings/logging').then(r => r.json()).then(data => {
+        const days = Math.max(10, data.logRetentionDays || 90);
+        document.getElementById('logRetentionDays').value = days;
+        showLoading(false);
+    }).catch(() => { showAlert('danger', 'Failed to load logging settings'); showLoading(false); });
+}
 
     // ==================== BULK DELETE ====================
     function openBulkDeleteModal(type) {
