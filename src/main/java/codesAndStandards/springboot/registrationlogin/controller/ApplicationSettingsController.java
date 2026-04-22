@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/settings")
-@PreAuthorize("hasAuthority('Admin')")
+@PreAuthorize("hasAuthority('METADATA_VIEW')")
 public class ApplicationSettingsController {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationSettingsController.class);
@@ -323,7 +323,7 @@ public class ApplicationSettingsController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     @GetMapping("/max-tags-per-document")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getMaxTagsPerDocument() {

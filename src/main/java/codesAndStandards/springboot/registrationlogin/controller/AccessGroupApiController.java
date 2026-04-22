@@ -25,7 +25,7 @@ public class AccessGroupApiController {
     private final GroupService groupService;
     private final LicenseService licenseService;
     @GetMapping("/edition-permissions")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public ResponseEntity<Map<String, Object>> getEditionPermissions() {
         log.info("Getting edition permissions for group management");
 
@@ -86,7 +86,7 @@ public class AccessGroupApiController {
      * GET /api/access-groups
      */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public ResponseEntity<List<GroupListDTO>> getAllGroups() {
         log.info("REST request to get all groups");
         try {
@@ -103,7 +103,7 @@ public class AccessGroupApiController {
      * GET /api/access-groups/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public ResponseEntity<?> getGroupById(@PathVariable Long id) {
         log.info("REST request to get group : {}", id);
         try {
@@ -128,7 +128,7 @@ public class AccessGroupApiController {
      * Only Admin can create groups
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('GROUP_CREATE')")
     public ResponseEntity<?> createGroup(@RequestBody GroupRequestDTO requestDTO) {
         log.info("REST request to create group : {}", requestDTO.getGroupName());
         try {
@@ -153,7 +153,7 @@ public class AccessGroupApiController {
      * Only Admin can update groups
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('GROUP_UPDATE')")
     public ResponseEntity<?> updateGroup(
             @PathVariable Long id,
             @RequestBody GroupRequestDTO requestDTO) {
@@ -212,7 +212,7 @@ public class AccessGroupApiController {
      * Only Admin can delete groups
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('GROUP_DELETE')")
     public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
         log.info("REST request to delete group : {}", id);
         try {
@@ -238,7 +238,7 @@ public class AccessGroupApiController {
      * GET /api/access-groups/by-document/{documentId}
      */
     @GetMapping("/by-document/{documentId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public ResponseEntity<List<GroupListDTO>> getGroupsByDocument(@PathVariable Long documentId) {
         log.info("REST request to get groups for document : {}", documentId);
         try {
@@ -255,7 +255,7 @@ public class AccessGroupApiController {
      * GET /api/access-groups/by-user/{userId}
      */
     @GetMapping("/by-user/{userId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public ResponseEntity<List<GroupListDTO>> getGroupsByUser(@PathVariable Long userId) {
         log.info("REST request to get groups for user : {}", userId);
         try {
@@ -272,7 +272,7 @@ public class AccessGroupApiController {
      * GET /api/access-groups/check-access?userId={userId}&documentId={documentId}
      */
     @GetMapping("/check-access")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public ResponseEntity<AccessCheckDTO> checkAccess(
             @RequestParam Long userId,
             @RequestParam Long documentId) {
@@ -291,7 +291,7 @@ public class AccessGroupApiController {
      * GET /api/access-groups/accessible-documents/{userId}
      */
     @GetMapping("/accessible-documents/{userId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('GROUP_VIEW')")
     public ResponseEntity<List<Long>> getAccessibleDocuments(@PathVariable Long userId) {
         log.info("REST request to get accessible documents for user : {}", userId);
         try {
@@ -308,7 +308,7 @@ public class AccessGroupApiController {
      * POST /api/access-groups/{groupId}/documents/{documentId}
      */
     @PostMapping("/{groupId}/documents/{documentId}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('GROUP_UPDATE')")
     public ResponseEntity<?> addDocumentToGroup(
             @PathVariable Long groupId,
             @PathVariable Long documentId) {
@@ -335,7 +335,7 @@ public class AccessGroupApiController {
      * DELETE /api/access-groups/{groupId}/documents/{documentId}
      */
     @DeleteMapping("/{groupId}/documents/{documentId}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('GROUP_UPDATE')")
     public ResponseEntity<?> removeDocumentFromGroup(
             @PathVariable Long groupId,
             @PathVariable Long documentId) {
@@ -358,7 +358,7 @@ public class AccessGroupApiController {
      * POST /api/access-groups/{groupId}/users/{userId}
      */
     @PostMapping("/{groupId}/users/{userId}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('GROUP_UPDATE')")
     public ResponseEntity<?> addUserToGroup(
             @PathVariable Long groupId,
             @PathVariable Long userId) {
@@ -385,7 +385,7 @@ public class AccessGroupApiController {
      * DELETE /api/access-groups/{groupId}/users/{userId}
      */
     @DeleteMapping("/{groupId}/users/{userId}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('GROUP_UPDATE')")
     public ResponseEntity<?> removeUserFromGroup(
             @PathVariable Long groupId,
             @PathVariable Long userId) {

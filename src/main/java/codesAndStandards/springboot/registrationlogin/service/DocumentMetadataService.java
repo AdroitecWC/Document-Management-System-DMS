@@ -27,6 +27,7 @@ public class DocumentMetadataService {
     /**
      * Get all metadata values for a document
      */
+    @Transactional(readOnly = true)
     public List<DocumentMetadataDto> getMetadataByDocumentId(Long documentId) {
         return documentMetadataRepository.findByDocumentDocumentId(documentId)
                 .stream()
@@ -37,6 +38,7 @@ public class DocumentMetadataService {
     /**
      * Get a single document metadata entry by ID
      */
+    @Transactional(readOnly = true)
     public DocumentMetadataDto getById(Long id) {
         DocumentMetadata entity = documentMetadataRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document metadata not found with ID: " + id));

@@ -162,7 +162,7 @@ public class AuthController {
     // ================== ADMIN ONLY ==================  -AJ
 
     // User Management -AJ
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     @GetMapping("/users")
     public String users(Model model) {
         List<UserDto> users = userService.findAllUsers();
@@ -234,7 +234,7 @@ public class AuthController {
 
 
     // FIXED in users.html for adding new user by admin -AJ
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('USER_CREATE')")
     @PostMapping("/add/save")
     public String addUser(@Valid @ModelAttribute("user") UserDto userDto,
                           BindingResult result,
@@ -389,7 +389,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     @PostMapping("/edit/{id}")
     public String updateUserById(@Valid @ModelAttribute("user") UserDto updatedUserDto,
                                  BindingResult result,
@@ -458,9 +458,9 @@ public class AuthController {
             UserDto currentUser = userService.findUserById(id);
             if (currentUser == null) {
                 activityLogService.logByUsername(
-                        adminUsername,
-                        ActivityLogService.USER_EDIT_FAILED,
-                        "Failed to edit user: User not found with ID " + id
+                    adminUsername,
+                    ActivityLogService.USER_EDIT_FAILED,
+                    "Failed to edit user: User not found with ID " + id
                 );
 
                 redirectAttributes.addFlashAttribute("error", "User not found");
@@ -524,7 +524,7 @@ public class AuthController {
 // private List<Long> parseGroupIdsFromString(String groupIds) { ... }
 
     //Editing user details(only by admin) -AJ
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     @GetMapping("/edit/{id}")
     public String editUser(@PathVariable Long id, Model model) {
         UserDto user = userService.findUserById(id);
@@ -694,7 +694,7 @@ public class AuthController {
     }
 
     //Admin can delete any users(even other admins) but not himself -AJ
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('USER_DELETE')")
     @GetMapping("/delete/{id}")
     public String deleteUser(@PathVariable Long id,
                              Principal principal,
@@ -805,7 +805,7 @@ public class AuthController {
 
 
     //Page you get after logging in as a Manager -AJ
-    @PreAuthorize("hasAuthority('Manager')")
+    @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
     @GetMapping("/manager")
     public String managerPage(Model model, Principal principal) {
         User user = userService.findUserByUsername(principal.getName());
@@ -831,7 +831,7 @@ public class AuthController {
     }
 
     // Load upload page: Uploading new document, admin and manager both have permission for this -AJ
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_UPLOAD')")
     @GetMapping("/upload")
     public String showUploadForm(Model model) {
         model.addAttribute("document", new DocumentDto());
@@ -855,7 +855,7 @@ public class AuthController {
         return "upload";
     }
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_UPLOAD')")
     @PostMapping("/upload")
     public String uploadDocument(@Valid @ModelAttribute("document") DocumentDto documentDto,
                                  BindingResult result,
@@ -1067,14 +1067,14 @@ public class AuthController {
     }
 
     //From here it will navigate to TagController -AJ
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('TAG_VIEW')")
     @GetMapping("/tags-management")
     public String tagsManagement() {
         return "tags-management";
     }
 
     //From here it will navigate to ClassificationController -AJ
-    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
+    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
     @GetMapping("/classifications-management")
     public String classificationsManagement() {
         return "classifications-management";
@@ -1084,7 +1084,7 @@ public class AuthController {
     // ================== DOCUMENT LIST - SHOW ALL DOCUMENTS ==================
 //    private final DocumentService documentService;
     //DOCUMENT LIBRARY: Show all the uploaded document -AJ
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin', 'Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents")
     public String listDocuments(Model model, Principal principal) {
 
@@ -1120,7 +1120,7 @@ public class AuthController {
 
 
     // Editing only the metadata's of the document -AJ
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
     @GetMapping("/document/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
         DocumentDto document = documentService.findDocumentById(id);
@@ -1158,7 +1158,7 @@ public class AuthController {
 
     //Tags can be created while updating document also and that will also be stored in Tags table -AJ
     //Tags can be created while updating document also and that will also be stored in Tags table -AJ
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
     @PostMapping("/document/edit/{id}")
     public String updateDocument(@PathVariable("id") Long id,
                                  @Valid @ModelAttribute("document") DocumentDto documentDto,
@@ -1339,7 +1339,7 @@ public class AuthController {
     }
 
     //Deleting any document -AJ
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_DELETE')")
     @GetMapping("/documents/delete/{id}")
     public String deleteDocument(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
         String username = principal != null ? principal.getName() : "Unknown";
@@ -1392,7 +1392,7 @@ public class AuthController {
     // METHOD 1: viewDocument  (inline serving — used by direct URL access)---L
     // Change: detect MediaType from file extension instead of hardcoding PDF
     // ─────────────────────────────────────────────────────────────────────────
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/DocView/{id}")
     public ResponseEntity<Resource> viewDocument(@PathVariable Long id) {
         try {
@@ -1428,7 +1428,7 @@ public class AuthController {
     @Autowired
     private DocumentConversionService documentConversionService;
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/DocViewer-view/{id}")
     public ResponseEntity<byte[]> viewDocumentForViewer(@PathVariable Long id, Principal principal) {
         try {
@@ -1514,7 +1514,7 @@ public class AuthController {
     @Autowired
     private AccessControlLogicRepository accessControlLogicRepository;  // Add this
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/DocViewer")
     public String showPdfViewer(@RequestParam Long id, Model model, Principal principal) {
         logger.info("===== VIEWER METHOD CALLED =====");
@@ -1565,7 +1565,7 @@ public class AuthController {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/info/{id}")
     public ResponseEntity<?> getDocumentInfo(@PathVariable Long id, Principal principal) {
         try {
@@ -1602,7 +1602,7 @@ public class AuthController {
     // Change: detect content type, apply PDF watermark only to PDFs;
     //         for other types download as-is with watermark filename prefix
     // ─────────────────────────────────────────────────────────────────────────
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_DOWNLOAD')")
     @GetMapping("/documents/download/{id}")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id, Principal principal) {
         String username = principal != null ? principal.getName() : "Unknown";
@@ -1704,7 +1704,7 @@ public class AuthController {
     @Autowired
     private BookmarkService bookmarkService;
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('BOOKMARK_VIEW')")
     @GetMapping("/my-bookmarks")
     public String showBookmarksPage(Principal principal) {
 //        User user = userService.findUserByUsername(principal.getName());
@@ -1714,7 +1714,7 @@ public class AuthController {
 // ================== BOOKMARK ENDPOINTS ==================
 
     //Only complete document can be bookmarked. It is not based on the any specific page in document -AJ
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('BOOKMARK_CREATE')")
     @PostMapping("/documents/bookmark/{id}")
     public ResponseEntity<?> saveBookmark(@PathVariable Long id,
 //                                          @RequestParam int page,
@@ -1757,7 +1757,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('BOOKMARK_VIEW')")
     @GetMapping("/documents/bookmarks/{id}")
     public ResponseEntity<?> getDocumentBookmarks(@PathVariable Long id, Principal principal) {
         try {
@@ -1783,7 +1783,7 @@ public class AuthController {
         return ResponseEntity.ok(isBookmarked);
     }
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('BOOKMARK_DELETE')")
     @DeleteMapping("/bookmarks/document/{documentId}")
     public ResponseEntity<String> deleteBookmarkByDocument(
             @PathVariable Long documentId,
@@ -1815,7 +1815,7 @@ public class AuthController {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('BOOKMARK_DELETE')")
     @DeleteMapping("/bookmarks/{id}")
     public ResponseEntity<String> deleteBookmark(@PathVariable Long id) {
         try {
@@ -1827,7 +1827,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin','Viewer')")
+    @PreAuthorize("hasAuthority('BOOKMARK_VIEW')")
     @GetMapping("/bookmarks")
     public ResponseEntity<?> getAllUserBookmarks(Principal principal) {
         try {
@@ -1844,7 +1844,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('Manager', 'Admin', 'Viewer')")
+    @PreAuthorize("hasAuthority('BOOKMARK_EDIT')")
     @PutMapping("/bookmarks/{id}")
     public ResponseEntity<?> updateBookmarkName(@PathVariable Long id,
                                                 @RequestBody Map<String, String> payload) {

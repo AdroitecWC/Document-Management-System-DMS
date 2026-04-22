@@ -37,7 +37,7 @@ public class MetadataDefinitionController {
      * READ-ONLY — all editions
      */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getAllMetadataDefinitions() {
         try {
             List<MetadataDefinitionDto> definitions = metadataDefinitionService.getAllMetadataDefinitions();
@@ -53,7 +53,7 @@ public class MetadataDefinitionController {
      * Get metadata definition by ID
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             MetadataDefinitionDto dto = metadataDefinitionService.getById(id);
@@ -69,7 +69,7 @@ public class MetadataDefinitionController {
      * Returns definitions with mandatory flag from the join table
      */
     @GetMapping("/by-doc-type/{docTypeId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getByDocumentType(@PathVariable Long docTypeId) {
         try {
             List<MetadataDefinitionDto> definitions = metadataDefinitionService.getByDocumentTypeId(docTypeId);
@@ -85,7 +85,7 @@ public class MetadataDefinitionController {
      * Get mandatory metadata definitions for a specific document type
      */
     @GetMapping("/mandatory/{docTypeId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getMandatoryByDocumentType(@PathVariable Long docTypeId) {
         try {
             List<MetadataDefinitionDto> definitions = metadataDefinitionService.getMandatoryByDocumentTypeId(docTypeId);
@@ -101,7 +101,7 @@ public class MetadataDefinitionController {
      * Create new metadata definition — Admin only, ED2 only
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_CREATE')")
     public ResponseEntity<?> create(@RequestBody MetadataDefinitionDto dto) {
         if (!licenseService.isLicenseValid()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -139,7 +139,7 @@ public class MetadataDefinitionController {
      * Update metadata definition — Admin only, ED2 only
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody MetadataDefinitionDto dto) {
         if (!licenseService.isLicenseValid()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -170,7 +170,7 @@ public class MetadataDefinitionController {
      * Delete metadata definition — Admin only, ED2 only
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_DELETE')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         if (!licenseService.isLicenseValid()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -201,7 +201,7 @@ public class MetadataDefinitionController {
      * Body: { "docTypeId": 1, "metadataId": 2, "mandatory": true }
      */
     @PostMapping("/link")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_LINK')")
     public ResponseEntity<?> linkToDocumentType(@RequestBody DocumentTypeMetadataDto dto) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -251,7 +251,7 @@ public class MetadataDefinitionController {
      * DELETE /api/metadata-definitions/unlink?docTypeId=1&metadataId=2
      */
     @DeleteMapping("/unlink")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_LINK')")
     public ResponseEntity<?> unlinkFromDocumentType(
             @RequestParam Long docTypeId,
             @RequestParam Long metadataId) {

@@ -53,7 +53,7 @@ public class DocumentApiController {
      * Uses the SAME access logic as the document library
      */
     @GetMapping("/{id}/check-access")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<Map<String, Object>> checkDocumentAccess(@PathVariable Long id) {
         log.info("=== BOOKMARK ACCESS CHECK (Using Document Library Logic) ===");
         log.info("Document ID: {}", id);
@@ -143,7 +143,7 @@ public class DocumentApiController {
      * ✅ WITH LICENSE VALIDATION
      */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     @Transactional
     public ResponseEntity<?> getAllDocuments() {
         log.info("REST request to get documents (filtered by group access)");
@@ -184,7 +184,7 @@ public class DocumentApiController {
      * ✅ WITH LICENSE VALIDATION
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<?> getDocumentById(@PathVariable Long id) {
         log.info("REST request to get document : {}", id);
 
@@ -222,7 +222,7 @@ public class DocumentApiController {
      * ✅ WITH LICENSE VALIDATION
      */
     @GetMapping("/search")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<?> searchDocuments(@RequestParam String query) {
         log.info("REST request to search documents with query: {}", query);
 
@@ -261,7 +261,7 @@ public class DocumentApiController {
      * ✅ WITH LICENSE VALIDATION
      */
     @PostMapping("/upload")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('DOCUMENT_UPLOAD')")
     public ResponseEntity<?> uploadDocument(
             @ModelAttribute DocumentDto documentDto,
             @RequestParam("file") MultipartFile file,
@@ -298,7 +298,7 @@ public class DocumentApiController {
      * ✅ WITH LICENSE VALIDATION
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
     public ResponseEntity<?> updateDocument(
             @PathVariable Long id,
             @ModelAttribute DocumentDto documentDto,
@@ -336,7 +336,7 @@ public class DocumentApiController {
      * ✅ WITH LICENSE VALIDATION
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('DOCUMENT_DELETE')")
     public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
         log.info("REST request to delete document: {}", id);
 
@@ -366,7 +366,7 @@ public class DocumentApiController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @PostMapping("/bulk-upload")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('DOCUMENT_BULK_UPLOAD')")
     public ResponseEntity<?> bulkUpload(
             @RequestParam("files") MultipartFile[] files,
             @RequestParam(value = "groupIds", required = false) String groupIds) {
@@ -463,7 +463,7 @@ public class DocumentApiController {
      * GET /api/documents/license-test
      */
     @GetMapping("/license-test")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'User')")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<?> testLicense() {
         Map<String, Object> response = new HashMap<>();
         response.put("licenseValid", licenseService.isLicenseValid());

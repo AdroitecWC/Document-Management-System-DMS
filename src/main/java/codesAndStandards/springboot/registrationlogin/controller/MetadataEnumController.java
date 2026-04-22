@@ -27,7 +27,7 @@ public class MetadataEnumController {
      * GET /api/metadata-enums/by-metadata/{metadataId}
      */
     @GetMapping("/by-metadata/{metadataId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getEnumValues(@PathVariable Long metadataId) {
         try {
             List<MetadataEnumDto> values = metadataEnumService.getEnumValuesByMetadataId(metadataId);
@@ -44,7 +44,7 @@ public class MetadataEnumController {
      * GET /api/metadata-enums/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(metadataEnumService.getById(id));
@@ -58,7 +58,7 @@ public class MetadataEnumController {
      * POST /api/metadata-enums
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> addEnumValue(@RequestBody MetadataEnumDto dto) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -84,7 +84,7 @@ public class MetadataEnumController {
      * PUT /api/metadata-enums/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> updateEnumValue(@PathVariable Long id, @RequestBody MetadataEnumDto dto) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -110,7 +110,7 @@ public class MetadataEnumController {
      * DELETE /api/metadata-enums/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> deleteEnumValue(@PathVariable Long id) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

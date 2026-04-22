@@ -27,7 +27,7 @@ public class DocumentMetadataController {
      * GET /api/document-metadata/by-document/{documentId}
      */
     @GetMapping("/by-document/{documentId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getByDocument(@PathVariable Long documentId) {
         try {
             List<DocumentMetadataDto> metadata = documentMetadataService.getMetadataByDocumentId(documentId);
@@ -44,7 +44,7 @@ public class DocumentMetadataController {
      * GET /api/document-metadata/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager', 'Viewer')")
+    @PreAuthorize("hasAuthority('METADATA_VIEW')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(documentMetadataService.getById(id));
@@ -59,7 +59,7 @@ public class DocumentMetadataController {
      * Body: { "documentId": 1, "metadataId": 2, "value": "some value" }
      */
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> saveOrUpdate(@RequestBody DocumentMetadataDto dto) {
         try {
             DocumentMetadataDto saved = documentMetadataService.saveOrUpdate(dto);
@@ -81,7 +81,7 @@ public class DocumentMetadataController {
      * Body: [{ "metadataId": 1, "value": "val1" }, { "metadataId": 2, "value": "val2" }]
      */
     @PostMapping("/bulk/{documentId}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
     public ResponseEntity<?> saveBulk(@PathVariable Long documentId, @RequestBody List<DocumentMetadataDto> metadataList) {
         try {
             List<DocumentMetadataDto> saved = documentMetadataService.saveAll(documentId, metadataList);
@@ -100,7 +100,7 @@ public class DocumentMetadataController {
      * DELETE /api/document-metadata/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('Admin', 'Manager')")
+    @PreAuthorize("hasAuthority('METADATA_DELETE')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             documentMetadataService.delete(id);
@@ -119,7 +119,7 @@ public class DocumentMetadataController {
      * DELETE /api/document-metadata/by-document/{documentId}
      */
     @DeleteMapping("/by-document/{documentId}")
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAuthority('METADATA_DELETE')")
     public ResponseEntity<?> deleteAllByDocument(@PathVariable Long documentId) {
         try {
             documentMetadataService.deleteAllByDocumentId(documentId);
