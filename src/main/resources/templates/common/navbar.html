@@ -50,8 +50,11 @@
                 </div>
                 <div class="text-start">
                     <div style="font-size: 0.9rem;" sec:authentication="name"></div>
-                    <div style="font-size: 0.75rem; opacity: 0.8;"
-                         th:text="${#authentication.principal.authorities.iterator().next().authority}">
+                    <div style="font-size: 0.75rem; opacity: 0.8;">
+                        <span th:each="authority : ${#authentication.principal.authorities}"
+                              th:if="${authority.authority.startsWith('ROLE_')}"
+                              th:text="${#strings.replace(authority.authority, 'ROLE_', '')}">
+                        </span>
                     </div>
                 </div>
             </button>
