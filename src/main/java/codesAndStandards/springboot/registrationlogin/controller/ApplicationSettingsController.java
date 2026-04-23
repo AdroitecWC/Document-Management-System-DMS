@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/settings")
-@PreAuthorize("hasAuthority('METADATA_VIEW')")
+@PreAuthorize("hasAuthority('SETTINGS_VIEW')")
 public class ApplicationSettingsController {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationSettingsController.class);

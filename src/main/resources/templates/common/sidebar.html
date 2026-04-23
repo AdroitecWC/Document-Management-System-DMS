@@ -71,7 +71,7 @@
         </div>
 
         <!-- Administration Section (Admin only) -->
-        <div class="mb-4" sec:authorize="hasAnyAuthority('DOCUMENT_BULK_UPLOAD', 'USER_VIEW', 'GROUP_VIEW', 'METADATA_VIEW', 'ACTIVITY_LOG_VIEW')">
+        <div class="mb-4" sec:authorize="hasAnyAuthority('DOCUMENT_BULK_UPLOAD', 'USER_VIEW', 'GROUP_VIEW', 'Admin', 'ACTIVITY_LOG_VIEW')">
             <h6 class="sidebar-section-title text-uppercase text-white-50 mb-3">Administration</h6>
             <hr>
             <ul class="nav flex-column">
@@ -100,7 +100,7 @@
                         <span class="sidebar-text">Access Control</span>
                     </a>
                 </li>
-                <li class="nav-item mb-2" sec:authorize="hasAuthority('METADATA_VIEW')">
+                <li class="nav-item mb-2" sec:authorize="hasAuthority('SETTINGS_VIEW')">
                     <a th:href="@{/settings}" class="nav-link text-white" title="Settings">
                         <img src="/images/setting_white_fill.png"
                              class="sidebar-icon-image"
