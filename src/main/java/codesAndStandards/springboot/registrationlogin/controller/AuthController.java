@@ -1069,14 +1069,18 @@ public class AuthController {
     //From here it will navigate to TagController -AJ
     @PreAuthorize("hasAuthority('TAG_VIEW')")
     @GetMapping("/tags-management")
-    public String tagsManagement() {
+    public String tagsManagement(Model model, Principal principal) {
+        User user = userRepository.findByUsername(principal.getName());
+        model.addAttribute("userRole", user.getRole().getRoleName());
         return "tags-management";
     }
 
     //From here it will navigate to ClassificationController -AJ
     @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
     @GetMapping("/classifications-management")
-    public String classificationsManagement() {
+    public String classificationsManagement(Model model, Principal principal) {
+        User user = userRepository.findByUsername(principal.getName());
+        model.addAttribute("userRole", user.getRole().getRoleName());
         return "classifications-management";
     }
 
