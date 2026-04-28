@@ -16,6 +16,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 import java.util.HashMap;
 import java.util.List;
@@ -92,6 +97,40 @@ public class ActivityLogsController {
         model.addAttribute("hasValidLicense", hasValidLicense);
 
         return "activity-logs";
+    }
+
+    /**
+     * Get current user's recent activity logs (today) for notification bell
+     * GET /api/notifications/recent
+     */
+    @GetMapping("/api/notifications/recent")
+    @ResponseBody
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getMyRecentNotifications() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth.getName();
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                return ResponseEntity.ok(List.of());
+            }
+
+            LocalDateTime since = LocalDate.now().atStartOfDay();
+            List<ActivityLog> logs = activityLogService.getRecentByUserId(user.getUserId(), since);
+
+            List<Map<String, Object>> result = logs.stream().map(log -> {
+                Map<String, Object> item = new HashMap<>();
+                item.put("logId", log.getLogId());
+                item.put("action", log.getAction());
+                item.put("details", log.getDetails());
+                item.put("timestamp", log.getTimestamp().toString());
+                return item;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.ok(List.of());
+        }
     }
 
     @GetMapping("/apis/users/{userId}")

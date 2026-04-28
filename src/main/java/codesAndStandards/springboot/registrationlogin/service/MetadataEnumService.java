@@ -24,6 +24,7 @@ public class MetadataEnumService {
     /**
      * Get all enum values for a metadata definition
      */
+    @Transactional
     public List<MetadataEnumDto> getEnumValuesByMetadataId(Long metadataId) {
         return metadataEnumRepository.findByMetadataDefinitionMetadataId(metadataId)
                 .stream()
@@ -34,6 +35,7 @@ public class MetadataEnumService {
     /**
      * Get a single enum value by ID
      */
+    @Transactional
     public MetadataEnumDto getById(Long id) {
         MetadataEnum entity = metadataEnumRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Metadata enum value not found with ID: " + id));
@@ -99,6 +101,26 @@ public class MetadataEnumService {
         MetadataEnum saved = metadataEnumRepository.save(entity);
         log.info("Updated enum value ID {} to '{}'", id, saved.getValue());
         return toDto(saved);
+    }
+    @Transactional
+    public List<MetadataEnumDto> replaceAll(Long metadataId, List<String> values) {
+        MetadataDefinition definition = metadataDefinitionRepository.findById(metadataId)
+                .orElseThrow(() -> new RuntimeException("Metadata definition not found: " + metadataId));
+
+        metadataEnumRepository.deleteByMetadataDefinitionMetadataId(metadataId);
+        metadataEnumRepository.flush();
+
+        List<MetadataEnum> entities = values.stream()
+                .filter(v -> v != null && !v.trim().isEmpty())
+                .map(v -> MetadataEnum.builder()
+                        .metadataDefinition(definition)
+                        .value(v.trim())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<MetadataEnum> saved = metadataEnumRepository.saveAll(entities);
+        log.info("Replaced enum values for metadata ID {} — {} values", metadataId, saved.size());
+        return saved.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -33,23 +34,20 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Invalid username or password.");
         }
 
-        // Trim whitespace and use exact role name from DB
-        String roleName = user.getRole().getRoleName().trim();
-
-        System.out.println("User: " + username + " has role: " + roleName); // debug
-
         List<GrantedAuthority> authorities = new ArrayList<>();
-        // Add the role itself as an authority, maybe prefixed with ROLE_ if needed, but keeping existing logic:
-        authorities.add(new SimpleGrantedAuthority(roleName));
 
-        // Fetch permissions for the user's role
+        // Add the role with "ROLE_" prefix as per Spring Security convention
+        String roleName = user.getRole().getRoleName().trim();
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName)); // Removed toUpperCase()
+        System.out.println("User: " + username + " has role: ROLE_" + roleName); // debug
+
+        // Fetch and add permissions (actions) for the user's role
         List<Permission> permissions = permissionRepository.findByRole(user.getRole());
         for (Permission permission : permissions) {
             String actionName = permission.getAction().getActionName().trim();
             authorities.add(new SimpleGrantedAuthority(actionName));
             System.out.println("User: " + username + " has action permission: " + actionName); // debug
         }
-
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())

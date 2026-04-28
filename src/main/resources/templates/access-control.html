@@ -674,7 +674,7 @@
 </head>
 <body>
 <!-- Hidden input to store user role from Thymeleaf -->
-<input type="hidden" id="userRole" th:value="${#authentication.principal.authorities.iterator().next().authority}">
+<input type="hidden" id="userRole" th:value="${userRole}">
 <input type="hidden" id="userName" th:value="${#authentication.name}">
 
 <!-- Include Top Navbar -->

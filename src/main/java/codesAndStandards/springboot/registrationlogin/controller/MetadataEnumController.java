@@ -58,7 +58,7 @@ public class MetadataEnumController {
      * POST /api/metadata-enums
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
+    @PreAuthorize("hasAuthority('METADATA_ENUM_CREATE')")
     public ResponseEntity<?> addEnumValue(@RequestBody MetadataEnumDto dto) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -84,7 +84,7 @@ public class MetadataEnumController {
      * PUT /api/metadata-enums/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
+    @PreAuthorize("hasAuthority('METADATA_ENUM_CREATE')")
     public ResponseEntity<?> updateEnumValue(@PathVariable Long id, @RequestBody MetadataEnumDto dto) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -104,13 +104,35 @@ public class MetadataEnumController {
                     .body(Map.of("error", "Failed to update enum value: " + e.getMessage()));
         }
     }
-
+    /**
+     * Replace all enum values for a metadata field
+     * PUT /api/metadata-enums/by-metadata/{metadataId}
+     * Body: ["Value1", "Value2", "Value3"]
+     */
+    @PutMapping("/by-metadata/{metadataId}")
+    @PreAuthorize("hasAuthority('METADATA_ENUM_CREATE')")
+    public ResponseEntity<?> replaceAll(@PathVariable Long metadataId, @RequestBody List<String> values) {
+        if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Requires valid ED2 license"));
+        }
+        try {
+            List<MetadataEnumDto> saved = metadataEnumService.replaceAll(metadataId, values);
+            return ResponseEntity.ok(saved);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error saving enum values for metadata {}", metadataId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to save enum values"));
+        }
+    }
     /**
      * Delete an enum value — Admin only, ED2 only
      * DELETE /api/metadata-enums/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('METADATA_UPDATE')")
+    @PreAuthorize("hasAuthority('METADATA_ENUM_DELETE')")
     public ResponseEntity<?> deleteEnumValue(@PathVariable Long id) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
  * Admin-only access
  */
 @Controller
-@PreAuthorize("hasAuthority('METADATA_VIEW')") // Changed from 'Admin' to 'METADATA_VIEW'
+@PreAuthorize("hasAuthority('SETTINGS_VIEW')") // Changed from 'Admin' to 'METADATA_VIEW'
 public class SettingsPageController {
 
     private static final Logger logger = LoggerFactory.getLogger(SettingsPageController.class);
