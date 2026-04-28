@@ -31,4 +31,13 @@ public interface MetadataDefinitionRepository extends JpaRepository<MetadataDefi
             "JOIN DocumentTypeMetadata dtm ON md.metadataId = dtm.metadataDefinition.metadataId " +
             "WHERE dtm.documentType.docTypeId = :docTypeId AND dtm.mandatory = true")
     List<MetadataDefinition> findMandatoryByDocumentTypeId(@Param("docTypeId") Long docTypeId);
+
+    /**
+     * Fetch metadata definitions WITH their mandatory flag for a specific doc type.
+     * Returns Object[] with [MetadataDefinition, Boolean mandatory]
+     */
+    @Query("SELECT md, dtm.mandatory FROM MetadataDefinition md " +
+            "JOIN DocumentTypeMetadata dtm ON md.metadataId = dtm.metadataDefinition.metadataId " +
+            "WHERE dtm.documentType.docTypeId = :docTypeId")
+    List<Object[]> findByDocumentTypeIdWithMandatory(@Param("docTypeId") Long docTypeId);
 }
