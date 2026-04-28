@@ -36,8 +36,17 @@ public class MetadataDefinitionService {
 
     @Transactional(readOnly = true)
     public List<MetadataDefinitionDto> getByDocumentTypeId(Long docTypeId) {
-        return metadataDefinitionRepository.findByDocumentTypeId(docTypeId).stream()
-                .map(this::mapToDto)
+        return metadataDefinitionRepository.findByDocumentTypeIdWithMandatory(docTypeId).stream()
+                .map(row -> {
+                    MetadataDefinition md = (MetadataDefinition) row[0];
+                    Boolean mandatory = (Boolean) row[1];
+                    return MetadataDefinitionDto.builder()
+                            .metadataId(md.getMetadataId())
+                            .fieldName(md.getFieldName())
+                            .fieldType(md.getFieldType())
+                            .mandatory(mandatory != null ? mandatory : false)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -74,7 +83,7 @@ public class MetadataDefinitionService {
         }
 
         md.setFieldName(dto.getFieldName());
-        md.setFieldType(dto.getFieldType());
+        // fieldType intentionally NOT updated — type is immutable after creation
 
         MetadataDefinition updated = metadataDefinitionRepository.save(md);
         return mapToDto(updated);

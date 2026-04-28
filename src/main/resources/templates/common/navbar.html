@@ -18,6 +18,63 @@
             }
         })();
     </script>
+    <style>
+        .notification-bell { position: relative; cursor: pointer; }
+        .notification-badge {
+            position: absolute; top: -4px; right: -4px;
+            background: #ef4444; color: white; font-size: 10px; font-weight: 700;
+            min-width: 18px; height: 18px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 4px; border: 2px solid #1e3a5f;
+        }
+        .notification-badge.hidden { display: none; }
+        .notification-panel {
+            display: none; position: absolute; top: 100%; right: 0;
+            width: 380px; max-height: 480px; background: white;
+            border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            z-index: 9999; overflow: hidden; margin-top: 8px;
+        }
+        .notification-panel.show { display: flex; flex-direction: column; }
+        .notification-panel-header {
+            padding: 16px 20px; background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .notification-panel-header h6 { margin: 0; font-size: 15px; font-weight: 700; color: #1e3a5f; }
+        .notification-mark-read {
+            font-size: 12px; color: #667eea; cursor: pointer;
+            font-weight: 600; border: none; background: none; padding: 4px 8px; border-radius: 4px;
+        }
+        .notification-mark-read:hover { background: #eef2ff; }
+        .notification-list {
+            overflow-y: auto; max-height: 380px; flex: 1;
+        }
+        .notification-list::-webkit-scrollbar { width: 5px; }
+        .notification-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        .notification-item {
+            display: flex; gap: 12px; padding: 14px 20px;
+            border-bottom: 1px solid #f3f4f6; transition: background 0.2s; cursor: default;
+        }
+        .notification-item:hover { background: #f9fafb; }
+        .notification-item.unread { background: #eff6ff; }
+        .notification-item.unread:hover { background: #dbeafe; }
+        .notification-icon-circle {
+            width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 15px;
+        }
+        .notification-icon-circle.success { background: #d1fae5; color: #059669; }
+        .notification-icon-circle.danger { background: #fee2e2; color: #dc2626; }
+        .notification-icon-circle.info { background: #dbeafe; color: #2563eb; }
+        .notification-icon-circle.warning { background: #fef3c7; color: #d97706; }
+        .notification-content { flex: 1; min-width: 0; }
+        .notification-text { font-size: 13px; color: #374151; line-height: 1.4; margin: 0; }
+        .notification-text strong { color: #1e3a5f; }
+        .notification-time { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+        .notification-empty {
+            padding: 40px 20px; text-align: center; color: #9ca3af;
+        }
+        .notification-empty i { font-size: 36px; margin-bottom: 10px; display: block; color: #d1d5db; }
+    </style>
 
     <div class="container-fluid d-flex align-items-center">
         <!-- Left side: Toggle + Logo -->
@@ -39,6 +96,30 @@
                  style="width: 35px; height: 35px; object-fit: contain; margin-right: 0px;"
                  alt="Document Library Icon"> Document Management System
         </span>
+
+        <!-- Right side: Notifications + Profile dropdown -->
+        <div class="d-flex align-items-center gap-2">
+            <!-- Notification Bell -->
+            <div class="notification-bell" id="notificationBell" onclick="toggleNotificationPanel(event)" style="position:relative;">
+                <button class="btn btn-outline-light" style="border:none;font-size:20px;padding:6px 10px;" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                </button>
+                <span class="notification-badge hidden" id="notifBadge">0</span>
+                <div class="notification-panel" id="notifPanel">
+                    <div class="notification-panel-header">
+                        <h6><i class="bi bi-bell me-2"></i>Notifications</h6>
+                        <button class="notification-mark-read" onclick="markAllNotificationsRead(event)">Mark all read</button>
+                    </div>
+                    <div class="notification-list" id="notifList">
+                        <div class="notification-empty">
+                            <i class="bi bi-bell-slash"></i>
+                            <p>No notifications today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
 
         <!-- Right side: Profile dropdown -->
         <div class="dropdown">
@@ -65,6 +146,7 @@
             </ul>
         </div>
     </div>
+        </div>
 </nav>
 
 <!-- JavaScript for Sidebar Toggle -->
@@ -130,7 +212,120 @@
                 link.classList.add('active');
             }
         });
+   });
+
+    // ==================== NOTIFICATION BELL ====================
+    const NOTIF_READ_KEY = 'notif_read_ids_' + new Date().toISOString().slice(0, 10);
+    let notifData = [];
+
+    function getReadIds() {
+        try { return JSON.parse(sessionStorage.getItem(NOTIF_READ_KEY) || '[]'); } catch(e) { return []; }
+    }
+
+    function saveReadIds(ids) {
+        sessionStorage.setItem(NOTIF_READ_KEY, JSON.stringify(ids));
+    }
+
+    function fetchNotifications() {
+        fetch('/api/notifications/recent')
+            .then(r => r.ok ? r.json() : [])
+            .then(data => {
+                notifData = data || [];
+                renderNotifications();
+            })
+            .catch(() => {});
+    }
+
+    function renderNotifications() {
+        const list = document.getElementById('notifList');
+        const badge = document.getElementById('notifBadge');
+        if (!list || !badge) return;
+
+        const readIds = getReadIds();
+        const unreadCount = notifData.filter(n => !readIds.includes(n.logId)).length;
+
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
+        if (notifData.length === 0) {
+            list.innerHTML = '<div class="notification-empty"><i class="bi bi-bell-slash"></i><p>No notifications today</p></div>';
+            return;
+        }
+
+        list.innerHTML = notifData.slice(0, 50).map(n => {
+            const isUnread = !readIds.includes(n.logId);
+            const meta = getActionMeta(n.action);
+            const timeAgo = formatTimeAgo(n.timestamp);
+            return `<div class="notification-item ${isUnread ? 'unread' : ''}">
+                <div class="notification-icon-circle ${meta.color}"><i class="bi ${meta.icon}"></i></div>
+                <div class="notification-content">
+                    <p class="notification-text"><strong>${meta.label}</strong> — ${escapeHtmlNotif(n.details || '')}</p>
+                    <div class="notification-time"><i class="bi bi-clock me-1"></i>${timeAgo}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function getActionMeta(action) {
+        if (!action) return { icon: 'bi-info-circle', color: 'info', label: 'Activity' };
+        const a = action.toUpperCase();
+        if (a.includes('FAILED') || a.includes('FAIL')) return { icon: 'bi-x-circle', color: 'danger', label: formatAction(action) };
+        if (a.includes('DELETE') || a.includes('BULK'))  return { icon: 'bi-trash', color: 'warning', label: formatAction(action) };
+        if (a.includes('LOGIN'))                          return { icon: 'bi-box-arrow-in-right', color: 'info', label: 'Login' };
+        if (a.includes('LOGOUT'))                         return { icon: 'bi-box-arrow-right', color: 'info', label: 'Logout' };
+        if (a.includes('UPLOAD'))                         return { icon: 'bi-cloud-arrow-up', color: 'success', label: 'Upload' };
+        if (a.includes('DOWNLOAD'))                       return { icon: 'bi-download', color: 'info', label: 'Download' };
+        if (a.includes('EDIT') || a.includes('UPDATE'))   return { icon: 'bi-pencil', color: 'info', label: formatAction(action) };
+        if (a.includes('CREATE') || a.includes('ADD'))    return { icon: 'bi-plus-circle', color: 'success', label: formatAction(action) };
+        if (a.includes('SETTINGS'))                       return { icon: 'bi-gear', color: 'info', label: 'Settings' };
+        return { icon: 'bi-activity', color: 'info', label: formatAction(action) };
+    }
+
+    function formatAction(action) {
+        return action.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/\bFailed\b/i, 'Failed');
+    }
+
+    function formatTimeAgo(timestamp) {
+        const diff = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function escapeHtmlNotif(s) {
+        const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+    }
+
+    function toggleNotificationPanel(e) {
+        e.stopPropagation();
+        const panel = document.getElementById('notifPanel');
+        panel.classList.toggle('show');
+    }
+
+    function markAllNotificationsRead(e) {
+        e.stopPropagation();
+        const allIds = notifData.map(n => n.logId);
+        saveReadIds(allIds);
+        renderNotifications();
+    }
+
+    // Close panel when clicking outside
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('notifPanel');
+        const bell = document.getElementById('notificationBell');
+        if (panel && bell && !bell.contains(e.target)) {
+            panel.classList.remove('show');
+        }
     });
-</script>
+
+    // Fetch on load + refresh every 30 seconds
+    fetchNotifications();
+    setInterval(fetchNotifications, 30000);
+</script>z
 </body>
 </html>

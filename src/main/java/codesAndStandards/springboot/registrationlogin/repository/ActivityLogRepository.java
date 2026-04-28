@@ -38,4 +38,7 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     // Count failed logs (any action ending with '_FAILED')
     @Query("SELECT COUNT(a) FROM ActivityLog a WHERE a.action LIKE '%_FAILED'")
     Long countFailedLogs();
+
+    @Query("SELECT al FROM ActivityLog al WHERE al.user.userId = :userId AND al.timestamp >= :since ORDER BY al.timestamp DESC")
+    List<ActivityLog> findRecentByUserId(@Param("userId") Long userId, @Param("since") LocalDateTime since);
 }

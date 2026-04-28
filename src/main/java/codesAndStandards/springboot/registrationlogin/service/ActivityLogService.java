@@ -153,6 +153,10 @@ public class ActivityLogService {
         }
     }
 
+    public List<ActivityLog> getRecentByUserId(Long userId, LocalDateTime since) {
+        return activityLogRepository.findRecentByUserId(userId, since);
+    }
+
     @Scheduled(cron = "0 0 2 * * ?")
     @Transactional
     public void deleteOldLogs() {
