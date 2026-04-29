@@ -3,6 +3,7 @@ package codesAndStandards.springboot.registrationlogin.controller;
 import codesAndStandards.springboot.registrationlogin.dto.UserDto;
 import codesAndStandards.springboot.registrationlogin.entity.ActivityLog;
 import codesAndStandards.springboot.registrationlogin.entity.User;
+import codesAndStandards.springboot.registrationlogin.entity.Role; // Import Role
 import codesAndStandards.springboot.registrationlogin.repository.UserRepository;
 import codesAndStandards.springboot.registrationlogin.service.ActivityLogService;
 import codesAndStandards.springboot.registrationlogin.service.UserService;
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@PreAuthorize("hasAuthority('ACTIVITY_LOG_VIEW')")
+@PreAuthorize("hasRole('superadmin') or hasAuthority('ACTIVITY_LOG_VIEW')")
 public class ActivityLogsController {
 
     @Autowired
@@ -50,15 +51,29 @@ public class ActivityLogsController {
         // Get all logs
         List<ActivityLog> logs = activityLogService.getAllLogs();
 
-        // Get user details for each log
+        // Get user details for each log, handling superadmin (userId = 0L)
         Map<Long, User> userMap = new HashMap<>();
         for (ActivityLog log : logs) {
             if (log.getUser() != null) {
                 Long userId = log.getUser().getUserId();
-                if (!userMap.containsKey(userId)) {
-                    User user = userRepository.findById(userId).orElse(null);
-                    userMap.put(userId, user);
+                if (userId != null) { // Ensure userId is not null
+                    if (userId == 0L) { // Handle superadmin
+                        User superadminUser = new User();
+                        superadminUser.setUserId(0L);
+                        superadminUser.setUsername("adroitec");
+                        Role superadminRole = new Role();
+                        superadminRole.setRoleName("superadmin");
+                        superadminUser.setRole(superadminRole);
+                        userMap.put(0L, superadminUser);
+                    } else if (!userMap.containsKey(userId)) {
+                        User user = userRepository.findById(userId).orElse(null);
+                        userMap.put(userId, user);
+                    }
                 }
+            } else {
+                // If log.getUser() is null, it might be a system action or an old log entry
+                // For now, we'll just skip it or handle it as an unknown user.
+                // If superadmin actions are logged with null user, this needs adjustment.
             }
         }
 
@@ -138,6 +153,16 @@ public class ActivityLogsController {
     public ResponseEntity<?> getUserDetails(@PathVariable Long userId) {
         try {
             System.out.println("API called - Fetching user with ID: " + userId);
+            // Handle superadmin (userId = 0L) for API calls as well
+            if (userId == 0L) {
+                UserDto superadminDto = new UserDto();
+                superadminDto.setId(0L); // Corrected from setUserId to setId
+                superadminDto.setUsername("superadmin"); // Corrected username
+                superadminDto.setRoleName("superadmin");
+                superadminDto.setEmail("superadmin@example.com"); // Placeholder email
+                return ResponseEntity.ok(superadminDto);
+            }
+
             UserDto userDTO = userService.findUserById(userId);
             if (userDTO == null) {
                 System.out.println("User not found with ID: " + userId);

@@ -1,4 +1,4 @@
-package codesAndStandards.springboot.registrationlogin.controller;
+package  codesAndStandards.springboot.registrationlogin.controller;
 
 import codesAndStandards.springboot.registrationlogin.dto.DocumentVersionDto;
 import codesAndStandards.springboot.registrationlogin.service.DocumentVersionService;
@@ -31,7 +31,7 @@ public class DocumentVersionController {
      * GET /api/document-versions/by-document/{documentId}
      */
     @GetMapping("/by-document/{documentId}")
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<?> getVersionsByDocument(@PathVariable Long documentId) {
         try {
             List<DocumentVersionDto> versions = documentVersionService.getVersionsByDocumentId(documentId);
@@ -48,7 +48,7 @@ public class DocumentVersionController {
      * GET /api/document-versions/latest/{documentId}
      */
     @GetMapping("/latest/{documentId}")
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<?> getLatestVersion(@PathVariable Long documentId) {
         try {
             DocumentVersionDto version = documentVersionService.getLatestVersion(documentId);
@@ -64,7 +64,7 @@ public class DocumentVersionController {
      * GET /api/document-versions/{versionId}
      */
     @GetMapping("/{versionId}")
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<?> getVersionById(@PathVariable Long versionId) {
         try {
             DocumentVersionDto version = documentVersionService.getVersionById(versionId);
@@ -80,7 +80,7 @@ public class DocumentVersionController {
      * GET /api/document-versions/{versionId}/download
      */
     @GetMapping("/{versionId}/download")
-    @PreAuthorize("hasAuthority('DOCUMENT_DOWNLOAD')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_DOWNLOAD')")
     public ResponseEntity<?> downloadVersion(@PathVariable Long versionId) {
         try {
             if (!licenseService.isLicenseValid()) {
@@ -123,7 +123,7 @@ public class DocumentVersionController {
      * GET /api/document-versions/{versionId}/view
      */
     @GetMapping("/{versionId}/view")
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<?> viewVersion(@PathVariable Long versionId) {
         try {
             DocumentVersionDto version = documentVersionService.getVersionById(versionId);
@@ -156,7 +156,7 @@ public class DocumentVersionController {
      * DELETE /api/document-versions/{versionId}
      */
     @DeleteMapping("/{versionId}")
-    @PreAuthorize("hasAuthority('DOCUMENT_DELETE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_DELETE')")
     public ResponseEntity<?> deleteVersion(@PathVariable Long versionId) {
         if (!licenseService.isLicenseValid()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

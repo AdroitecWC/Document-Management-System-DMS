@@ -32,7 +32,7 @@ public class PdfConvertController {
     @Autowired private DocumentService    documentService;
     @Autowired private NetworkFileService networkFileService;
 
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/pdf-convert/{id}")
     public ResponseEntity<?> convertToPdf(@PathVariable Long id) {
         File tempDir    = null;
