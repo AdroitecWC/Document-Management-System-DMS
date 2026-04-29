@@ -1436,23 +1436,48 @@ window.addEventListener('load', function() {
             }
 
             container.innerHTML = '';
-            metadataDefs.forEach(def => {
+            for (const def of metadataDefs) {
                 const formGroup = document.createElement('div');
                 formGroup.className = 'form-group';
 
                 const requiredIndicator = def.mandatory ? '<span class="required-indicator">*</span>' : '';
-                const inputType = def.fieldType.toLowerCase() === 'date' ? 'date' : 'text';
+                const fieldType = (def.fieldType || 'text').toLowerCase();
 
-                formGroup.innerHTML = `
-                    <label for="meta_${def.fieldName}" class="form-label">
-                        ${def.fieldName} ${requiredIndicator}
-                    </label>
-                    <input type="${inputType}" class="form-control dynamic-meta-field" id="meta_${def.fieldName}"
-                           data-field-name="${def.fieldName}" data-is-mandatory="${def.mandatory}"
-                           placeholder="Enter ${def.fieldName}">
-                `;
+                if (fieldType === 'dropdown') {
+                    // Fetch enum values and render <select>
+                    let options = '<option value="">Select ' + def.fieldName + '</option>';
+                    try {
+                        const enumRes = await fetch('/api/metadata-enums/by-metadata/' + def.metadataId);
+                        if (enumRes.ok) {
+                            const enumValues = await enumRes.json();
+                            enumValues.forEach(e => {
+                                options += '<option value="' + e.value + '">' + e.value + '</option>';
+                            });
+                        }
+                    } catch (err) { console.error('Error loading enum values for ' + def.fieldName, err); }
+
+                    formGroup.innerHTML = `
+                        <label for="meta_${def.fieldName}" class="form-label">
+                            ${def.fieldName} ${requiredIndicator}
+                        </label>
+                        <select class="form-control dynamic-meta-field" id="meta_${def.fieldName}"
+                                data-field-name="${def.fieldName}" data-is-mandatory="${def.mandatory}">
+                            ${options}
+                        </select>
+                    `;
+                } else {
+                    const inputType = fieldType === 'date' ? 'date' : 'text';
+                    formGroup.innerHTML = `
+                        <label for="meta_${def.fieldName}" class="form-label">
+                            ${def.fieldName} ${requiredIndicator}
+                        </label>
+                        <input type="${inputType}" class="form-control dynamic-meta-field" id="meta_${def.fieldName}"
+                               data-field-name="${def.fieldName}" data-is-mandatory="${def.mandatory}"
+                               placeholder="Enter ${def.fieldName}">
+                    `;
+                }
                 container.appendChild(formGroup);
-            });
+            }
         } catch (error) {
             console.error('Error fetching metadata:', error);
             container.innerHTML = '<div class="empty-state" style="color: #ef4444;">Error loading metadata fields.</div>';

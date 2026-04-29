@@ -1230,13 +1230,27 @@
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">Field Type <span class="text-danger">*</span></label>
-            <select class="form-control" id="metadataTypeField">
+            <select class="form-control" id="metadataTypeField" onchange="toggleEnumSection()">
                 <option value="text">Text</option>
                 <option value="number">Number</option>
                 <option value="date">Date</option>
                 <option value="textarea">Textarea</option>
                 <option value="dropdown">Dropdown</option>
             </select>
+        </div>
+        <!-- Dropdown enum values section -->
+        <div id="enumValuesSection" style="display:none;">
+            <label class="form-label fw-bold"><i class="bi bi-list-ul me-1"></i>Dropdown Values <span class="text-danger">*</span></label>
+            <p class="text-muted mb-2" style="font-size:13px;">Add the options that will appear in this dropdown field.</p>
+            <div class="d-flex gap-2 mb-3">
+                <input type="text" class="form-control" id="enumValueInput" placeholder="Type a value and press Add">
+                <button type="button" class="btn btn-sm fw-bold" style="background:#1e3a5f;color:white;white-space:nowrap;" onclick="addEnumValue()">
+                    <i class="bi bi-plus-circle me-1"></i>Add
+                </button>
+            </div>
+            <div id="enumValuesList" style="max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px;">
+                <div class="text-center text-muted py-2" style="font-size:13px;">No values added yet</div>
+            </div>
         </div>
     </div>
     <div class="modal-footer">
@@ -1246,7 +1260,6 @@
         </button>
     </div>
 </div>
-
 <!-- ==================== DELETE CONFIRM MODAL (shared for DocType + Metadata) ==================== -->
 <div class="custom-modal" id="genericDeleteModal">
     <div class="modal-header bg-danger text-white">
@@ -1427,6 +1440,10 @@ document.addEventListener('keydown', function(e) {
                 switchSection(this.getAttribute('data-section'));
             });
         });
+        // Enter key adds enum value
+    document.getElementById('enumValueInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); addEnumValue(); }
+    });
     });
    function positionFullscreenToMainContent() {
     const modal = document.getElementById('wmFullscreenModal');
@@ -2105,12 +2122,27 @@ async function saveDocType() {
 }
 
 function confirmDeleteDocType(id, name) {
-    document.getElementById('genericDeleteText').textContent = `Delete document type "${name}"?`;
+    const docType = (allDocTypes || []).find(dt => dt.docTypeId === id || dt.docTypeId === parseInt(id));
+    const fieldCount = docType ? (docType.metadataFieldIds || docType.metadataDefinitions || []).length : 0;
+
+    let bodyHtml = `<p class="fw-bold">Delete document type "<strong>${escapeHtml(name)}</strong>"?</p>`;
+    bodyHtml += `
+        <div class="mt-3 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">
+            <p style="color:#991b1b;font-size:13px;margin-bottom:6px;"><i class="bi bi-exclamation-triangle-fill me-1"></i><strong>This will permanently:</strong></p>
+            <ul style="color:#991b1b;font-size:13px;margin:0;padding-left:18px;">
+                <li>Remove this document type from the system</li>
+                ${fieldCount > 0 ? `<li>Unassign <strong>${fieldCount} metadata field(s)</strong> from this type</li>` : ''}
+                <li>Affect all documents currently tagged with this type</li>
+            </ul>
+        </div>
+        <p class="text-danger mt-3 mb-0" style="font-size:13px;"><i class="bi bi-info-circle me-1"></i>This action cannot be undone.</p>`;
+
+    document.getElementById('genericDeleteText').innerHTML = bodyHtml;
     document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
         closeSettingsModal('genericDeleteModal');
         showLoading(true);
         try {
-            const r = await fetch(contextPath + 'api/document-types/' + id, { method:'DELETE' });
+            const r = await fetch(contextPath + 'api/document-types/' + id, { method: 'DELETE' });
             if (!r.ok) throw new Error(await r.text());
             showAlert('success', 'Deleted');
             loadDocTypes();
@@ -2124,8 +2156,12 @@ function confirmDeleteDocType(id, name) {
 async function loadMetadataFields() {
     showLoading(true);
     try {
-        const r = await fetch(contextPath + 'api/metadata-definitions');
-        allMetadataFields = await r.json();
+        const [metaRes, typesRes] = await Promise.all([
+            fetch(contextPath + 'api/metadata-definitions'),
+            fetch(contextPath + 'api/document-types')
+        ]);
+        allMetadataFields = await metaRes.json();
+        allDocTypes = await typesRes.json();
         renderMetadataList();
     } catch (e) {
         showAlert('danger', 'Failed to load metadata fields');
@@ -2139,17 +2175,34 @@ function renderMetadataList() {
         return;
     }
     const typeColors = { text:'#3b82f6', number:'#16a34a', date:'#a855f7', textarea:'#ec4899', dropdown:'#f59e0b' };
+
     container.innerHTML = allMetadataFields.map(f => {
         const color = typeColors[(f.fieldType||'').toLowerCase()] || '#6b7280';
+
+        // Find doc types using this field
+        const usingDocTypes = (allDocTypes || []).filter(dt =>
+            (dt.metadataFieldIds || []).includes(f.metadataId) ||
+            (dt.metadataDefinitions || []).some(m => m.metadataId === f.metadataId)
+        );
+        const docTypeBadges = usingDocTypes.length > 0
+            ? usingDocTypes.map(dt => `<span class="badge me-1" style="background:#eef2ff;color:#1e3a5f;font-size:10px;">${escapeHtml(dt.docTypeName)}</span>`).join('')
+            : `<span style="color:#9ca3af;font-size:11px;">Not assigned to any document type</span>`;
+
         return `
         <div class="col-md-6">
             <div class="border rounded p-3 h-100" style="border:1px solid #e5e7eb !important;">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="fw-bold mb-2">${escapeHtml(f.fieldName)}</h6>
-                        <span class="badge" style="background:${color}20;color:${color};font-size:11px;">${escapeHtml(f.fieldType)}</span>
+                        <span class="badge mb-2" style="background:${color}20;color:${color};font-size:11px;">${escapeHtml(f.fieldType)}</span>
+                        <div class="mt-2">
+                            <span style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;">
+                                <i class="bi bi-diagram-3 me-1"></i>Used in:
+                            </span>
+                            <div class="mt-1">${docTypeBadges}</div>
+                        </div>
                     </div>
-                    <div>
+                    <div class="ms-2 d-flex flex-column gap-1">
                         <button class="btn btn-sm" style="color:#3b82f6;" onclick="openMetadataModal(${f.metadataId})" title="Edit"><i class="bi bi-pencil"></i></button>
                         <button class="btn btn-sm" style="color:#dc2626;" onclick="confirmDeleteMetadata(${f.metadataId}, '${escapeHtml(f.fieldName).replace(/'/g,"\\'")}')" title="Delete"><i class="bi bi-trash"></i></button>
                     </div>
@@ -2159,6 +2212,8 @@ function renderMetadataList() {
     }).join('');
 }
 
+let enumValues = []; // holds current dropdown values
+
 async function openMetadataModal(metadataId) {
     document.getElementById('metadataIdField').value = metadataId || '';
     document.getElementById('metadataModalTitle').innerHTML = metadataId
@@ -2166,15 +2221,118 @@ async function openMetadataModal(metadataId) {
         : '<i class="bi bi-database me-2"></i>Add Metadata Field';
 
     let existing = { fieldName:'', fieldType:'text' };
+    enumValues = [];
+
     if (metadataId) {
         try {
             const r = await fetch(contextPath + 'api/metadata-definitions/' + metadataId);
             existing = await r.json();
         } catch (e) {}
+
+        // Load existing enum values if type is dropdown
+        if ((existing.fieldType || '').toLowerCase() === 'dropdown') {
+            try {
+                const er = await fetch(contextPath + 'api/metadata-enums/by-metadata/' + metadataId);
+                const enumData = await er.json();
+                enumValues = enumData.map(e => e.value);
+            } catch (e) {}
+        }
     }
+
     document.getElementById('metadataNameField').value = existing.fieldName || '';
     document.getElementById('metadataTypeField').value = (existing.fieldType || 'text').toLowerCase();
+
+    // ADD THIS:
+document.getElementById('metadataTypeField').disabled = !!metadataId;
+    document.getElementById('enumValueInput').value = '';
+    toggleEnumSection();
+    renderEnumValues();
     openSettingsModal('metadataModal');
+}
+
+function toggleEnumSection() {
+    const type = document.getElementById('metadataTypeField').value;
+    document.getElementById('enumValuesSection').style.display = (type === 'dropdown') ? 'block' : 'none';
+}
+
+function addEnumValue() {
+    const input = document.getElementById('enumValueInput');
+    const val = input.value.trim();
+    if (!val) return;
+    if (enumValues.includes(val)) {
+        showAlert('danger', 'This value already exists');
+        return;
+    }
+    enumValues.push(val);
+    input.value = '';
+    input.focus();
+    renderEnumValues();
+}
+
+function removeEnumValue(index) {
+    enumValues.splice(index, 1);
+    renderEnumValues();
+}
+
+function renderEnumValues() {
+    const container = document.getElementById('enumValuesList');
+    if (enumValues.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-2" style="font-size:13px;">No values added yet</div>';
+        return;
+    }
+    container.innerHTML = enumValues.map((val, i) => `
+        <div class="d-flex align-items-center justify-content-between p-2 ${i < enumValues.length - 1 ? 'border-bottom' : ''}" id="enumRow_${i}">
+            <div class="d-flex align-items-center gap-2 flex-grow-1">
+                <span class="badge" style="background:#eef2ff;color:#1e3a5f;font-size:11px;flex-shrink:0;">${i + 1}</span>
+                <span class="enum-value-label"
+                      style="font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-grow:1;"
+                      title="Click to rename"
+                      onclick="startEnumRename(${i}, this)">
+                    ${escapeHtml(val)}
+                </span>
+            </div>
+            <button class="btn btn-sm p-0 ms-2" style="color:#dc2626;flex-shrink:0;" onclick="removeEnumValue(${i})" title="Remove">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function startEnumRename(index, labelEl) {
+    const currentVal = enumValues[index];
+    const row = document.getElementById('enumRow_' + index);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentVal;
+    input.className = 'form-control form-control-sm';
+    input.style.cssText = 'font-size:14px;padding:2px 8px;flex-grow:1;';
+    input.setAttribute('data-index', index);
+
+    labelEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    function commit() {
+        const newVal = input.value.trim();
+        if (!newVal) {
+            renderEnumValues(); // revert
+            return;
+        }
+        if (newVal !== currentVal && enumValues.includes(newVal)) {
+            showAlert('danger', `"${newVal}" already exists in the list.`);
+            input.focus();
+            return;
+        }
+        enumValues[index] = newVal;
+        renderEnumValues();
+    }
+
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') { e.preventDefault(); renderEnumValues(); }
+    });
 }
 
 async function saveMetadataField() {
@@ -2182,6 +2340,10 @@ async function saveMetadataField() {
     const name = document.getElementById('metadataNameField').value.trim();
     const type = document.getElementById('metadataTypeField').value;
     if (!name) { showAlert('danger', 'Field name is required'); return; }
+    if (type === 'dropdown' && enumValues.length === 0) {
+        showAlert('danger', 'Please add at least one dropdown value');
+        return;
+    }
 
     const payload = { fieldName: name, fieldType: type };
     const url = id ? (contextPath + 'api/metadata-definitions/' + id) : (contextPath + 'api/metadata-definitions');
@@ -2190,6 +2352,18 @@ async function saveMetadataField() {
     try {
         const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
         if (!r.ok) throw new Error(await r.text());
+        const savedField = await r.json();
+        const savedId = id || savedField.metadataId;
+
+        // Save enum values if dropdown
+        if (type === 'dropdown' && savedId) {
+            await fetch(contextPath + 'api/metadata-enums/by-metadata/' + savedId, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(enumValues)
+            });
+        }
+
         showAlert('success', 'Metadata field saved!');
         closeSettingsModal('metadataModal');
         loadMetadataFields();
@@ -2198,12 +2372,40 @@ async function saveMetadataField() {
 }
 
 function confirmDeleteMetadata(id, name) {
-    document.getElementById('genericDeleteText').textContent = `Delete metadata field "${name}"?`;
+    // Ensure allDocTypes is loaded
+    const usingDocTypes = (allDocTypes || []).filter(dt =>
+        (dt.metadataFieldIds || []).includes(id) ||
+        (dt.metadataDefinitions || []).some(m => m.metadataId === id)
+    );
+
+    let bodyHtml = `<p class="fw-bold">Delete metadata field "<strong>${escapeHtml(name)}</strong>"?</p>`;
+
+    if (usingDocTypes.length > 0) {
+        const names = usingDocTypes.map(dt => `<span class="badge" style="background:#fee2e2;color:#dc2626;margin:2px;">${escapeHtml(dt.docTypeName)}</span>`).join(' ');
+        bodyHtml += `
+            <div class="mt-3 p-3 rounded" style="background:#fff7ed;border:1px solid #fed7aa;">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b;font-size:18px;"></i>
+                    <strong style="color:#92400e;">Used in ${usingDocTypes.length} document type(s)</strong>
+                </div>
+                <p style="color:#92400e;font-size:13px;margin-bottom:8px;">This field will be <strong>removed</strong> from:</p>
+                <div>${names}</div>
+                <p style="color:#92400e;font-size:12px;margin-top:8px;margin-bottom:0;">
+                    All existing document values for this field will also be <strong>permanently lost</strong>.
+                </p>
+            </div>`;
+    } else {
+        bodyHtml += `<p class="text-muted mt-2" style="font-size:13px;">This field is not assigned to any document type.</p>`;
+    }
+
+    bodyHtml += `<p class="text-danger mt-3 mb-0" style="font-size:13px;"><i class="bi bi-info-circle me-1"></i>This action cannot be undone.</p>`;
+
+    document.getElementById('genericDeleteText').innerHTML = bodyHtml;
     document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
         closeSettingsModal('genericDeleteModal');
         showLoading(true);
         try {
-            const r = await fetch(contextPath + 'api/metadata-definitions/' + id, { method:'DELETE' });
+            const r = await fetch(contextPath + 'api/metadata-definitions/' + id, { method: 'DELETE' });
             if (!r.ok) throw new Error(await r.text());
             showAlert('success', 'Deleted');
             loadMetadataFields();
