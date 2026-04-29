@@ -37,7 +37,7 @@ public class PandocHtmlController {
     @Autowired private DocumentService    documentService;
     @Autowired private NetworkFileService networkFileService;
 
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/pandoc-preview/{id}")
     public ResponseEntity<?> pandocPreview(@PathVariable Long id) {
         File tempDir   = null;

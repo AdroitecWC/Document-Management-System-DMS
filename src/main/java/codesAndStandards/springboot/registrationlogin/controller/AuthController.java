@@ -162,7 +162,7 @@ public class AuthController {
     // ================== ADMIN ONLY ==================  -AJ
 
     // User Management -AJ
-    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_VIEW')")
     @GetMapping("/users")
     public String users(Model model) {
         List<UserDto> users = userService.findAllUsers();
@@ -234,7 +234,7 @@ public class AuthController {
 
 
     // FIXED in users.html for adding new user by admin -AJ
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_CREATE')")
     @PostMapping("/add/save")
     public String addUser(@Valid @ModelAttribute("user") UserDto userDto,
                           BindingResult result,
@@ -389,7 +389,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAuthority('USER_UPDATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_UPDATE')")
     @PostMapping("/edit/{id}")
     public String updateUserById(@Valid @ModelAttribute("user") UserDto updatedUserDto,
                                  BindingResult result,
@@ -524,7 +524,7 @@ public class AuthController {
 // private List<Long> parseGroupIdsFromString(String groupIds) { ... }
 
     //Editing user details(only by admin) -AJ
-    @PreAuthorize("hasAuthority('USER_UPDATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_UPDATE')")
     @GetMapping("/edit/{id}")
     public String editUser(@PathVariable Long id, Model model) {
         UserDto user = userService.findUserById(id);
@@ -694,7 +694,7 @@ public class AuthController {
     }
 
     //Admin can delete any users(even other admins) but not himself -AJ
-    @PreAuthorize("hasAuthority('USER_DELETE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_DELETE')")
     @GetMapping("/delete/{id}")
     public String deleteUser(@PathVariable Long id,
                              Principal principal,
@@ -805,7 +805,7 @@ public class AuthController {
 
 
     //Page you get after logging in as a Manager -AJ
-    @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_UPDATE')")
     @GetMapping("/manager")
     public String managerPage(Model model, Principal principal) {
         User user = userService.findUserByUsername(principal.getName());
@@ -831,7 +831,7 @@ public class AuthController {
     }
 
     // Load upload page: Uploading new document, admin and manager both have permission for this -AJ
-    @PreAuthorize("hasAuthority('DOCUMENT_UPLOAD')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_UPLOAD')")
     @GetMapping("/upload")
     public String showUploadForm(Model model) {
         model.addAttribute("document", new DocumentDto());
@@ -855,7 +855,7 @@ public class AuthController {
         return "upload";
     }
 
-    @PreAuthorize("hasAuthority('DOCUMENT_UPLOAD')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_UPLOAD')")
     @PostMapping("/upload")
     public String uploadDocument(@Valid @ModelAttribute("document") DocumentDto documentDto,
                                  BindingResult result,
@@ -954,6 +954,7 @@ public class AuthController {
         }
 
         try {
+
             // Set docTypeId on DTO
             if (docTypeId != null) {
                 documentDto.setDocTypeId(docTypeId);
@@ -1049,6 +1050,17 @@ public class AuthController {
         }
 
         String username = authentication.getName();
+        
+        // Check if the authenticated user is a superadmin
+        boolean isSuperAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("superadmin"));
+
+        if (isSuperAdmin) {
+            // For superadmin, return a placeholder ID (e.g., 0L) instead of null
+            // Services should handle 0L as a special system user ID.
+            return 0L; 
+        }
+
         User user = userRepository.findByUsername(username);
 
         if (user == null) {
@@ -1067,20 +1079,33 @@ public class AuthController {
     }
 
     //From here it will navigate to TagController -AJ
-    @PreAuthorize("hasAuthority('TAG_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('TAG_VIEW')")
     @GetMapping("/tags-management")
     public String tagsManagement(Model model, Principal principal) {
-        User user = userRepository.findByUsername(principal.getName());
-        model.addAttribute("userRole", user.getRole().getRoleName());
+        // Get logged-in user's role for display purposes
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userRole = authentication.getAuthorities().stream()
+                .filter(a -> a.getAuthority().startsWith("ROLE_") || a.getAuthority().equals("superadmin"))
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .findFirst()
+                .orElse("Unknown");
+
+        model.addAttribute("userRole", userRole);
         return "tags-management";
     }
 
     //From here it will navigate to ClassificationController -AJ
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     @GetMapping("/classifications-management")
     public String classificationsManagement(Model model, Principal principal) {
-        User user = userRepository.findByUsername(principal.getName());
-        model.addAttribute("userRole", user.getRole().getRoleName());
+        // Get logged-in user's role for display purposes
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userRole = authentication.getAuthorities().stream()
+                .filter(a -> a.getAuthority().startsWith("ROLE_") || a.getAuthority().equals("superadmin"))
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .findFirst()
+                .orElse("Unknown");
+        model.addAttribute("userRole", userRole);
         return "classifications-management";
     }
 
@@ -1088,33 +1113,44 @@ public class AuthController {
     // ================== DOCUMENT LIST - SHOW ALL DOCUMENTS ==================
 //    private final DocumentService documentService;
     //DOCUMENT LIBRARY: Show all the uploaded document -AJ
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents")
     public String listDocuments(Model model, Principal principal) {
-
-        // Get logged-in user
-        User user = userRepository.findByUsername(principal.getName());
-        Long userId = user.getUserId();
-        String userRole = user.getRole().getRoleName();
-
         List<DocumentDto> documentsToShow;
+        String userRole;
+        String currentUsername = principal.getName();
 
-        // 🔥 If ADMIN → show all documents
-        if ("Admin".equalsIgnoreCase(userRole)) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Check if the authenticated user is a superadmin
+        boolean isSuperAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("superadmin"));
+
+        if (isSuperAdmin) {
+            userRole = "superadmin";
             documentsToShow = documentService.findAllDocuments();
+            logger.info("Superadmin '{}' viewing all documents.", currentUsername);
         } else {
-            // 🔥 Otherwise → show only accessible documents
+            // For regular users, fetch from DB
+            User user = userRepository.findByUsername(currentUsername);
+            if (user == null) {
+                logger.error("User '{}' not found in database, but authenticated. This should not happen for non-superadmin.", currentUsername);
+                // Redirect to login or show an error
+                return "redirect:/login?error=userNotFound";
+            }
+            Long userId = user.getUserId();
+            userRole = user.getRole().getRoleName();
             documentsToShow = documentService.findDocumentsAccessibleByUser(userId);
+            logger.info("User '{}' (Role: {}) viewing accessible documents.", currentUsername, userRole);
         }
 
         // Add filtered documents to model
         model.addAttribute("documents", documentsToShow);
-        model.addAttribute("currentUsername", principal.getName());
+        model.addAttribute("currentUsername", currentUsername);
         model.addAttribute("userRole", userRole);
 
         // Tag dropdown
         model.addAttribute("allTags", tagService.getAllTags());
-
         // Classification dropdown
         model.addAttribute("allClassifications", classificationService.getAllClassifications());
 
@@ -1124,7 +1160,7 @@ public class AuthController {
 
 
     // Editing only the metadata's of the document -AJ
-    @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_UPDATE')")
     @GetMapping("/document/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
         DocumentDto document = documentService.findDocumentById(id);
@@ -1162,7 +1198,7 @@ public class AuthController {
 
     //Tags can be created while updating document also and that will also be stored in Tags table -AJ
     //Tags can be created while updating document also and that will also be stored in Tags table -AJ
-    @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_UPDATE')")
     @PostMapping("/document/edit/{id}")
     public String updateDocument(@PathVariable("id") Long id,
                                  @Valid @ModelAttribute("document") DocumentDto documentDto,
@@ -1322,7 +1358,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('Admin')")
     @GetMapping("/diagnose-network-share")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> diagnoseNetworkShare() {
@@ -1343,7 +1379,7 @@ public class AuthController {
     }
 
     //Deleting any document -AJ
-    @PreAuthorize("hasAuthority('DOCUMENT_DELETE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_DELETE')")
     @GetMapping("/documents/delete/{id}")
     public String deleteDocument(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
         String username = principal != null ? principal.getName() : "Unknown";
@@ -1396,7 +1432,7 @@ public class AuthController {
     // METHOD 1: viewDocument  (inline serving — used by direct URL access)---L
     // Change: detect MediaType from file extension instead of hardcoding PDF
     // ─────────────────────────────────────────────────────────────────────────
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/DocView/{id}")
     public ResponseEntity<Resource> viewDocument(@PathVariable Long id) {
         try {
@@ -1432,7 +1468,7 @@ public class AuthController {
     @Autowired
     private DocumentConversionService documentConversionService;
 
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/DocViewer-view/{id}")
     public ResponseEntity<byte[]> viewDocumentForViewer(@PathVariable Long id, Principal principal) {
         try {
@@ -1518,7 +1554,7 @@ public class AuthController {
     @Autowired
     private AccessControlLogicRepository accessControlLogicRepository;  // Add this
 
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/DocViewer")
     public String showPdfViewer(@RequestParam Long id, Model model, Principal principal) {
         logger.info("===== VIEWER METHOD CALLED =====");
@@ -1529,8 +1565,15 @@ public class AuthController {
             DocumentDto document = documentService.findDocumentById(id);
             logger.info("Document found: " + document.getTitle());
 
-            User user = userRepository.findByUsername(principal.getName());
-            String userRole = user.getRole().getRoleName();
+            // Determine user role for display, handling superadmin
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userRole;
+            if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("superadmin"))) {
+                userRole = "superadmin";
+            } else {
+                User user = userRepository.findByUsername(principal.getName());
+                userRole = user != null ? user.getRole().getRoleName() : "Unknown";
+            }
             logger.info("User role: " + userRole);
 
             // ✅ ADD THIS: Fetch groups through AccessControlLogic
@@ -1553,7 +1596,7 @@ public class AuthController {
             model.addAttribute("documentId", id);
             model.addAttribute("document", document);
             model.addAttribute("userRole", userRole);
-            model.addAttribute("username", user.getUsername());
+            model.addAttribute("username", principal.getName()); // Use principal.getName() directly for username
 
             logger.info("Document title: " + document.getTitle());
             logger.info("Document type: " + document.getDocTypeName());
@@ -1563,13 +1606,14 @@ public class AuthController {
 
             return "DocViewer";
         } catch (Exception e) {
+
             logger.error("Failed to load viewer", e);
             return "redirect:/documents?error=notfound";
         }
     }
 
 
-    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
     @GetMapping("/documents/info/{id}")
     public ResponseEntity<?> getDocumentInfo(@PathVariable Long id, Principal principal) {
         try {
@@ -1594,6 +1638,7 @@ public class AuthController {
             info.put("groupNames", groupNames);
             return ResponseEntity.ok(info);
         } catch (Exception e) {
+
             logger.error("Failed to get document info", e);
             return ResponseEntity.notFound().build();
         }
@@ -1606,7 +1651,7 @@ public class AuthController {
     // Change: detect content type, apply PDF watermark only to PDFs;
     //         for other types download as-is with watermark filename prefix
     // ─────────────────────────────────────────────────────────────────────────
-    @PreAuthorize("hasAuthority('DOCUMENT_DOWNLOAD')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_DOWNLOAD')")
     @GetMapping("/documents/download/{id}")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id, Principal principal) {
         String username = principal != null ? principal.getName() : "Unknown";
@@ -1708,7 +1753,7 @@ public class AuthController {
     @Autowired
     private BookmarkService bookmarkService;
 
-    @PreAuthorize("hasAuthority('BOOKMARK_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('BOOKMARK_VIEW')")
     @GetMapping("/my-bookmarks")
     public String showBookmarksPage(Principal principal) {
 //        User user = userService.findUserByUsername(principal.getName());
@@ -1718,7 +1763,7 @@ public class AuthController {
 // ================== BOOKMARK ENDPOINTS ==================
 
     //Only complete document can be bookmarked. It is not based on the any specific page in document -AJ
-    @PreAuthorize("hasAuthority('BOOKMARK_CREATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('BOOKMARK_CREATE')")
     @PostMapping("/documents/bookmark/{id}")
     public ResponseEntity<?> saveBookmark(@PathVariable Long id,
 //                                          @RequestParam int page,
@@ -1761,7 +1806,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAuthority('BOOKMARK_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('BOOKMARK_VIEW')")
     @GetMapping("/documents/bookmarks/{id}")
     public ResponseEntity<?> getDocumentBookmarks(@PathVariable Long id, Principal principal) {
         try {
@@ -1787,7 +1832,7 @@ public class AuthController {
         return ResponseEntity.ok(isBookmarked);
     }
 
-    @PreAuthorize("hasAuthority('BOOKMARK_DELETE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('BOOKMARK_DELETE')")
     @DeleteMapping("/bookmarks/document/{documentId}")
     public ResponseEntity<String> deleteBookmarkByDocument(
             @PathVariable Long documentId,
@@ -1819,7 +1864,7 @@ public class AuthController {
     }
 
 
-    @PreAuthorize("hasAuthority('BOOKMARK_DELETE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('BOOKMARK_DELETE')")
     @DeleteMapping("/bookmarks/{id}")
     public ResponseEntity<String> deleteBookmark(@PathVariable Long id) {
         try {
@@ -1831,7 +1876,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAuthority('BOOKMARK_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('BOOKMARK_VIEW')")
     @GetMapping("/bookmarks")
     public ResponseEntity<?> getAllUserBookmarks(Principal principal) {
         try {
@@ -1848,7 +1893,7 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAuthority('BOOKMARK_EDIT')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('BOOKMARK_EDIT')")
     @PutMapping("/bookmarks/{id}")
     public ResponseEntity<?> updateBookmarkName(@PathVariable Long id,
                                                 @RequestBody Map<String, String> payload) {
