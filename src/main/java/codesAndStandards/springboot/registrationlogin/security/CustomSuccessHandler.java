@@ -24,7 +24,7 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
         // Now we use the PBAC action to determine if they can view documents.
         // As long as they have DOCUMENT_VIEW, they can log in.
         // We still keep the admin check as a fallback.
-        if (authorities.contains("Admin") || authorities.contains("DOCUMENT_VIEW")) {
+        if (authorities.contains("superadmin") || authorities.contains("DOCUMENT_VIEW")) {
             response.sendRedirect("/documents");
         } else if (authorities.contains("Manager")) {
             response.sendRedirect("/documents");

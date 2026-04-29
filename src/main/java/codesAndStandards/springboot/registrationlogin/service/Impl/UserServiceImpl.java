@@ -379,15 +379,19 @@ public class UserServiceImpl implements UserService {
         dto.setEmail(user.getEmail());
         dto.setPassword("");
         dto.setRoleId(user.getRole() != null ? user.getRole().getRoleId() : null);
-        dto.setRoleName(user.getRole() != null ? user.getRole().getRoleName() : null);
+        dto.setRoleName(user.getRole() != null ? user.getRole().getRoleName() : ""); // Changed to empty string
 
         if (user.getCreatedBy() != null) {
             dto.setCreatedByUsername(user.getCreatedBy().getUsername());
+        } else {
+            dto.setCreatedByUsername(""); // Changed to empty string
         }
 
         if (user.getCreatedAt() != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             dto.setCreatedAt(user.getCreatedAt().format(formatter));
+        } else {
+            dto.setCreatedAt(""); // Also ensure createdAt is not null
         }
 
         return dto;

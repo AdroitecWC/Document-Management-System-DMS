@@ -1,3 +1,4 @@
+
 package codesAndStandards.springboot.registrationlogin.controller;
 
 import codesAndStandards.springboot.registrationlogin.dto.GroupListDTO;
@@ -14,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,7 @@ public class UserApiController {
      * GET /api/users
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_VIEW')")
     public ResponseEntity<List<UserInfoDTO>> getAllUsers() {
         log.info("REST request to get all users for access control");
         try {
@@ -45,7 +47,16 @@ public class UserApiController {
                     .map(this::convertToDTO)
                     .collect(Collectors.toList());
 
-            log.info("Returning {} users", userDTOs.size());
+            // Add superadmin to the list
+            UserInfoDTO superadminDto = UserInfoDTO.builder()
+                    .id(0L) // Use 0L as the placeholder ID for superadmin
+                    .username("superadmin")
+                    .email("superadmin@example.com") // Placeholder email
+                    .role("superadmin")
+                    .build();
+            userDTOs.add(0, superadminDto); // Add at the beginning of the list
+
+            log.info("Returning {} users (including superadmin)", userDTOs.size());
             return ResponseEntity.ok(userDTOs);
         } catch (Exception e) {
             log.error("Error fetching users", e);
@@ -58,10 +69,21 @@ public class UserApiController {
      * GET /api/users/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_VIEW')")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         log.info("REST request to get user : {}", id);
         try {
+            // Handle superadmin (id = 0L)
+            if (id == 0L) {
+                UserInfoDTO superadminDto = UserInfoDTO.builder()
+                        .id(0L)
+                        .username("superadmin")
+                        .email("superadmin@example.com")
+                        .role("superadmin")
+                        .build();
+                return ResponseEntity.ok(superadminDto);
+            }
+
             User user = userRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
@@ -86,7 +108,7 @@ public class UserApiController {
      * GET /api/users/search?query=xyz
      */
     @GetMapping("/search")
-    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_VIEW')")
     public ResponseEntity<List<UserInfoDTO>> searchUsers(@RequestParam String query) {
         log.info("REST request to search users with query: {}", query);
         try {
@@ -103,6 +125,17 @@ public class UserApiController {
             List<UserInfoDTO> userDTOs = users.stream()
                     .map(this::convertToDTO)
                     .collect(Collectors.toList());
+
+            // Include superadmin in search results if query matches
+            if ("superadmin".contains(query.toLowerCase()) || "superadmin@example.com".contains(query.toLowerCase())) {
+                UserInfoDTO superadminDto = UserInfoDTO.builder()
+                        .id(0L)
+                        .username("superadmin")
+                        .email("superadmin@example.com")
+                        .role("superadmin")
+                        .build();
+                userDTOs.add(0, superadminDto);
+            }
 
             return ResponseEntity.ok(userDTOs);
         } catch (Exception e) {
@@ -142,10 +175,15 @@ public class UserApiController {
 
 
     @GetMapping("/apis/users/{userId}/groups")
-    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_VIEW')")
     public ResponseEntity<List<GroupListDTO>> getUserGroups(@PathVariable Long userId) {
         logger.info("REST request to get groups for user: {}", userId);
         try {
+            // Handle superadmin (userId = 0L)
+            if (userId == 0L) {
+                // Superadmin doesn't belong to any groups in the DB, return empty list
+                return ResponseEntity.ok(new ArrayList<>());
+            }
             List<GroupListDTO> groups = userService.getUserGroups(userId);
             return ResponseEntity.ok(groups);
         } catch (Exception e) {

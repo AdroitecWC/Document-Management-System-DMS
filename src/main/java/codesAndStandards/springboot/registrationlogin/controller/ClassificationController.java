@@ -41,7 +41,7 @@ public class ClassificationController {
      * ✅ CREATE CLASSIFICATION - ED2 ONLY
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('CLASSIFICATION_CREATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_CREATE')")
     public ResponseEntity<?> createClassification(@Valid @RequestBody ClassificationDto classificationDto) {
         String username = getCurrentUsername();
 
@@ -77,7 +77,7 @@ public class ClassificationController {
      * ✅ UPDATE CLASSIFICATION - ED2 ONLY
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_UPDATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_UPDATE')")
     public ResponseEntity<?> updateClassification(@PathVariable Long id,
                                                   @Valid @RequestBody ClassificationDto classificationDto) {
         String username = getCurrentUsername();
@@ -127,7 +127,7 @@ public class ClassificationController {
      * ✅ DELETE CLASSIFICATION - ED2 ONLY
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_DELETE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_DELETE')")
     public ResponseEntity<?> deleteClassification(@PathVariable Long id) {
         String username = getCurrentUsername();
 
@@ -179,7 +179,7 @@ public class ClassificationController {
      * ✅ GET CLASSIFICATION BY ID - READ-ONLY (ALL USERS)
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     public ResponseEntity<?> getClassificationById(@PathVariable Long id) {
         // ✅ LICENSE CHECK (READ-ONLY - ALL EDITIONS)
         if (!licenseService.isLicenseValid()) {
@@ -193,7 +193,7 @@ public class ClassificationController {
     /**
      * ✅ GET ALL CLASSIFICATIONS - READ-ONLY (ALL USERS)
      */
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     @GetMapping
     public ResponseEntity<?> getAllClassifications() {
         // ✅ LICENSE CHECK (READ-ONLY - ALL EDITIONS)
@@ -209,7 +209,7 @@ public class ClassificationController {
      * ✅ GET MY CLASSIFICATIONS - READ-ONLY (ALL USERS)
      */
     @GetMapping("/my-classifications")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     public ResponseEntity<?> getMyClassifications() {
         // ✅ LICENSE CHECK (READ-ONLY - ALL EDITIONS)
         if (!licenseService.isLicenseValid()) {
@@ -224,7 +224,7 @@ public class ClassificationController {
      * ✅ GET MY EDITED CLASSIFICATIONS - READ-ONLY (ALL USERS)
      */
     @GetMapping("/my-edited-classifications")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     public ResponseEntity<?> getMyEditedClassifications() {
         // ✅ LICENSE CHECK (READ-ONLY - ALL EDITIONS)
         if (!licenseService.isLicenseValid()) {
@@ -239,7 +239,7 @@ public class ClassificationController {
      * ✅ GET DOCUMENTS BY CLASSIFICATION - READ-ONLY (ALL USERS)
      */
     @GetMapping("/{id}/documents")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     public ResponseEntity<?> getDocumentsByClassification(@PathVariable Long id) {
         // ✅ LICENSE CHECK (READ-ONLY - ALL EDITIONS)
         if (!licenseService.isLicenseValid()) {
@@ -261,7 +261,7 @@ public class ClassificationController {
      * Used for document upload dropdown (ED1 users can SELECT but not CREATE)
      */
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     public ResponseEntity<?> getAllClassificationNames() {
         // ✅ LICENSE CHECK (READ-ONLY - ALL EDITIONS)
         if (!licenseService.isLicenseValid()) {
@@ -297,7 +297,7 @@ public class ClassificationController {
      * Used by frontend to show/hide management features
      */
     @GetMapping("/check-management-access")
-    @PreAuthorize("hasAuthority('CLASSIFICATION_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('CLASSIFICATION_VIEW')")
     public ResponseEntity<Map<String, Object>> checkManagementAccess() {
         Map<String, Object> response = new HashMap<>();
 
