@@ -221,10 +221,7 @@ public class TagController {
             throw new RuntimeException("User not authenticated");
         }
         User user = userRepository.findByUsername(authentication.getName());
-        if (user == null) {
-            throw new RuntimeException("User not found with username: " + authentication.getName());
-        }
-        return user.getUserId();
+        return user != null ? user.getUserId() : null;
     }
 
     private String getCurrentUsername() {
