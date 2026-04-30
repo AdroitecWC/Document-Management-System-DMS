@@ -9,6 +9,7 @@ import codesAndStandards.springboot.registrationlogin.repository.ApplicationSett
 import codesAndStandards.springboot.registrationlogin.repository.DocumentRepository;
 import codesAndStandards.springboot.registrationlogin.repository.DocumentVersionRepository;
 import codesAndStandards.springboot.registrationlogin.repository.UserRepository;
+import codesAndStandards.springboot.registrationlogin.security.SuperAdminConfig;
 import codesAndStandards.springboot.registrationlogin.service.ApplicationSettingsService;
 import codesAndStandards.springboot.registrationlogin.service.DocumentService;
 import org.slf4j.Logger;
@@ -47,6 +48,9 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Autowired
     @Lazy
     private DocumentService documentService;
+
+    @Autowired
+    private SuperAdminConfig superAdminConfig;
 
     @Value("${file.upload-dir}")
     private String repositoryPath;
@@ -96,7 +100,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
             throw new IllegalArgumentException("At least one file format must be allowed");
 
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new RuntimeException("User not found: " + username);
 
         if (!skipFileCheck) {
             Integer currentMaxSize = getMaxFileSizeMB();
@@ -181,7 +184,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         if (maxTagsPerDocument == null || maxTagsPerDocument < 1 || maxTagsPerDocument > 50)
             throw new IllegalArgumentException("Maximum tags per document must be between 1 and 50");
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new RuntimeException("User not found: " + username);
         saveSettingValue("max_tags_per_document", String.valueOf(maxTagsPerDocument), user);
     }
 
@@ -209,7 +211,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     public void updateWatermarkSettings(Boolean watermarkEnabled, Integer watermarkOpacity,
                                         String watermarkPosition, Integer watermarkFontSize, String username) throws Exception {
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new RuntimeException("User not found: " + username);
         saveSettingValue("watermark_enabled", watermarkEnabled ? "1" : "0", user);
         if (watermarkOpacity != null) saveSettingValue("watermark_opacity", String.valueOf(watermarkOpacity), user);
         if (watermarkPosition != null) saveSettingValue("watermark_position", watermarkPosition, user);
@@ -251,7 +252,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
                                        Boolean requireLowercase, Boolean requireNumber,
                                        Boolean requireSpecialChar, String username) throws Exception {
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new RuntimeException("User not found: " + username);
         if (sessionTimeoutHours == null || sessionTimeoutHours < 1 || sessionTimeoutHours > 72)
             throw new IllegalArgumentException("Session timeout must be between 1 and 72 hours");
         if (minPasswordLength == null || minPasswordLength < 4 || minPasswordLength > 32)
@@ -297,7 +297,6 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Transactional
     public void updateActivityLoggingSettings(Boolean activityLoggingEnabled, Integer logRetentionDays, String username) throws Exception {
         User user = userRepository.findByUsername(username);
-        if (user == null) throw new RuntimeException("User not found: " + username);
         if (logRetentionDays != null && (logRetentionDays < 1 || logRetentionDays > 3650))
             throw new IllegalArgumentException("Log retention must be between 1 and 3650 days");
         saveSettingValue("activity_logging_enabled", activityLoggingEnabled ? "1" : "0", user);
@@ -315,6 +314,9 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
 
     @Override
     public boolean verifyAdminPassword(String username, String rawPassword) {
+        if (username.equals(superAdminConfig.getUsername())) {
+            return passwordEncoder.matches(rawPassword, superAdminConfig.getEncodedPassword());
+        }
         User user = userRepository.findByUsername(username);
         if (user == null) return false;
         return passwordEncoder.matches(rawPassword, user.getPassword());

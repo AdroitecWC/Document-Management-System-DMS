@@ -33,8 +33,7 @@ public class ClassificationServiceImpl implements ClassificationService {
             throw new IllegalArgumentException("Classification with name '" + classificationDto.getClassificationName() + "' already exists");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        User user = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
 
         Classification classification = new Classification();
         classification.setClassificationName(classificationDto.getClassificationName());
@@ -55,8 +54,7 @@ public class ClassificationServiceImpl implements ClassificationService {
             throw new IllegalArgumentException("Classification with name '" + classificationDto.getClassificationName() + "' already exists");
         }
 
-        User updatingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        User updatingUser = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
 
         classification.setClassificationName(classificationDto.getClassificationName());
         classification.setUpdatedBy(updatingUser);
@@ -114,6 +112,7 @@ public class ClassificationServiceImpl implements ClassificationService {
     @Override
     @Transactional(readOnly = true)
     public List<ClassificationDto> getClassificationsByUser(Long userId) {
+        if (userId == null) return List.of();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return classificationRepository.findByCreatedBy(user).stream()
@@ -124,6 +123,7 @@ public class ClassificationServiceImpl implements ClassificationService {
     @Override
     @Transactional(readOnly = true)
     public List<ClassificationDto> getClassificationsEditedByUser(Long userId) {
+        if (userId == null) return List.of();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return classificationRepository.findByUpdatedBy(user).stream()

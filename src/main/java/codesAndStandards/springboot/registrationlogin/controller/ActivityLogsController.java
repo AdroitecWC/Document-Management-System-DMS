@@ -60,7 +60,7 @@ public class ActivityLogsController {
                     if (userId == 0L) { // Handle superadmin
                         User superadminUser = new User();
                         superadminUser.setUserId(0L);
-                        superadminUser.setUsername("adroitec");
+                        superadminUser.setUsername("superadmin");
                         Role superadminRole = new Role();
                         superadminRole.setRoleName("superadmin");
                         superadminUser.setRole(superadminRole);
