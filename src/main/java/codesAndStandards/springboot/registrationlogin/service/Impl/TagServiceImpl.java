@@ -33,8 +33,7 @@ public class TagServiceImpl implements TagService {
             throw new IllegalArgumentException("Tag with name '" + tagDto.getTagName() + "' already exists");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        User user = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
 
         Tag tag = new Tag();
         tag.setTagName(tagDto.getTagName());
@@ -46,8 +45,7 @@ public class TagServiceImpl implements TagService {
 
     public void createTagIfNotExists(String tagName, Long userId) {
         if (!tagRepository.existsByTagName(tagName)) {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            User user = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
 
             Tag tag = new Tag();
             tag.setTagName(tagName);
@@ -85,8 +83,7 @@ public class TagServiceImpl implements TagService {
             throw new IllegalArgumentException("Tag with name '" + tagDto.getTagName() + "' already exists");
         }
 
-        User updatingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        User updatingUser = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
 
         tag.setTagName(tagDto.getTagName());
         tag.setUpdatedBy(updatingUser);
@@ -126,6 +123,7 @@ public class TagServiceImpl implements TagService {
     @Override
     @Transactional(readOnly = true)
     public List<TagDto> getTagsByUser(Long userId) {
+        if (userId == null) return List.of();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return tagRepository.findByCreatedBy(user).stream()
@@ -136,6 +134,7 @@ public class TagServiceImpl implements TagService {
     @Override
     @Transactional(readOnly = true)
     public List<TagDto> getTagsEditedByUser(Long userId) {
+        if (userId == null) return List.of();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return tagRepository.findByUpdatedBy(user).stream()
@@ -174,8 +173,7 @@ public class TagServiceImpl implements TagService {
     public Tag getOrCreateTag(String tagName, Long userId) {
         return tagRepository.findByTagName(tagName)
                 .orElseGet(() -> {
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new RuntimeException("User not found"));
+                    User user = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
                     Tag newTag = new Tag();
                     newTag.setTagName(tagName);
                     newTag.setCreatedBy(user);
