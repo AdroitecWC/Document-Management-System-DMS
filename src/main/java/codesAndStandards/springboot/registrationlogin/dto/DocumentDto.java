@@ -46,6 +46,9 @@ public class DocumentDto {
     // Resolved group names (used for display in viewer/info panel)
     private String groupNames;
 
+    // Workflow assignment (optional — null means no workflow assigned)
+    private Long workflowId;
+    private String workflowName;
     // Upload info
     private String uploadedAt;
     private String uploadedByUsername;

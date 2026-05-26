@@ -14,25 +14,53 @@ import java.util.Set;
 @Component
 public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 
+    /**
+     * Sidebar-ordered list of (permission -> redirect URL).
+     * The FIRST entry whose permission the user has wins.
+     * superadmin always goes to /documents (checked before this list).
+     */
+    private static final String[][] PAGE_PRIORITY = {
+            // LIBRARY
+            { "DOCUMENT_VIEW",          "/documents"                },
+            { "BOOKMARK_VIEW",          "/my-bookmarks"             },
+            // MANAGEMENT
+            { "DOCUMENT_UPLOAD",        "/upload"                   },
+            { "TAG_VIEW",               "/tags-management"          },
+            { "CLASSIFICATION_VIEW",    "/classifications-management" },
+            // ADMINISTRATION
+            { "DOCUMENT_BULK_UPLOAD",   "/bulk-upload"              },
+            { "USER_VIEW",              "/users"                    },
+            { "GROUP_VIEW",             "/access-control"           },
+            { "SETTINGS_VIEW",          "/settings"                 },
+            { "ACTIVITY_LOG_VIEW",      "/activity-logs"            },
+    };
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+                                        Authentication authentication)
+            throws IOException, ServletException {
 
-        Set<String> authorities = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
+        Set<String> authorities =
+                AuthorityUtils.authorityListToSet(authentication.getAuthorities());
 
-        // Now we use the PBAC action to determine if they can view documents.
-        // As long as they have DOCUMENT_VIEW, they can log in.
-        // We still keep the admin check as a fallback.
-        if (authorities.contains("superadmin") || authorities.contains("DOCUMENT_VIEW")) {
+        // superadmin always lands on Document Library
+        if (authorities.contains("superadmin")) {
             response.sendRedirect("/documents");
-        } else if (authorities.contains("Manager")) {
-            response.sendRedirect("/documents");
-        } else if (authorities.contains("Viewer")) {
-            response.sendRedirect("/documents");
+            return;
         }
-        else {
-            response.sendRedirect("/login?error=unauthorized");
+
+        // Walk the priority list — redirect to the first page the user can access
+        for (String[] entry : PAGE_PRIORITY) {
+            String permission = entry[0];
+            String url        = entry[1];
+            if (authorities.contains(permission)) {
+                response.sendRedirect(url);
+                return;
+            }
         }
+
+        // User is authenticated but has no recognised permissions at all
+        response.sendRedirect("/login?error=unauthorized");
     }
 }

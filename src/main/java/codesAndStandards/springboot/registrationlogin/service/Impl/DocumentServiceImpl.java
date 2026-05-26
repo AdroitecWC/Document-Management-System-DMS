@@ -40,6 +40,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentTypeRepository documentTypeRepository;
     private final DocumentTagRepository documentTagRepository;
     private final DocumentClassificationRepository documentClassificationRepository;
+    private final WorkflowRepository workflowRepository;
 
     @Autowired
     private ApplicationSettingsService settingsService;
@@ -55,7 +56,8 @@ public class DocumentServiceImpl implements DocumentService {
                                DocumentVersionRepository documentVersionRepository,
                                DocumentTypeRepository documentTypeRepository,
                                DocumentTagRepository documentTagRepository,
-                               DocumentClassificationRepository documentClassificationRepository) {
+                               DocumentClassificationRepository documentClassificationRepository,
+                               WorkflowRepository workflowRepository) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.storedProcedureRepository = storedProcedureRepository;
@@ -65,6 +67,7 @@ public class DocumentServiceImpl implements DocumentService {
         this.documentTypeRepository = documentTypeRepository;
         this.documentTagRepository = documentTagRepository;
         this.documentClassificationRepository = documentClassificationRepository;
+        this.workflowRepository = workflowRepository;
     }
 
     private String extractFileExtension(String fileName) {
@@ -151,6 +154,17 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         logger.info("Document uploaded successfully. ID = {}", documentId);
+
+        // Link to workflow (optional — null means no workflow assigned yet)
+        if (documentDto.getWorkflowId() != null) {
+            documentRepository.findById(documentId).ifPresent(doc -> {
+                doc.setWorkflowId(documentDto.getWorkflowId());
+                documentRepository.save(doc);
+                logger.info("Linked document {} to workflow {}", documentId, documentDto.getWorkflowId());
+            });
+        }
+
+
 
         // Link to groups
         if (groupIds != null && !groupIds.trim().isEmpty()) {
@@ -356,11 +370,18 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setFileExtension(document.getFileExtension());
 
         // Document Type
+        // Document Type
         if (document.getDocumentType() != null) {
             dto.setDocTypeId(document.getDocumentType().getDocTypeId());
             dto.setDocTypeName(document.getDocumentType().getDocTypeName());
         }
 
+        // Workflow name (null = no workflow assigned yet)
+        dto.setWorkflowId(document.getWorkflowId());
+        if (document.getWorkflowId() != null) {
+            workflowRepository.findById(document.getWorkflowId())
+                    .ifPresent(wf -> dto.setWorkflowName(wf.getWorkflowName()));
+        }
         // Uploader info
         if (document.getCreatedAt() != null) {
             dto.setUploadedAt(document.getCreatedAt()
@@ -437,6 +458,15 @@ public class DocumentServiceImpl implements DocumentService {
             logger.error("Error getting accessible documents for user {}: {}", userId, e.getMessage(), e);
             return new ArrayList<>();
         }
+    }
+    @Override
+    @Transactional
+    public void assignWorkflow(Long documentId, Long workflowId) {
+        Document doc = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found: " + documentId));
+        doc.setWorkflowId(workflowId);
+        documentRepository.save(doc);
+        logger.info("Assigned workflow {} to document {}", workflowId, documentId);
     }
 
     @Override

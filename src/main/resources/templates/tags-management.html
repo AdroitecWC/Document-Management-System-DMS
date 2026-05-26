@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tags Management - Codes & Standards</title>
+    <title>Tags Management - Document Management System</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
     <!-- Include Sidebar Styles -->
@@ -569,6 +569,23 @@
     let deleteTagId = null;
     let activeModalId = null;
 
+    let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        console.error('Failed to load permissions', e);
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    return myPermissions.includes(perm);
+}
+
     // Get user role from hidden input
     const userRole = document.getElementById('userRole')?.value || 'Viewer';
     const userName = document.getElementById('userName')?.value || 'User';
@@ -669,6 +686,7 @@
     // ==================== INITIALIZATION ====================
 
     document.addEventListener('DOMContentLoaded', async function() {
+        await fetchMyPermissions();
         applyRoleBasedRestrictions();
         await loadTags();
         setupEventListeners();
@@ -714,10 +732,9 @@
 
     // Apply role-based restrictions
     function applyRoleBasedRestrictions() {
-        const canManage = userRole === 'Admin' || userRole === 'Manager';
-        const createBtn = document.getElementById('createTagBtn');
-        if (createBtn) createBtn.style.display = canManage ? 'block' : 'none';
-    }
+    const createBtn = document.getElementById('createTagBtn');
+    if (createBtn) createBtn.style.display = hasPerm('TAG_CREATE') ? 'block' : 'none';
+}
 
     // Setup all event listeners
     function setupEventListeners() {
@@ -734,9 +751,9 @@
 
     // ==================== MODAL OPEN FUNCTIONS ====================
 
-    function openCreateTagModal() {
-        openModal('createTagModal');
-    }
+function openCreateTagModal() {
+    openModal('createTagModal');
+}
 
     function openEditModal(tagId, tagName) {
         document.getElementById('editTagId').value = tagId;
@@ -852,18 +869,20 @@
         const updatedDate = formatDate(tag.updatedAt);
         const updatedBy = tag.updatedByUsername || 'N/A';
         const createdBy = tag.createdByUsername || 'Unknown';
-        const canManage = userRole === 'Admin' || userRole === 'Manager';
+       const canEdit   = hasPerm('TAG_UPDATE');
+        const canDelete = hasPerm('TAG_DELETE');
+        const hasAny    = canEdit || canDelete;
 
-        const actionsHTML = canManage ? `
+        const actionsHTML = hasAny ? `
             <div class="tag-hover-actions">
-                <button class="btn-icon edit-btn" title="Edit"
+                ${canEdit ? `<button class="btn-icon edit-btn" title="Edit"
                     onclick="event.stopPropagation(); openEditModal(${tag.id}, '${escapeHtml(tag.tagName).replace(/'/g, "\\'")}')">
                     <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn-icon delete-btn" title="Delete"
+                </button>` : ''}
+                ${canDelete ? `<button class="btn-icon delete-btn" title="Delete"
                     onclick="event.stopPropagation(); openDeleteModal(${tag.id}, '${escapeHtml(tag.tagName).replace(/'/g, "\\'")}', ${tag.documentCount || 0})">
                     <i class="bi bi-trash"></i>
-                </button>
+                </button>` : ''}
             </div>` : '';
 
         div.innerHTML = `
@@ -928,6 +947,7 @@
 
     async function handleCreateTag(e) {
         e.preventDefault();
+        if (!hasPerm('TAG_CREATE')) { showAlert('You do not have permission to create tags.', 'danger'); return; }
 
         const input = document.getElementById('createTagName');
         let tagName = input.value.trim().toLowerCase().replace(/\s+/g, '');
@@ -969,6 +989,7 @@
 
    async function handleEditTag(e) {
     e.preventDefault();
+    if (!hasPerm('TAG_UPDATE')) { showAlert('You do not have permission to edit tags.', 'danger'); return; }
 
     const input = document.getElementById('editTagName');
     let tagName = input.value.trim().toLowerCase().replace(/\s+/g, '');
@@ -1017,6 +1038,7 @@
 
    async function handleDeleteTag() {
     if (!deleteTagId) return;
+     if (!hasPerm('TAG_DELETE')) { showAlert('You do not have permission to delete tags.', 'danger'); closeModal('deleteModal'); return; }
 
     // Save scroll position before DOM rebuild
     const scrollPos = window.scrollY;

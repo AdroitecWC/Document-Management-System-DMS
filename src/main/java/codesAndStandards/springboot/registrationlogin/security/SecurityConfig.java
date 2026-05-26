@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/register/**").permitAll()
                         .requestMatchers("/login/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
+                        .requestMatchers("/error/403").permitAll()
 
                         // ========================================
                         // ROLE / AUTHORITY BASED ACCESS
@@ -113,6 +114,9 @@ public class SecurityConfig {
                         .requestMatchers("/delete/**")
                         .hasAnyAuthority("superadmin", "USER_DELETE")
 
+
+                        .requestMatchers("/users/*/toggle-status")
+                        .hasAnyAuthority("superadmin", "USER_SUSPEND")
                         // Manager
                         .requestMatchers("/manager", "/manager/**")
                         .hasAnyAuthority("superadmin", "DOCUMENT_UPDATE")
@@ -151,6 +155,10 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
+                )
+
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/error/403")
                 )
 
                 // =========================

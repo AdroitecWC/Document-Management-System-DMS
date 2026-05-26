@@ -44,4 +44,5 @@ public class UserDto {
     private List<Long> groupIds;
 
     private List<GroupListDTO> groups;
+    private boolean active = true;
 }

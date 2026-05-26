@@ -37,6 +37,8 @@ public class ActivityLogService {
     public static final String EDIT_PROFILE_FAILED        = "EDIT_PROFILE_FAILED";
     public static final String USER_DELETE                = "USER_DELETE";
     public static final String USER_DELETE_FAILED         = "USER_DELETE_FAILED";
+    public static final String USER_SUSPEND               = "USER_SUSPEND";
+    public static final String USER_ACTIVATE              = "USER_ACTIVATE";
 
     // ==================== DOCUMENT ====================
     public static final String DOCUMENT_UPLOAD            = "DOCUMENT_UPLOAD";
@@ -47,6 +49,7 @@ public class ActivityLogService {
     public static final String DOCUMENT_DELETE_FAILED     = "DOCUMENT_DELETE_FAILED";
     public static final String DOCUMENT_DOWNLOAD          = "DOCUMENT_DOWNLOAD";
     public static final String DOCUMENT_DOWNLOAD_FAILED   = "DOCUMENT_DOWNLOAD_FAILED";
+    public static final String ACTIVITY_LOG_DOWNLOAD      = "ACTIVITY_LOG_DOWNLOAD";
 
     // ==================== TAG ====================
     public static final String TAG_ADD                    = "TAG_ADD";
@@ -85,6 +88,21 @@ public class ActivityLogService {
     public static final String SETTINGS_BULK_USER_DELETE_FAIL  = "SETTINGS_BULK_USER_DELETE_FAIL";
     public static final String SETTINGS_BULK_DOC_DELETE        = "SETTINGS_BULK_DOC_DELETE";
     public static final String SETTINGS_BULK_DOC_DELETE_FAIL   = "SETTINGS_BULK_DOC_DELETE_FAIL";
+    // ==================== DOCUMENT TYPE ====================
+    public static final String DOCTYPE_CREATE             = "DOCTYPE_CREATE";
+    public static final String DOCTYPE_CREATE_FAIL        = "DOCTYPE_CREATE_FAIL";
+    public static final String DOCTYPE_UPDATE             = "DOCTYPE_UPDATE";
+    public static final String DOCTYPE_UPDATE_FAIL        = "DOCTYPE_UPDATE_FAIL";
+    public static final String DOCTYPE_DELETE             = "DOCTYPE_DELETE";
+    public static final String DOCTYPE_DELETE_FAIL        = "DOCTYPE_DELETE_FAIL";
+
+    // ==================== METADATA DEFINITION ====================
+    public static final String METADATA_CREATE            = "METADATA_CREATE";
+    public static final String METADATA_CREATE_FAIL       = "METADATA_CREATE_FAIL";
+    public static final String METADATA_UPDATE            = "METADATA_UPDATE";
+    public static final String METADATA_UPDATE_FAIL       = "METADATA_UPDATE_FAIL";
+    public static final String METADATA_DELETE            = "METADATA_DELETE";
+    public static final String METADATA_DELETE_FAIL       = "METADATA_DELETE_FAIL";
 
     // ==================== CORE METHODS ====================
 
