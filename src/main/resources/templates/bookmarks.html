@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookmarks - Codes & Standards</title>
+    <title>My Bookmarks - Document Management System</title>
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 
@@ -959,6 +959,23 @@
 <script>
     let allBookmarks = [];
     let filteredBookmarks = [];
+    // ==================== PERMISSIONS ====================
+let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
+}
     let bookmarkToDelete = null;
     let bookmarkToEdit = null;
     let currentView = 'grid';
@@ -1063,10 +1080,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
     // Fetch bookmarks on page load
-    window.addEventListener('load', function() {
-        fetchBookmarks();
-    });
-
+    window.addEventListener('load', async function() {
+    await fetchMyPermissions();
+    fetchBookmarks();
+});
     // Fetch bookmarks from backend
     function fetchBookmarks() {
         fetch('/bookmarks')
@@ -1124,96 +1141,102 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Render Grid View
-        let gridHTML = '';
-        filteredBookmarks.forEach(bookmark => {
-            const date = formatDate(bookmark.createdAt);
-            const bookmarkName = escapeHtml(bookmark.bookmarkName || bookmark.name || 'Untitled');
-            const documentTitle = escapeHtml(bookmark.documentTitle || 'Document');
-            const pageNumber = bookmark.pageNumber || 1;
-            const escapedBookmarkName = (bookmark.bookmarkName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+       // Render Grid View
+let gridHTML = '';
+filteredBookmarks.forEach(bookmark => {
+    const date = formatDate(bookmark.createdAt);
+    const bookmarkName = escapeHtml(bookmark.bookmarkName || bookmark.name || 'Untitled');
+    const documentTitle = escapeHtml(bookmark.documentTitle || 'Document');
+    const pageNumber = bookmark.pageNumber || 1;
+    const escapedBookmarkName = (bookmark.bookmarkName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
 
-            gridHTML += `
-                <div class="bookmark-card-grid" onclick="handleCardClick(event, ${bookmark.documentId}, ${pageNumber})">
-                    <div class="bookmark-actions">
-                        <button class="btn btn-sm btn-outline-view me-1" onclick="event.stopPropagation(); viewDocument(${bookmark.documentId}, ${pageNumber})" title="View Document">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation(); openEditModal(${bookmark.id}, '${escapedBookmarkName}')" title="Edit Bookmark">
-                             <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); confirmDelete(${bookmark.id})" title="Delete Bookmark">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                    <div class="bookmark-icon-large">
-                        <i class="bi bi-bookmark-fill"></i>
-                    </div>
-                    <div class="bookmark-title">${bookmarkName}</div>
-                    <div class="bookmark-meta">
-                        <div class="bookmark-meta-item">
-                            <i class="bi bi-calendar3"></i>
-                            ${date}
-                        </div>
-                    </div>
-                    <div class="bookmark-footer">
-                        <span style="font-size: 13px; color: #718096;">${documentTitle}</span>
+    const viewBtn = hasPerm('DOCUMENT_OPEN')
+        ? `<button class="btn btn-sm btn-outline-view me-1" onclick="event.stopPropagation(); viewDocument(${bookmark.documentId}, ${pageNumber})" title="View Document"><i class="bi bi-eye"></i></button>`
+        : '';
+    const editBtn = hasPerm('BOOKMARK_EDIT')
+        ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation(); openEditModal(${bookmark.id}, '${escapedBookmarkName}')" title="Edit Bookmark"><i class="bi bi-pencil"></i></button>`
+        : '';
+    const deleteBtn = hasPerm('BOOKMARK_DELETE')
+        ? `<button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); confirmDelete(${bookmark.id})" title="Delete Bookmark"><i class="bi bi-trash"></i></button>`
+        : '';
+
+    const hasActions = viewBtn || editBtn || deleteBtn;
+
+    gridHTML += `
+        <div class="bookmark-card-grid" onclick="handleCardClick(event, ${bookmark.documentId}, ${pageNumber})">
+            ${hasActions ? `<div class="bookmark-actions">${viewBtn}${editBtn}${deleteBtn}</div>` : ''}
+            <div class="bookmark-icon-large">
+                <i class="bi bi-bookmark-fill"></i>
+            </div>
+            <div class="bookmark-title">${bookmarkName}</div>
+            <div class="bookmark-meta">
+                <div class="bookmark-meta-item">
+                    <i class="bi bi-calendar3"></i>
+                    ${date}
+                </div>
+            </div>
+            <div class="bookmark-footer">
+                <span style="font-size: 13px; color: #718096;">${documentTitle}</span>
+            </div>
+        </div>
+    `;
+});
+gridContainer.innerHTML = gridHTML;
+
+// Render List View
+let listHTML = '';
+filteredBookmarks.forEach(bookmark => {
+    const date = formatDate(bookmark.createdAt);
+    const bookmarkName = escapeHtml(bookmark.bookmarkName || bookmark.name || 'Untitled');
+    const documentTitle = escapeHtml(bookmark.documentTitle || 'Document');
+    const pageNumber = bookmark.pageNumber || 1;
+    const escapedBookmarkName = (bookmark.bookmarkName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+
+    const viewBtn = hasPerm('DOCUMENT_OPEN')
+        ? `<button class="btn btn-sm btn-outline-view me-1" onclick="event.stopPropagation(); viewDocument(${bookmark.documentId}, ${pageNumber})" title="View Document"><i class="bi bi-eye"></i></button>`
+        : '';
+    const editBtn = hasPerm('BOOKMARK_EDIT')
+        ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation(); openEditModal(${bookmark.id}, '${escapedBookmarkName}')" title="Edit Bookmark"><i class="bi bi-pencil"></i></button>`
+        : '';
+    const deleteBtn = hasPerm('BOOKMARK_DELETE')
+        ? `<button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); confirmDelete(${bookmark.id})" title="Delete Bookmark"><i class="bi bi-trash"></i></button>`
+        : '';
+
+    const hasActions = viewBtn || editBtn || deleteBtn;
+
+    listHTML += `
+        <div class="bookmark-card-list" onclick="handleCardClick(event, ${bookmark.documentId}, ${pageNumber})">
+            ${hasActions ? `<div class="bookmark-actions">${viewBtn}${editBtn}${deleteBtn}</div>` : ''}
+            <div class="bookmark-icon-list">
+                <i class="bi bi-bookmark-fill"></i>
+            </div>
+            <div class="bookmark-content">
+                <div class="bookmark-title">${bookmarkName}</div>
+                <div class="bookmark-meta">
+                    <div class="bookmark-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        ${date}
                     </div>
                 </div>
-            `;
-        });
-        gridContainer.innerHTML = gridHTML;
-
-        // Render List View
-        let listHTML = '';
-        filteredBookmarks.forEach(bookmark => {
-            const date = formatDate(bookmark.createdAt);
-            const bookmarkName = escapeHtml(bookmark.bookmarkName || bookmark.name || 'Untitled');
-            const documentTitle = escapeHtml(bookmark.documentTitle || 'Document');
-            const pageNumber = bookmark.pageNumber || 1;
-            const escapedBookmarkName = (bookmark.bookmarkName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
-
-            listHTML += `
-                <div class="bookmark-card-list" onclick="handleCardClick(event, ${bookmark.documentId}, ${pageNumber})">
-                    <div class="bookmark-actions">
-                        <button class="btn btn-sm btn-outline-view me-1" onclick="event.stopPropagation(); viewDocument(${bookmark.documentId}, ${pageNumber})" title="View Document">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation(); openEditModal(${bookmark.id}, '${escapedBookmarkName}')" title="Edit Bookmark">
-                             <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); confirmDelete(${bookmark.id})" title="Delete Bookmark">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                    <div class="bookmark-icon-list">
-                        <i class="bi bi-bookmark-fill"></i>
-                    </div>
-                    <div class="bookmark-content">
-                        <div class="bookmark-title">${bookmarkName}</div>
-                        <div class="bookmark-meta">
-                            <div class="bookmark-meta-item">
-                                <i class="bi bi-calendar3"></i>
-                                ${date}
-                            </div>
-                        </div>
-                        <div class="bookmark-footer">
-                            <span style="font-size: 13px; color: #718096;">${documentTitle}</span>
-                        </div>
-                    </div>
+                <div class="bookmark-footer">
+                    <span style="font-size: 13px; color: #718096;">${documentTitle}</span>
                 </div>
-            `;
-        });
-        listContainer.innerHTML = listHTML;
-    }
-
+            </div>
+        </div>
+    `;
+});
+listContainer.innerHTML = listHTML;
+}
     // Handle card click - opens document in new tab
     function handleCardClick(event, documentId, pageNumber) {
-        if (event.target.closest('.bookmark-actions')) {
-            return;
-        }
-        viewDocument(documentId, pageNumber);
+    if (event.target.closest('.bookmark-actions')) {
+        return;
     }
+    if (!hasPerm('DOCUMENT_OPEN')) {
+        return; // Silently do nothing — no permission, no action
+    }
+    viewDocument(documentId, pageNumber);
+}
 
     // Format date
     function formatDate(dateStr) {
@@ -1283,10 +1306,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ⭐ UPDATED: View document with enhanced access check
     async function viewDocument(documentId, pageNumber) {
-        if (!documentId) {
-            showAlert('danger', 'Invalid document ID');
-            return;
-        }
+    if (!documentId) {
+        showAlert('danger', 'Invalid document ID');
+        return;
+    }
+
+    if (!hasPerm('DOCUMENT_OPEN')) {
+        document.getElementById('accessDeniedMessage').innerHTML =
+            'You do not have permission to open documents from bookmarks.';
+        openModal('accessDeniedModal');
+        return;
+    }
+
+    // Show loading indicator
+    showAlert('info', 'Checking access permissions...');
 
         // Show loading indicator
         showAlert('info', 'Checking access permissions...');

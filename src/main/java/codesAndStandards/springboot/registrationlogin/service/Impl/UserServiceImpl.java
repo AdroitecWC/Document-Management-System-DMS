@@ -322,6 +322,7 @@ public class UserServiceImpl implements UserService {
         } else {
             dto.setCreatedByUsername("System");
         }
+        dto.setActive(user.isActive());
 
         // Load groups via GroupUserRepository (no collection on entity)
         List<GroupUser> groupUsers = groupUserRepository.findByUserId(user.getUserId());
@@ -393,6 +394,7 @@ public class UserServiceImpl implements UserService {
         } else {
             dto.setCreatedAt(""); // Also ensure createdAt is not null
         }
+        dto.setActive(user.isActive());
 
         return dto;
     }
@@ -486,5 +488,16 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Current user not found");
         }
         return user;
+    }
+
+
+    @Override
+    @Transactional
+    public void toggleUserStatus(Long userId, boolean active) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
+        user.setActive(active);
+        userRepository.save(user);
+        logger.info("User {} status changed to: {}", userId, active ? "ACTIVE" : "SUSPENDED");
     }
 }

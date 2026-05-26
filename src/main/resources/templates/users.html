@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <!-- ==================== META TAGS ==================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - Codes & Standards</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>User Management - Document Management System</title>
 
     <!-- ==================== STYLESHEETS ==================== -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -512,6 +516,68 @@
         .stat-card.active::after {
 content: '✓';
 }
+
+
+        /* ==================== CONFIRM MODAL ==================== */
+.confirm-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+}
+.confirm-modal-overlay.active {
+    display: flex;
+}
+.confirm-modal-box {
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    overflow: hidden;
+    animation: modalSlideIn 0.25s ease forwards;
+}
+.confirm-modal-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+.confirm-modal-header.suspend {
+    background: #fff8e1;
+    color: #856404;
+    border-bottom: 1px solid #ffe69c;
+}
+.confirm-modal-header.activate {
+    background: #d1fae5;
+    color: #065f46;
+    border-bottom: 1px solid #a7f3d0;
+}
+.confirm-modal-body {
+    padding: 20px 24px;
+    color: #374151;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+.confirm-modal-body .user-highlight {
+    font-weight: 600;
+    color: #1e3a5f;
+}
+.confirm-modal-footer {
+    padding: 14px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
     </style>
 </head>
 <body>
@@ -541,7 +607,9 @@ content: '✓';
                     </ol>
                 </nav>
             </div>
-            <button class="btn" style="background:#1e3a5f; color:white;" onclick="openModal('addUserModal')">
+            <button sec:authorize="hasRole('superadmin') or hasAuthority('USER_CREATE')"
+                    class="btn" style="background:#1e3a5f; color:white;"
+                    onclick="openModal('addUserModal')">
                 <i class="bi bi-plus-circle me-2"></i> Add User
             </button>
         </div>
@@ -574,6 +642,20 @@ content: '✓';
                      data-filter="Viewer" onclick="filterByStatCard(this)">
                     <div class="stat-label d-flex justify-content-center">Viewers</div>
                     <div class="stat-number" th:text="${viewerCount}">2</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #82b3e0"
+                     data-filter="Active" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Active</div>
+                    <div class="stat-number" th:text="${activeCount}">0</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card d-flex flex-row" style="background-color: #aacef0"
+                     data-filter="Suspended" onclick="filterByStatCard(this)">
+                    <div class="stat-label d-flex justify-content-center">Suspended</div>
+                    <div class="stat-number" th:text="${suspendedCount}">0</div>
                 </div>
             </div>
         </div>
@@ -619,6 +701,7 @@ content: '✓';
                         <th>Full Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Status</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -630,48 +713,71 @@ content: '✓';
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-3"
-                                     style="width: 40px; height: 40px; font-weight: bold; background: #1e3a5f;">
-                                    <span th:text="${(user.firstName != null and user.firstName != '' and user.lastName != null and user.lastName != '') ?
-                                        (#strings.substring(user.firstName, 0, 1) + #strings.substring(user.lastName, 0, 1)) :
-                                        '??'}">JD</span>
+                                     style="width: 40px; height: 40px; font-weight: bold;"
+                                     th:style="${user.active} ? 'width:40px;height:40px;font-weight:bold;background:#1e3a5f;' : 'width:40px;height:40px;font-weight:bold;background:#adb5bd;'">
+                <span th:text="${(user.firstName != null and user.firstName != '' and user.lastName != null and user.lastName != '') ?
+                    (#strings.substring(user.firstName, 0, 1) + #strings.substring(user.lastName, 0, 1)) :
+                    '??'}">JD</span>
                                 </div>
                                 <div>
-                                    <span class="username-text"
-                                          th:text="${user.username != null ? user.username : 'N/A'}">username</span>
+                <span class="username-text"
+                      th:text="${user.username != null ? user.username : 'N/A'}"
+                      th:style="${user.active} ? '' : 'color:#adb5bd;'">username</span>
                                 </div>
                             </div>
                         </td>
-                        <td>
-                            <div th:text="${(user.firstName != null and user.lastName != null) ? (user.firstName + ' ' + user.lastName) : 'N/A'}">John Doe</div>
-                        </td>
+                        <td th:text="${(user.firstName != null and user.lastName != null) ? (user.firstName + ' ' + user.lastName) : 'N/A'}">John Doe</td>
                         <td th:text="${user.email != null ? user.email : 'N/A'}">email@example.com</td>
                         <td>
-                            <span class="badge rounded-pill"
-                                  th:class="${'badge rounded-pill ' +
-                                      (user.roleName != null ?
-                                          (user.roleName == 'Admin' ? 'role-admin' :
-                                              (user.roleName == 'Manager' ? 'role-manager' : 'role-viewer'))
-                                          : 'role-viewer')}"
-                                  th:text="${user.roleName != null ? user.roleName : 'Unknown'}">Role</span>
+        <span class="badge rounded-pill"
+              th:class="${'badge rounded-pill ' +
+                  (user.roleName != null ?
+                      (user.roleName == 'Admin' ? 'role-admin' :
+                          (user.roleName == 'Manager' ? 'role-manager' : 'role-viewer'))
+                      : 'role-viewer')}"
+              th:text="${user.roleName != null ? user.roleName : 'Unknown'}">Role</span>
+                        </td>
+                        <!-- STATUS COLUMN -->
+                        <td>
+        <span class="badge rounded-pill status-badge"
+              th:classappend="${user.active} ? ' bg-success' : ' bg-secondary'"
+              th:text="${user.active} ? 'Active' : 'Suspended'">Active</span>
                         </td>
                         <td>
-                            <small class="text-muted" th:text="${user.createdAt != null ? user.createdAt : 'N/A'}">15-Jan-2024 14:30:45</small>
+                            <small class="text-muted" th:text="${user.createdAt != null ? user.createdAt : 'N/A'}">15-Jan-2024</small>
                         </td>
                         <td class="actions-cell">
-                            <button class="btn btn-sm btn-outline-primary me-1"
+                            <!-- EDIT: only USER_UPDATE -->
+                            <button sec:authorize="hasRole('superadmin') or hasAuthority('USER_UPDATE')"
+                                    class="btn btn-sm btn-outline-primary me-1"
                                     th:attr="data-id=${user.id},
-                                             data-firstname=${user.firstName != null ? user.firstName : ''},
-                                             data-lastname=${user.lastName != null ? user.lastName : ''},
-                                             data-username=${user.username != null ? user.username : ''},
-                                             data-email=${user.email != null ? user.email : ''},
-                                             data-roleid=${user.roleId != null ? user.roleId : ''}"
+                         data-firstname=${user.firstName != null ? user.firstName : ''},
+                         data-lastname=${user.lastName != null ? user.lastName : ''},
+                         data-username=${user.username != null ? user.username : ''},
+                         data-email=${user.email != null ? user.email : ''},
+                         data-roleid=${user.roleId != null ? user.roleId : ''}"
                                     onclick="openEditModal(this); event.stopPropagation();" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <a href="#"
+
+                            <!-- SUSPEND/ACTIVATE: only USER_SUSPEND -->
+                            <button sec:authorize="hasRole('superadmin') or hasAuthority('USER_SUSPEND')"
+                                    class="btn btn-sm me-1"
+                                    th:classappend="${user.active} ? ' btn-outline-warning' : ' btn-outline-success'"
+                                    th:attr="data-userid=${user.id}, data-active=${user.active}"
+                                    th:title="${user.active} ? 'Suspend User' : 'Activate User'"
+                                    onclick="toggleUserStatus(this); event.stopPropagation();">
+                                <i class="bi" th:classappend="${user.active} ? ' bi-pause-circle' : ' bi-play-circle'"></i>
+                            </button>
+
+                            <!-- DELETE: only USER_DELETE -->
+                            <a sec:authorize="hasRole('superadmin') or hasAuthority('USER_DELETE')"
+                               href="#"
                                class="btn btn-sm btn-outline-danger"
                                th:data-userid="${user.id}"
-                               th:data-username="${(user.firstName != null and user.lastName != null) ? (user.firstName + ' ' + user.lastName) : (user.username != null ? user.username : 'Unknown User')}"
+                               th:data-username="${(user.firstName != null and user.lastName != null) ?
+               (user.firstName + ' ' + user.lastName) :
+               (user.username != null ? user.username : 'Unknown User')}"
                                title="Delete"
                                onclick="event.stopPropagation(); openDeleteModal(this);">
                                 <i class="bi bi-trash"></i>
@@ -679,7 +785,7 @@ content: '✓';
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(users)}">
-                        <td colspan="6" class="text-center py-5">
+                        <td colspan="7" class="text-center py-5">
                             <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
                             <p class="text-muted mt-3">No users found.</p>
                         </td>
@@ -905,6 +1011,27 @@ content: '✓';
 </div>
 
 
+<!-- ==================== SUSPEND/ACTIVATE CONFIRM MODAL ==================== -->
+<div class="confirm-modal-overlay" id="statusConfirmOverlay">
+    <div class="confirm-modal-box">
+        <div class="confirm-modal-header" id="statusConfirmHeader">
+            <i class="bi" id="statusConfirmHeaderIcon"></i>
+            <span id="statusConfirmTitle">Confirm Action</span>
+        </div>
+        <div class="confirm-modal-body" id="statusConfirmBody">
+            <!-- filled by JS -->
+        </div>
+        <div class="confirm-modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm px-4"
+                    onclick="closeStatusConfirm()">Cancel</button>
+            <button type="button" class="btn btn-sm px-4"
+                    id="statusConfirmOkBtn"
+                    onclick="executeToggleStatus()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+
 <!-- ==================== JAVASCRIPT INCLUDES ==================== -->
 <script src="/js/bootstrap.bundle.min.js"></script>
 <div th:replace="~{common/navbar :: navbar-js}"></div>
@@ -1105,6 +1232,7 @@ function closeActiveModal() {
         if (activeModalId) closeModal(activeModalId);
         closeGroupsDropdown('add');
         closeGroupsDropdown('edit');
+        closeStatusConfirm();
     }
 });
 
@@ -1112,6 +1240,7 @@ function closeActiveModal() {
             if (!e.target.closest('.groups-dropdown-container')) {
                 closeGroupsDropdown('add');
                 closeGroupsDropdown('edit');
+                closeStatusConfirm();
             }
         });
 
@@ -1841,45 +1970,49 @@ function filterByStatCard(card) {
     applyFilters();
 }
 
-    function applyFilters() {
-        const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
-        const allRows = document.querySelectorAll('#usersTable tbody tr');
-        let visibleCount = 0;
+function applyFilters() {
+    const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+    const allRows = document.querySelectorAll('#usersTable tbody tr');
+    let visibleCount = 0;
 
-        allRows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length < 6) return;
+    allRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 6) return;
 
-            let show = true;
-            const rowRole = row.getAttribute('data-role') || '';
+        let show = true;
+        const rowRole = row.getAttribute('data-role') || '';
 
-<!--            if (currentFilter !== 'all') {-->
-<!--                if (rowRole !== currentFilter) {-->
-<!--                    show = false;-->
-<!--                }-->
-<!--            }-->
-if (!activeFilters.has('all')) {
-    if (!activeFilters.has(rowRole)) {
-        show = false;
-    }
-}
+        const statusBadge = row.querySelector('.status-badge');
+        const rowStatus = statusBadge ? statusBadge.textContent.trim() : '';
 
-            if (searchQuery && show) {
-                let searchText = '';
-                for (let i = 0; i < 3; i++) {
-                    searchText += cells[i].textContent.toLowerCase() + ' ';
-                }
-                if (!searchText.includes(searchQuery)) {
-                    show = false;
-                }
+        if (!activeFilters.has('all')) {
+            const roleFilters = [...activeFilters].filter(f => ['Admin', 'Manager', 'Viewer'].includes(f));
+            const statusFilters = [...activeFilters].filter(f => ['Active', 'Suspended'].includes(f));
+
+            const roleMatch = roleFilters.length === 0 || roleFilters.includes(rowRole);
+            const statusMatch = statusFilters.length === 0 || statusFilters.includes(rowStatus);
+
+            if (!roleMatch || !statusMatch) {
+                show = false;
             }
+        }
 
-            row.style.display = show ? '' : 'none';
-            if (show) visibleCount++;
-        });
+        if (searchQuery && show) {
+            let searchText = '';
+            for (let i = 0; i < 3; i++) {
+                searchText += cells[i].textContent.toLowerCase() + ' ';
+            }
+            if (!searchText.includes(searchQuery)) {
+                show = false;
+            }
+        }
 
-        document.getElementById('userCount').textContent = visibleCount;
-    }
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+    });
+
+    document.getElementById('userCount').textContent = visibleCount;
+}
 
     // ==================== DATE FORMATTING ====================
 
@@ -2162,6 +2295,202 @@ document.getElementById('editForm')?.addEventListener('submit', async function(e
         }
     }
 });
+ // ==================== TOGGLE USER STATUS ====================
+let _pendingToggleBtn = null; // stores the button reference for after confirm
+
+function toggleUserStatus(button) {
+    const userId = button.getAttribute('data-userid');
+    const currentlyActive = button.getAttribute('data-active') === 'true';
+    const newStatus = !currentlyActive;
+
+    // Store button reference for use after confirmation
+    _pendingToggleBtn = button;
+
+    // Customize modal based on action
+    const header = document.getElementById('statusConfirmHeader');
+    const headerIcon = document.getElementById('statusConfirmHeaderIcon');
+    const title = document.getElementById('statusConfirmTitle');
+    const body = document.getElementById('statusConfirmBody');
+    const okBtn = document.getElementById('statusConfirmOkBtn');
+
+    // Get username from the same row
+    const row = button.closest('tr');
+    const usernameEl = row ? row.querySelector('.username-text') : null;
+    const displayName = usernameEl ? usernameEl.textContent.trim() : 'this user';
+
+    if (!newStatus) {
+        // Suspending
+        header.className = 'confirm-modal-header suspend';
+        headerIcon.className = 'bi bi-pause-circle-fill';
+        title.textContent = 'Suspend User';
+        body.innerHTML = `
+            <p>Are you sure you want to <strong>suspend</strong>
+            <span class="user-highlight">${displayName}</span>?</p>
+            <p class="text-muted mb-0" style="font-size:0.875rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                The user will be logged out and won't be able to log in until reactivated.
+            </p>`;
+        okBtn.className = 'btn btn-warning btn-sm px-4';
+        okBtn.innerHTML = '<i class="bi bi-pause-circle me-1"></i>Suspend';
+    } else {
+        // Activating
+        header.className = 'confirm-modal-header activate';
+        headerIcon.className = 'bi bi-play-circle-fill';
+        title.textContent = 'Activate User';
+        body.innerHTML = `
+            <p>Are you sure you want to <strong>activate</strong>
+            <span class="user-highlight">${displayName}</span>?</p>
+            <p class="text-muted mb-0" style="font-size:0.875rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                The user will be able to log in again immediately.
+            </p>`;
+        okBtn.className = 'btn btn-success btn-sm px-4';
+        okBtn.innerHTML = '<i class="bi bi-play-circle me-1"></i>Activate';
+    }
+
+    // Show the confirm modal
+    document.getElementById('statusConfirmOverlay').classList.add('active');
+}
+
+function closeStatusConfirm() {
+    document.getElementById('statusConfirmOverlay').classList.remove('active');
+    // DON'T set _pendingToggleBtn = null here
+}
+
+function executeToggleStatus() {
+    // Close the modal FIRST, but save button reference before closing
+    document.getElementById('statusConfirmOverlay').classList.remove('active');
+
+    if (!_pendingToggleBtn) {
+        console.error('❌ No pending button found');
+        return;
+    }
+
+    const button = _pendingToggleBtn;
+    _pendingToggleBtn = null; // Clear AFTER saving reference
+
+    const userId = button.getAttribute('data-userid');
+    const currentlyActive = button.getAttribute('data-active') === 'true';
+    const newStatus = !currentlyActive;
+
+    console.log('🔄 Toggling user:', userId, 'to:', newStatus);
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (csrfToken) headers[csrfHeader] = csrfToken;
+
+    // Show loading state on button
+    const originalHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    fetch(`${contextPath}users/${userId}/toggle-status`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ active: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+        button.disabled = false;
+        console.log('✅ Toggle response:', data);
+
+        if (data.success) {
+            button.setAttribute('data-active', String(newStatus));
+
+            if (newStatus) {
+                button.classList.remove('btn-outline-success');
+                button.classList.add('btn-outline-warning');
+                button.title = 'Suspend User';
+                button.innerHTML = '<i class="bi bi-pause-circle"></i>';
+            } else {
+                button.classList.remove('btn-outline-warning');
+                button.classList.add('btn-outline-success');
+                button.title = 'Activate User';
+                button.innerHTML = '<i class="bi bi-play-circle"></i>';
+            }
+
+            // Update status badge
+            const row = button.closest('tr');
+            const badge = row ? row.querySelector('.status-badge') : null;
+            if (badge) {
+                badge.textContent = newStatus ? 'Active' : 'Suspended';
+                badge.className = 'badge rounded-pill status-badge ' +
+                    (newStatus ? 'bg-success' : 'bg-secondary');
+            }
+
+            // Grey out avatar and username if suspended
+            const avatar = row ? row.querySelector('.rounded-circle') : null;
+            const usernameEl = row ? row.querySelector('.username-text') : null;
+            if (avatar) avatar.style.background = newStatus ? '#1e3a5f' : '#adb5bd';
+            if (usernameEl) usernameEl.style.color = newStatus ? '' : '#adb5bd';
+
+            showStatusToast(data.message, 'success');
+            updateStatCards();
+        } else {
+            button.innerHTML = originalHtml;
+            showStatusToast(data.message || 'Failed to update status.', 'danger');
+        }
+    })
+    .catch(err => {
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+        console.error('❌ Error toggling status:', err);
+        showStatusToast('Failed to update user status. Please try again.', 'danger');
+    });
+}
+
+function showStatusToast(message, type) {
+    const existing = document.getElementById('statusToast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'statusToast';
+    toast.className = `alert alert-${type} alert-dismissible fade show`;
+    toast.style.cssText = 'position:fixed;top:80px;right:20px;z-index:99999;min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+    toast.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-circle-fill'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 3500);
+}
+
+
+    function updateStatCards() {
+    const allRows = document.querySelectorAll('#usersTable tbody tr');
+    let total = 0, adminCount = 0, managerCount = 0, viewerCount = 0, activeCount = 0, suspendedCount = 0;
+
+    allRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 6) return;
+
+        total++;
+
+        const role = row.getAttribute('data-role') || '';
+        if (role === 'Admin') adminCount++;
+        else if (role === 'Manager') managerCount++;
+        else if (role === 'Viewer') viewerCount++;
+
+        const statusBadge = row.querySelector('.status-badge');
+        const status = statusBadge ? statusBadge.textContent.trim() : '';
+        if (status === 'Active') activeCount++;
+        else if (status === 'Suspended') suspendedCount++;
+    });
+
+    // Update card numbers
+    document.querySelector('[data-filter="all"] .stat-number').textContent = total;
+    document.querySelector('[data-filter="Admin"] .stat-number').textContent = adminCount;
+    document.querySelector('[data-filter="Manager"] .stat-number').textContent = managerCount;
+    document.querySelector('[data-filter="Viewer"] .stat-number').textContent = viewerCount;
+    document.querySelector('[data-filter="Active"] .stat-number').textContent = activeCount;
+    document.querySelector('[data-filter="Suspended"] .stat-number').textContent = suspendedCount;
+
+    // Also update the search bar user count
+    document.getElementById('userCount').textContent = total;
+}
 </script>
 </body>
 </html>

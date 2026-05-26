@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Library - DMS</title>
+    <title>Document Library - Document Management System</title>
     <script th:inline="javascript">
         window.userRole = /*[[${userRole}]]*/ 'Viewer';
         console.log('User Role:', window.userRole);
@@ -735,7 +735,33 @@
     font-size: 11px;
     padding: 4px 10px;
 }
+/* ── Assign Workflow button ── */
+        .btn-assign-workflow {
+            background: #f0f7ff; color: #3b82f6;
+            border: 1px dashed #93c5fd; border-radius: 6px;
+            padding: 4px 10px; font-size: 12px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+            transition: all 0.2s;
+        }
+        .btn-assign-workflow:hover { background: #3b82f6; color: white; border-color: #3b82f6; border-style: solid; }
 
+        /* ── Assign Workflow modal cards ── */
+        .assign-wf-card {
+            border: 2px solid #e5e7eb; border-radius: 10px;
+            padding: 14px 16px; cursor: pointer; transition: all 0.2s;
+            margin-bottom: 10px; position: relative; background: white;
+        }
+        .assign-wf-card:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(59,130,246,0.1); }
+        .assign-wf-card.selected { border-color: #3b82f6; background: #eff6ff; }
+        .assign-wf-checkmark {
+            position: absolute; top: 12px; right: 12px;
+            width: 22px; height: 22px; border-radius: 50%;
+            border: 2px solid #e5e7eb; display: flex; align-items: center;
+            justify-content: center; color: transparent; font-size: 12px; transition: all 0.2s;
+        }
+        .assign-wf-card.selected .assign-wf-checkmark { background: #3b82f6; border-color: #3b82f6; color: white; }
+
+        .overflow-tooltip::before {
 .overflow-tooltip::before {
     content: '';
     position: absolute;
@@ -837,6 +863,7 @@
                             <th class="col-Edition sortable" onclick="sortTable('version')">Version<span class="sort-icon"></span></th>
                             <th class="col-date sortable" onclick="sortTable('uploadDate')">Upload Date<span class="sort-icon"></span></th>
                             <th class="col-code sortable" onclick="sortTable('uploadedBy')">Uploaded By<span class="sort-icon"></span></th>
+                            <th class="col-code sortable" onclick="sortTable('workflow')">Workflow<span class="sort-icon"></span></th>
                             <th class="col-tags">Tags</th>
                             <th class="col-classifications">Classifications</th>
                             <th class="col-actions">Actions</th>
@@ -855,7 +882,8 @@
                                     data-doc-type=${doc.docTypeName != null ? doc.docTypeName : '-'},
                                     data-version=${doc.versionNumber != null ? doc.versionNumber : '1.0'},
                                     data-uploaded-by=${doc.uploadedByUsername != null ? doc.uploadedByUsername : '-'},
-                                    data-file-type=${doc.fileType != null ? doc.fileType : 'PDF'}">
+                                    data-file-type=${doc.fileType != null ? doc.fileType : 'PDF'},
+                                    data-workflow=${doc.workflowName != null ? doc.workflowName : ''}">
                             <td class="col-title">
                                 <a class="doc-main-link" th:href="@{/DocViewer(id=${doc.id})}" target="_blank" style="display:none;"></a>
                                 <div class="doc-title">
@@ -882,6 +910,24 @@
                             <td class="col-Edition"><span th:text="${doc.versionNumber != null ? doc.versionNumber : '1.0'}">1.0</span></td>
                             <td class="col-date"><span class="format-date-time" th:text="${doc.uploadedAt}">Mar 20, 2024</span></td>
                             <td class="col-code"><span th:text="${doc.uploadedByUsername != null ? doc.uploadedByUsername : '-'}">admin</span></td>
+                            <td class="col-code">
+                                <span th:if="${doc.workflowName != null}"
+                                      style="background:#eef2ff;color:#1e3a5f;border:1px solid #c7d2fe;
+                                             border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;
+                                             display:inline-flex;align-items:center;gap:5px;">
+                                    <i class="bi bi-diagram-3" style="font-size:11px;"></i>
+                                    <span th:text="${doc.workflowName}"></span>
+                                </span>
+                                <button th:if="${doc.workflowName == null}"
+                                        class="btn-assign-workflow"
+                                        th:attr="data-doc-id=${doc.id},
+                                                 data-doc-type-id=${doc.docTypeId},
+                                                 data-doc-type-name=${doc.docTypeName != null ? doc.docTypeName : ''},
+                                                 data-doc-title=${doc.title}"
+                                        onclick="event.stopPropagation(); openAssignWorkflowModal(this)">
+                                    <i class="bi bi-plus-circle" style="font-size:15px;"></i>
+                                </button>
+                            </td>
                             <td class="col-tags">
                                 <span th:if="${doc.tagNames != null and doc.tagNames != ''}">
                                     <th:block th:with="tagList=${#strings.arraySplit(doc.tagNames, ',')}">
@@ -909,12 +955,20 @@
                                 <span th:if="${(doc.classificationNames == null or doc.classificationNames == '') and (doc.classifications == null or doc.classifications.isEmpty())}" style="color: #9ca3af;">No Classifications</span>
                             </td>
                             <td class="col-actions text-nowrap">
-                                <a th:href="@{/DocViewer(id=${doc.id})}" target="_blank" class="btn btn-sm btn-outline-view me-1" title="View"><i class="bi bi-eye"></i></a>
-                                <a th:href="@{/document/edit/{id}(id=${doc.id})}" class="btn btn-sm btn-outline-primary me-1" title="Edit" th:if="${userRole != 'Viewer'}"><i class="bi bi-pencil"></i></a>
-                                <a href="#" class="btn btn-sm btn-outline-download me-1" title="Download"
+                                <a th:href="@{/DocViewer(id=${doc.id})}" target="_blank"
+                                   class="btn btn-sm btn-outline-view me-1 perm-btn perm-doc-view"
+                                   title="View" style="display:none;"><i class="bi bi-eye"></i></a>
+                                <a th:href="@{/document/edit/{id}(id=${doc.id})}"
+                                   class="btn btn-sm btn-outline-primary me-1 perm-btn perm-doc-update"
+                                   title="Edit" style="display:none;"><i class="bi bi-pencil"></i></a>
+                                <a href="#" class="btn btn-sm btn-outline-download me-1 perm-btn perm-doc-download"
+                                   title="Download"
                                    th:attr="data-doc-id=${doc.id}, data-doc-title=${doc.title}, data-file-type=${doc.fileType != null ? doc.fileType : 'PDF'}"
-                                   onclick="showDownloadModal(this); return false;" th:if="${userRole != 'Viewer'}"><i class="bi bi-download"></i></a>
-                                <a href="#" class="btn btn-sm btn-outline-danger" title="Delete" th:attr="data-doc-id=${doc.id}, data-doc-title=${doc.title}" onclick="showDeleteModal(this); return false;" th:if="${userRole != 'Viewer'}"><i class="bi bi-trash"></i></a>
+                                   onclick="showDownloadModal(this); return false;" style="display:none;"><i class="bi bi-download"></i></a>
+                                <a href="#" class="btn btn-sm btn-outline-danger perm-btn perm-doc-delete"
+                                   title="Delete"
+                                   th:attr="data-doc-id=${doc.id}, data-doc-title=${doc.title}"
+                                   onclick="showDeleteModal(this); return false;" style="display:none;"><i class="bi bi-trash"></i></a>
                             </td>
                         </tr>
                         </tbody>
@@ -946,12 +1000,20 @@
                     <a class="doc-main-link" th:href="@{/DocViewer(id=${doc.id})}" target="_blank" style="display:none;"></a>
 
                     <div class="card-actions">
-                        <a th:href="@{/DocViewer(id=${doc.id})}" target="_blank" class="btn btn-sm btn-outline-view-custom me-1" title="View"><i class="bi bi-eye"></i></a>
-                        <a th:href="@{/document/edit/{id}(id=${doc.id})}" class="btn btn-sm btn-outline-primary-custom me-1" title="Edit" th:if="${userRole != 'Viewer'}"><i class="bi bi-pencil"></i></a>
-                        <a href="#" class="btn btn-sm btn-outline-download-custom me-1" title="Download"
+                        <a th:href="@{/DocViewer(id=${doc.id})}" target="_blank"
+                           class="btn btn-sm btn-outline-view-custom me-1 perm-btn perm-doc-view"
+                           title="View" style="display:none;"><i class="bi bi-eye"></i></a>
+                        <a th:href="@{/document/edit/{id}(id=${doc.id})}"
+                           class="btn btn-sm btn-outline-primary-custom me-1 perm-btn perm-doc-update"
+                           title="Edit" style="display:none;"><i class="bi bi-pencil"></i></a>
+                        <a href="#" class="btn btn-sm btn-outline-download-custom me-1 perm-btn perm-doc-download"
+                           title="Download"
                            th:attr="data-doc-id=${doc.id}, data-doc-title=${doc.title}, data-file-type=${doc.fileType != null ? doc.fileType : 'PDF'}"
-                           onclick="showDownloadModal(this); return false;" th:if="${userRole != 'Viewer'}"><i class="bi bi-download"></i></a>
-                        <a href="#" class="btn btn-sm btn-outline-danger-custom" title="Delete" th:attr="data-doc-id=${doc.id}, data-doc-title=${doc.title}" onclick="showDeleteModal(this); return false;" th:if="${userRole != 'Viewer'}"><i class="bi bi-trash"></i></a>
+                           onclick="showDownloadModal(this); return false;" style="display:none;"><i class="bi bi-download"></i></a>
+                        <a href="#" class="btn btn-sm btn-outline-danger-custom perm-btn perm-doc-delete"
+                           title="Delete"
+                           th:attr="data-doc-id=${doc.id}, data-doc-title=${doc.title}"
+                           onclick="showDeleteModal(this); return false;" style="display:none;"><i class="bi bi-trash"></i></a>
                     </div>
 
                     <div class="card-header-row">
@@ -975,6 +1037,13 @@
                                 <span><i class="bi bi-bookmark"></i> v<span th:text="${doc.versionNumber != null ? doc.versionNumber : '1.0'}">1.0</span></span>
                                 <span><i class="bi bi-upload"></i> <span class="format-date-time" th:text="${doc.uploadedAt != null ? doc.uploadedAt : '-'}">Mar 21, 2024</span></span>
                                 <span><i class="bi bi-person"></i> <span th:text="${doc.uploadedByUsername != null ? doc.uploadedByUsername : '-'}">admin</span></span>
+                                <span th:if="${doc.workflowName != null}"
+                                      style="background:#eef2ff;color:#1e3a5f;border:1px solid #c7d2fe;
+                                             border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;
+                                             display:inline-flex;align-items:center;gap:4px;">
+                                    <i class="bi bi-diagram-3" style="font-size:10px;"></i>
+                                    <span th:text="${doc.workflowName}"></span>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -1079,8 +1148,40 @@
         </div>
     </div>
 </div>
+<!-- ==================== ASSIGN WORKFLOW MODAL ==================== -->
+<div class="modal fade" id="assignWorkflowModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:580px;">
+        <div class="modal-content" style="border-radius:12px;border:none;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header border-0" style="background:#1e3a5f;color:white;border-radius:12px 12px 0 0;padding:20px 24px;">
+                <div>
+                    <h5 class="modal-title mb-1" id="assignWorkflowModalTitle" style="font-size:17px;font-weight:600;">Assign Workflow</h5>
+                    <div style="font-size:12px;opacity:0.75;">
+                        Document Type: <span id="assignWorkflowDocTypeBadge" style="font-weight:600;"></span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:20px 24px;max-height:60vh;overflow-y:auto;">
+                <div id="assignWorkflowContent">
+                    <div class="text-center py-4 text-muted">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Loading...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0" style="padding:16px 24px;background:#f9fafb;border-radius:0 0 12px 12px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn fw-bold" id="confirmAssignWorkflowBtn"
+                        style="background:#1e3a5f;color:white;border:none;" disabled
+                        onclick="confirmAssignWorkflow()">
+                    <i class="bi bi-check-circle me-2"></i>Assign
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="/js/bootstrap.bundle.min.js"></script>
+
 <div th:replace="~{common/navbar :: navbar-js}"></div>
 
 <script th:inline="javascript">
@@ -1150,6 +1251,47 @@
         if (!fileType) return '.pdf';
         return '.' + fileType.toLowerCase();
     }
+    // ==================== PERMISSIONS ====================
+let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        console.error('Failed to load permissions', e);
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    // superadmin gets all permissions automatically
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
+}
+
+function applyDocumentPermissions() {
+   if (hasPerm('DOCUMENT_OPEN')) {
+    document.querySelectorAll('.perm-doc-view').forEach(el => el.style.display = '');
+    }
+    if (hasPerm('DOCUMENT_UPDATE')) {
+        document.querySelectorAll('.perm-doc-update').forEach(el => el.style.display = '');
+    }
+    if (hasPerm('DOCUMENT_DOWNLOAD')) {
+        document.querySelectorAll('.perm-doc-download').forEach(el => el.style.display = '');
+    }
+    if (hasPerm('DOCUMENT_DELETE')) {
+        document.querySelectorAll('.perm-doc-delete').forEach(el => el.style.display = '');
+    }
+    // Hide search/filter section if DOCUMENT_SEARCH not permitted
+    if (!hasPerm('DOCUMENT_SEARCH')) {
+        const filterSection = document.querySelector('.filter-section');
+        if (filterSection) filterSection.style.display = 'none';
+        const docCount = document.querySelector('.document-count');
+        if (docCount) docCount.style.display = 'none';
+    }
+}
 
     // ==================== STATE VARIABLES ====================
     let watermarkEnabled = true;
@@ -1181,10 +1323,12 @@
         applyAllFilters();
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        loadWatermarkSettings();
-        formatAllDates();
-        buildDocumentDataModel();
+    document.addEventListener('DOMContentLoaded', async function() {
+    await fetchMyPermissions();
+    applyDocumentPermissions();
+    loadWatermarkSettings();
+    formatAllDates();
+    buildDocumentDataModel();
         addOverflowTooltips();
 
         if (currentView === 'grid') toggleView('grid');
@@ -1216,7 +1360,8 @@
                 tags: (row.getAttribute('data-tags') || '').toLowerCase(),
                 classifications: (row.getAttribute('data-classifications') || '').toLowerCase(),
                 uploadDate: row.getAttribute('data-upload-date') || '',
-                fileType: (row.getAttribute('data-file-type') || 'PDF').toUpperCase(),
+               fileType: (row.getAttribute('data-file-type') || 'PDF').toUpperCase(),
+                workflow: (row.getAttribute('data-workflow') || '').toLowerCase(),
                 listElement: row,
                 gridElement: null
             });
@@ -1333,7 +1478,8 @@
                     doc.uploadedBy.includes(searchTerm) ||
                     doc.tags.includes(searchTerm) ||
                     doc.classifications.includes(searchTerm) ||
-                    doc.fileType.toLowerCase().includes(searchTerm);
+                   doc.fileType.toLowerCase().includes(searchTerm) ||
+                    doc.workflow.includes(searchTerm);
                }
 
             let matchesTag = true;
@@ -1390,6 +1536,7 @@
                 case 'docType': vA = a.docType; vB = b.docType; break;
                 case 'version': vA = a.version; vB = b.version; break;
                 case 'uploadedBy': vA = a.uploadedBy; vB = b.uploadedBy; break;
+                case 'workflow': vA = a.workflow; vB = b.workflow; break;
                 case 'uploadDate': return direction === 'asc' ? parseDate(a.uploadDate) - parseDate(b.uploadDate) : parseDate(b.uploadDate) - parseDate(a.uploadDate);
                 default: return 0;
             }
@@ -1499,7 +1646,7 @@
         document.querySelectorAll('#documentsTable tbody tr').forEach(row => {
             const mainLink = row.querySelector('.doc-main-link');
             row.removeEventListener('click', row._rowClickHandler);
-            row._rowClickHandler = function(e) { if (e.target.closest('.col-actions')) return; if (mainLink) window.open(mainLink.href, '_blank'); };
+          row._rowClickHandler = function(e) { if (e.target.closest('.col-actions')) return; if (!hasPerm('DOCUMENT_OPEN')) return; if (mainLink) window.open(mainLink.href, '_blank'); };
             row.addEventListener('click', row._rowClickHandler);
             row.style.cursor = 'pointer';
             row.querySelectorAll('.col-actions a, .col-actions button, .action-btn, .btn-sm').forEach(btn => btn.addEventListener('click', evt => evt.stopPropagation()));
@@ -1508,7 +1655,7 @@
         document.querySelectorAll('.document-card').forEach(card => {
             const mainLink = card.querySelector('.doc-main-link');
             card.removeEventListener('click', card._cardClickHandler);
-            card._cardClickHandler = function(e) { if (e.target.closest('.card-actions')) return; if (mainLink) window.open(mainLink.href, '_blank'); };
+          card._cardClickHandler = function(e) { if (e.target.closest('.card-actions')) return; if (!hasPerm('DOCUMENT_OPEN')) return; if (mainLink) window.open(mainLink.href, '_blank'); };
             card.addEventListener('click', card._cardClickHandler);
             card.style.cursor = 'pointer';
             card.querySelectorAll('.card-actions a, .card-actions button, .action-btn, .btn-sm').forEach(btn => btn.addEventListener('click', evt => evt.stopPropagation()));
@@ -1726,6 +1873,147 @@
         currentDownloadDocId = null;
         currentDownloadDocTitle = null;
         currentDownloadFileType = 'PDF'; // ⭐ PHASE 2
+    }
+    // ==================== ASSIGN WORKFLOW ====================
+    let assignWorkflowDocId   = null;
+    let assignWorkflowSelectedId   = null;
+    let assignWorkflowSelectedName = null;
+
+    async function openAssignWorkflowModal(btn) {
+        const docId       = btn.getAttribute('data-doc-id');
+        const docTypeId   = btn.getAttribute('data-doc-type-id');
+        const docTypeName = btn.getAttribute('data-doc-type-name');
+        const docTitle    = btn.getAttribute('data-doc-title');
+
+        assignWorkflowDocId        = docId;
+        assignWorkflowSelectedId   = null;
+        assignWorkflowSelectedName = null;
+
+        document.getElementById('assignWorkflowModalTitle').textContent = `Assign Workflow — ${docTitle}`;
+        document.getElementById('assignWorkflowDocTypeBadge').textContent = docTypeName || '-';
+        const confirmBtn = document.getElementById('confirmAssignWorkflowBtn');
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Assign';  // always reset text
+
+        const content = document.getElementById('assignWorkflowContent');
+        content.innerHTML = '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Loading workflows...</div>';
+
+        new bootstrap.Modal(document.getElementById('assignWorkflowModal')).show();
+
+        try {
+            const r = await fetch(`/api/workflows/by-doc-type/${docTypeId}`);
+            const workflows = await r.json();
+            renderAssignWorkflowCards(workflows);
+        } catch (e) {
+            content.innerHTML = '<div class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>Failed to load workflows.</div>';
+        }
+    }
+
+    function renderAssignWorkflowCards(workflows) {
+        const content = document.getElementById('assignWorkflowContent');
+        if (!workflows || workflows.length === 0) {
+            content.innerHTML = `<div class="text-center text-muted py-5">
+                <i class="bi bi-diagram-3" style="font-size:2.5rem;opacity:0.3;"></i>
+                <p class="mt-3 mb-0">No workflows defined for this document type yet.</p>
+                <p style="font-size:13px;">Go to Settings → Document Types to create one.</p>
+            </div>`;
+            return;
+        }
+        content.innerHTML = workflows.map(w => {
+            const transCount = (w.transitions || []).length;
+            return `
+            <div class="assign-wf-card" id="awfCard_${w.workflowId}"
+                 onclick="selectAssignWorkflowCard(${w.workflowId}, '${escapeHtmlList(w.workflowName)}', this)">
+                <div class="assign-wf-checkmark"><i class="bi bi-check"></i></div>
+                <div class="d-flex align-items-center gap-3" style="padding-right:30px;">
+                    <div style="width:40px;height:40px;background:#f3f4f6;border-radius:8px;
+                                display:flex;align-items:center;justify-content:center;
+                                flex-shrink:0;font-size:18px;color:#1e3a5f;">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div style="font-weight:600;font-size:14px;color:#1a2332;">${escapeHtmlList(w.workflowName)}</div>
+                        <div style="font-size:12px;color:#6b7280;">${escapeHtmlList(w.description || '')}</div>
+                    </div>
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <span style="background:#f3f4f6;color:#374151;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;">
+                            ${w.stateCount} State${w.stateCount !== 1 ? 's' : ''}
+                        </span>
+                        <span style="background:#eff6ff;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;">
+                            ${transCount} Transition${transCount !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function selectAssignWorkflowCard(workflowId, workflowName, cardEl) {
+        document.querySelectorAll('.assign-wf-card').forEach(c => c.classList.remove('selected'));
+        cardEl.classList.add('selected');
+        assignWorkflowSelectedId   = workflowId;
+        assignWorkflowSelectedName = workflowName;
+        document.getElementById('confirmAssignWorkflowBtn').disabled = false;
+    }
+
+    async function confirmAssignWorkflow() {
+        if (!assignWorkflowDocId || !assignWorkflowSelectedId) return;
+
+        const btn = document.getElementById('confirmAssignWorkflowBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning...';
+
+        try {
+            const r = await fetch(`/api/documents/${assignWorkflowDocId}/workflow`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ workflowId: assignWorkflowSelectedId })
+            });
+            if (!r.ok) throw new Error('Assignment failed');
+
+            // Replace the button with the workflow badge in the table
+            const button = document.querySelector(`.btn-assign-workflow[data-doc-id="${assignWorkflowDocId}"]`);
+            if (button) {
+                const cell = button.closest('td');
+                if (cell) {
+                    cell.innerHTML = `<span style="background:#eef2ff;color:#1e3a5f;border:1px solid #c7d2fe;
+                        border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;
+                        display:inline-flex;align-items:center;gap:5px;">
+                        <i class="bi bi-diagram-3" style="font-size:11px;"></i>
+                        ${escapeHtmlList(assignWorkflowSelectedName)}
+                    </span>`;
+                }
+            }
+
+            // Reset button before closing so it's clean if modal is reused
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Assign';
+            bootstrap.Modal.getInstance(document.getElementById('assignWorkflowModal')).hide();
+            showListAlert('success', `Workflow "${assignWorkflowSelectedName}" assigned successfully!`);
+
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Assign';
+            showListAlert('error', 'Failed to assign workflow. Please try again.');
+        }
+    }
+
+    function escapeHtmlList(s) {
+        if (!s) return '';
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[c]));
+    }
+
+    function showListAlert(type, message) {
+        const bg = type === 'success' ? '#10b981' : '#ef4444';
+        const icon = type === 'success' ? 'check-circle-fill' : 'exclamation-circle-fill';
+        const el = document.createElement('div');
+        el.style.cssText = `position:fixed;top:80px;right:20px;background:${bg};color:white;
+            padding:14px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25);
+            z-index:10000;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;
+            animation:slideInRight 0.3s ease;`;
+        el.innerHTML = `<i class="bi bi-${icon}" style="font-size:18px;"></i><span>${message}</span>`;
+        document.body.appendChild(el);
+        setTimeout(() => { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
     }
 </script>
 

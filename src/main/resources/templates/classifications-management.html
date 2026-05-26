@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classification Management - Codes & Standards</title>
+    <title>Classification Management - Document Management System</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
     <!-- Include Sidebar Styles -->
@@ -527,6 +527,22 @@
     let allClassifications = [];
     let deleteClassificationId = null;
     let activeModalId = null;
+    let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        console.error('Failed to load permissions', e);
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    return myPermissions.includes(perm);
+}
 
     const userRole = document.getElementById('userRole')?.value || 'Viewer';
     const userName = document.getElementById('userName')?.value || 'User';
@@ -622,10 +638,11 @@
     // ==================== INITIALIZATION ====================
 
     document.addEventListener('DOMContentLoaded', async function() {
-        const accessAllowed = await checkClassificationManagementAccess();
-        if (!accessAllowed) return;
+    const accessAllowed = await checkClassificationManagementAccess();
+    if (!accessAllowed) return;
 
-        applyRoleBasedRestrictions();
+    await fetchMyPermissions();
+    applyRoleBasedRestrictions();
         await loadClassifications();
         setupEventListeners();
 
@@ -665,11 +682,10 @@
         });
     }
 
-    function applyRoleBasedRestrictions() {
-        const isAdmin = userRole === 'Admin';
-        const createBtn = document.getElementById('createClassificationBtn');
-        if (createBtn) createBtn.style.display = isAdmin ? 'block' : 'none';
-    }
+   function applyRoleBasedRestrictions() {
+    const createBtn = document.getElementById('createClassificationBtn');
+    if (createBtn) createBtn.style.display = hasPerm('CLASSIFICATION_CREATE') ? 'block' : 'none';
+}
 
     function setupEventListeners() {
         document.getElementById('createClassificationForm').addEventListener('submit', handleCreateClassification);
@@ -685,28 +701,28 @@
     // ==================== MODAL OPEN FUNCTIONS ====================
 
     function openCreateClassificationModal() {
-        if (userRole !== 'Admin') {
-            showAlert('Only Admin users can create classifications.', 'danger');
-            return;
-        }
-        openModal('createClassificationModal');
+    if (!hasPerm('CLASSIFICATION_CREATE')) {
+        showAlert('You do not have permission to create classifications.', 'danger');
+        return;
     }
+    openModal('createClassificationModal');
+}
 
-    function openEditModal(classificationId, classificationName) {
-        if (userRole !== 'Admin') {
-            showAlert('Only Admin users can edit classifications.', 'danger');
-            return;
-        }
+   function openEditModal(classificationId, classificationName) {
+    if (!hasPerm('CLASSIFICATION_UPDATE')) {
+        showAlert('You do not have permission to edit classifications.', 'danger');
+        return;
+    }
         document.getElementById('editClassificationId').value = classificationId;
         document.getElementById('editClassificationName').value = classificationName;
         openModal('editClassificationModal');
     }
 
     function openDeleteModal(classificationId, classificationName, documentCount) {
-        if (userRole !== 'Admin') {
-            showAlert('Only Admin users can delete classifications.', 'danger');
-            return;
-        }
+    if (!hasPerm('CLASSIFICATION_DELETE')) {
+        showAlert('You do not have permission to delete classifications.', 'danger');
+        return;
+    }
 
         deleteClassificationId = classificationId;
 
@@ -811,20 +827,21 @@
         const updatedDate = formatDate(classification.updatedAt);
         const updatedBy = classification.updatedByUsername || 'N/A';
         const createdBy = classification.createdByUsername || 'Unknown';
-        const isAdmin = userRole === 'Admin';
+       const canEdit   = hasPerm('CLASSIFICATION_UPDATE');
+    const canDelete = hasPerm('CLASSIFICATION_DELETE');
+    const hasAny    = canEdit || canDelete;
 
-        const actionsHTML = isAdmin ? `
-            <div class="classification-hover-actions">
-                <button class="btn-icon edit-btn" title="Edit"
-                    onclick="event.stopPropagation(); openEditModal(${classification.id}, '${escapeHtml(classification.classificationName).replace(/'/g, "\\'")}')">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn-icon delete-btn" title="Delete"
-                    onclick="event.stopPropagation(); openDeleteModal(${classification.id}, '${escapeHtml(classification.classificationName).replace(/'/g, "\\'")}', ${classification.documentCount || 0})">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>` : '';
-
+    const actionsHTML = hasAny ? `
+        <div class="classification-hover-actions">
+            ${canEdit ? `<button class="btn-icon edit-btn" title="Edit"
+                onclick="event.stopPropagation(); openEditModal(${classification.id}, '${escapeHtml(classification.classificationName).replace(/'/g, "\\'")}')">
+                <i class="bi bi-pencil"></i>
+            </button>` : ''}
+            ${canDelete ? `<button class="btn-icon delete-btn" title="Delete"
+                onclick="event.stopPropagation(); openDeleteModal(${classification.id}, '${escapeHtml(classification.classificationName).replace(/'/g, "\\'")}', ${classification.documentCount || 0})">
+                <i class="bi bi-trash"></i>
+            </button>` : ''}
+        </div>` : '';
         div.innerHTML = `
             <div class="d-flex align-items-start">
                 <div class="classification-icon me-3">
@@ -885,12 +902,12 @@
     // ==================== FORM HANDLERS ====================
 
     async function handleCreateClassification(e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        if (userRole !== 'Admin') {
-            showAlert('Only Admin users can create classifications.', 'danger');
-            return;
-        }
+    if (!hasPerm('CLASSIFICATION_CREATE')) {
+        showAlert('You do not have permission to create classifications.', 'danger');
+        return;
+    }
 
         const input = document.getElementById('createClassificationName');
         let classificationName = input.value.trim().toLowerCase().replace(/\s+/g, '');
@@ -933,10 +950,10 @@
   async function handleEditClassification(e) {
     e.preventDefault();
 
-    if (userRole !== 'Admin') {
-        showAlert('Only Admin users can edit classifications.', 'danger');
-        return;
-    }
+    if (!hasPerm('CLASSIFICATION_UPDATE')) {
+    showAlert('You do not have permission to edit classifications.', 'danger');
+    return;
+}
 
     const input = document.getElementById('editClassificationName');
     let classificationName = input.value.trim().toLowerCase().replace(/\s+/g, '');
@@ -984,11 +1001,11 @@
    async function handleDeleteClassification() {
     if (!deleteClassificationId) return;
 
-    if (userRole !== 'Admin') {
-        showAlert('Only Admin users can delete classifications.', 'danger');
-        closeModal('deleteModal');
-        return;
-    }
+    if (!hasPerm('CLASSIFICATION_DELETE')) {
+    showAlert('You do not have permission to delete classifications.', 'danger');
+    closeModal('deleteModal');
+    return;
+}
 
     const scrollPos = window.scrollY;
 

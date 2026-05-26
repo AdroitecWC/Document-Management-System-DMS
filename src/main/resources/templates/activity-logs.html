@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Activity Logs</title>
+    <title>Activity Logs - Document Management System</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
     <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
@@ -67,6 +67,9 @@
         .badge-user-edit-failed   { color: #dc3545; }
         .badge-user-delete        { color: #28a745; }
         .badge-user-delete-failed { color: #dc3545; }
+        /* User Suspend / Activate */
+        .badge-user-suspend  { color: #fd7e14;}
+        .badge-user-activate { color: #20c997; }
 
         /* Document Actions */
         .badge-document-upload          { color: #28a745; }
@@ -89,6 +92,10 @@
         /* ✅ Settings Actions */
         .badge-settings-update { color: #28a745; font-weight: 600; }
         .badge-settings-fail   { color: #dc3545; font-weight: 600; }
+        .badge-doctype-success  { color: #28a745; font-weight: 600; }
+        .badge-doctype-fail     { color: #dc3545; font-weight: 600; }
+        .badge-metadata-success { color: #28a745; font-weight: 600; }
+        .badge-metadata-fail    { color: #dc3545; font-weight: 600; }
 
         /* Small utilities */
         .muted-small { color:var(--muted); font-size:13px; }
@@ -322,6 +329,8 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
                                     log.action == 'USER_EDIT_FAILED'              ? 'badge-user-edit-failed' :
                                     log.action == 'USER_DELETE'                   ? 'badge-user-delete' :
                                     log.action == 'USER_DELETE_FAILED'            ? 'badge-user-delete-failed' :
+                                    log.action == 'USER_SUSPEND'                  ? 'badge-user-suspend' :
+                                    log.action == 'USER_ACTIVATE'                 ? 'badge-user-activate' :
                                     log.action == 'DOCUMENT_UPLOAD'               ? 'badge-document-upload' :
                                     log.action == 'DOCUMENT_UPLOAD_FAILED'        ? 'badge-document-upload-failed' :
                                     log.action == 'DOCUMENT_EDIT'                 ? 'badge-document-edit' :
@@ -330,6 +339,7 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
                                     log.action == 'DOCUMENT_DELETE_FAILED'        ? 'badge-document-delete-failed' :
                                     log.action == 'DOCUMENT_DOWNLOAD'             ? 'badge-document-download' :
                                     log.action == 'DOCUMENT_DOWNLOAD_FAILED'      ? 'badge-document-download-failed' :
+                                    log.action == 'ACTIVITY_LOG_DOWNLOAD'         ? 'badge-success' :
                                     log.action == 'EDIT_PROFILE'                  ? 'badge-edit-profile' :
                                     log.action == 'EDIT_PROFILE_FAILED'           ? 'badge-edit-profile-failed' :
                                     log.action == 'TAG_ADD'                       ? 'badge-success' :
@@ -361,6 +371,18 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
                                     log.action == 'SETTINGS_BULK_USER_DELETE_FAIL' ? 'badge-settings-fail' :
                                     log.action == 'SETTINGS_BULK_DOC_DELETE'      ? 'badge-settings-update' :
                                     log.action == 'SETTINGS_BULK_DOC_DELETE_FAIL' ? 'badge-settings-fail' :
+                                    log.action == 'DOCTYPE_CREATE'      ? 'badge-doctype-success' :
+                                    log.action == 'DOCTYPE_CREATE_FAIL' ? 'badge-doctype-fail' :
+                                    log.action == 'DOCTYPE_UPDATE'      ? 'badge-doctype-success' :
+                                    log.action == 'DOCTYPE_UPDATE_FAIL' ? 'badge-doctype-fail' :
+                                    log.action == 'DOCTYPE_DELETE'      ? 'badge-doctype-success' :
+                                    log.action == 'DOCTYPE_DELETE_FAIL' ? 'badge-doctype-fail' :
+                                    log.action == 'METADATA_CREATE'      ? 'badge-metadata-success' :
+                                    log.action == 'METADATA_CREATE_FAIL' ? 'badge-metadata-fail' :
+                                    log.action == 'METADATA_UPDATE'      ? 'badge-metadata-success' :
+                                    log.action == 'METADATA_UPDATE_FAIL' ? 'badge-metadata-fail' :
+                                    log.action == 'METADATA_DELETE'      ? 'badge-metadata-success' :
+                                    log.action == 'METADATA_DELETE_FAIL' ? 'badge-metadata-fail' :
                                     ''}"
                                   th:text="${log.action}">
                                 ACTION
@@ -404,6 +426,32 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
 <script>
     let activeFilters = new Set(['all']);
     let isProfessional = [[${isProfessionalEdition and hasValidLicense}]];
+    let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        myPermissions = [];
+    }
+    applyDownloadPermission();
+}
+
+function hasPerm(perm) {
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
+}
+
+function applyDownloadPermission() {
+    if (!hasPerm('ACTIVITY_LOG_DOWNLOAD')) {
+        const downloadBtn = document.querySelector('button[onclick="downloadLogsAsCSV()"]');
+        if (downloadBtn) downloadBtn.style.display = 'none';
+    }
+}
+
+
 
     // ==================== CENTER MODAL ====================
     function centerModalToMainContent() {
@@ -422,7 +470,8 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
 
     // ==================== INITIALIZATION ====================
     document.addEventListener('DOMContentLoaded', function() {
-        const table = document.getElementById('activityLogsTable');
+    fetchMyPermissions();
+    const table = document.getElementById('activityLogsTable');
         if (table) {
             table.addEventListener('click', function(e) {
                 const userLink = e.target.closest('.user-link');
@@ -672,9 +721,14 @@ function applyFilters() {
         const dateText = cells[4].children[0]?.textContent?.trim();
         const logDate = parseDateFromText(dateText);
 
-        const isFailed = action.includes('FAILED') || action.includes('FAIL');
-      const isDownload = action === 'DOCUMENT_DOWNLOAD' || action === 'DOCUMENT_DOWNLOAD_FAILED';
-        const isSettings = action.startsWith('SETTINGS_');
+       const isFailed = action.includes('FAILED') || action.includes('FAIL');
+const isSuspendAction = action === 'USER_SUSPEND' || action === 'USER_ACTIVATE';
+      const isDownload = action === 'DOCUMENT_DOWNLOAD' ||
+                   action === 'DOCUMENT_DOWNLOAD_FAILED' ||
+                   action === 'ACTIVITY_LOG_DOWNLOAD';
+       const isSettings = action.startsWith('SETTINGS_') ||
+                   action.startsWith('DOCTYPE_') ||
+                   action.startsWith('METADATA_');
 
         let show = true;
 
@@ -751,8 +805,15 @@ function applyFilters() {
     }
 
     // ==================== CSV DOWNLOAD ====================
-    function downloadLogsAsCSV() {
-        if (!isProfessional) { alert("CSV Export is only available in Professional Edition (ED2)."); return; }
+   function downloadLogsAsCSV() {
+    if (!hasPerm('ACTIVITY_LOG_DOWNLOAD')) {
+        alert("You do not have permission to download activity logs.");
+        return;
+    }
+    if (!isProfessional) { alert("CSV Export is only available in Professional Edition (ED2)."); return; }
+
+    // Log the download action
+    fetch('/activity-logs/download', { method: 'GET' }).catch(() => {});
         const table = document.querySelector("#activityLogsTable");
         if (!table) { alert("No logs table found!"); return; }
 

@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -78,6 +79,11 @@ public class AuthController {
         this.documentService = documentService;
         this.activityLogService = activityLogService;
         this.groupService = groupService;
+    }
+
+    @GetMapping("/error/403")
+    public String accessDenied() {
+        return "error/403";
     }
 
     @GetMapping("/")
@@ -168,22 +174,22 @@ public class AuthController {
         List<UserDto> users = userService.findAllUsers();
         List<Role> roles = roleRepository.findAll();
 
-        // Calculate statistics
         long totalUsers = users.size();
         long adminCount = users.stream().filter(u -> "Admin".equals(u.getRoleName())).count();
         long managerCount = users.stream().filter(u -> "Manager".equals(u.getRoleName())).count();
         long viewerCount = users.stream().filter(u -> "Viewer".equals(u.getRoleName())).count();
+        long activeCount = users.stream().filter(u -> Boolean.TRUE.equals(u.isActive())).count();
+        long suspendedCount = users.stream().filter(u -> !Boolean.TRUE.equals(u.isActive())).count();
 
         model.addAttribute("users", users);
         model.addAttribute("roles", roles);
         model.addAttribute("user", new UserDto());
-
-
-        // Add statistics to model
         model.addAttribute("totalUsers", totalUsers);
         model.addAttribute("adminCount", adminCount);
         model.addAttribute("managerCount", managerCount);
         model.addAttribute("viewerCount", viewerCount);
+        model.addAttribute("activeCount", activeCount);
+        model.addAttribute("suspendedCount", suspendedCount);
 
         return "users";
     }
@@ -216,6 +222,56 @@ public class AuthController {
         response.put("exists", exists);
 
         return ResponseEntity.ok(response);
+    }
+
+
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('USER_SUSPEND')")
+    @PostMapping("/users/{id}/toggle-status")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> toggleUserStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> body,
+            Principal principal) {
+
+        String adminUsername = principal != null ? principal.getName() : "Unknown";
+        Map<String, Object> response = new HashMap<>();
+
+        // Prevent suspending yourself
+        User loggedInUser = userService.findUserByUsername(adminUsername);
+        if (loggedInUser != null && loggedInUser.getUserId().equals(id)) {
+            response.put("success", false);
+            response.put("message", "You cannot suspend yourself.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        boolean newStatus = Boolean.TRUE.equals(body.get("active"));
+
+        try {
+            userService.toggleUserStatus(id, newStatus);
+
+            // Fetch the target user's name for better log detail
+            UserDto targetUser = userService.findUserById(id);
+            String targetDisplayName = (targetUser != null && targetUser.getUsername() != null)
+                    ? targetUser.getUsername() +
+                    (targetUser.getFirstName() != null ? " (" + targetUser.getFirstName() + " " + targetUser.getLastName() + ")" : "")
+                    : "User ID: " + id;
+
+            activityLogService.logByUsername(
+                    adminUsername,
+                    newStatus ? "USER_ACTIVATE" : "USER_SUSPEND",
+                    (newStatus ? "Activated user: " : "Suspended user: ") + targetDisplayName
+            );
+            response.put("success", true);
+            response.put("active", newStatus);
+            response.put("message", "User " + (newStatus ? "activated" : "suspended") + " successfully.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Failed to toggle user status for ID: {}", id, e);
+            response.put("success", false);
+            response.put("message", "Failed to update status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @GetMapping("/{id}")
@@ -866,6 +922,7 @@ public class AuthController {
                                  @RequestParam(value = "classificationNames", required = false) String classificationsJson,
                                  @RequestParam(value = "groupIds", required = false) String groupIds,
                                  @RequestParam(value = "docTypeId", required = false) Long docTypeId,
+                                 @RequestParam(value = "workflowId", required = false) Long workflowId,
                                  @RequestParam(value = "versionNumber", required = false) String versionNumber,
                                  @RequestParam(value = "metadata", required = false) String metadataJson,
                                  Principal principal,
@@ -956,8 +1013,12 @@ public class AuthController {
         try {
 
             // Set docTypeId on DTO
+            // Set docTypeId and workflowId on DTO
             if (docTypeId != null) {
                 documentDto.setDocTypeId(docTypeId);
+            }
+            if (workflowId != null) {
+                documentDto.setWorkflowId(workflowId);
             }
             if (versionNumber != null && !versionNumber.trim().isEmpty()) {
                 documentDto.setVersionNumber(versionNumber.trim());
@@ -977,7 +1038,7 @@ public class AuthController {
                     Long savedDocumentId = allDocs.stream()
                             .filter(d -> d.getTitle().equals(documentDto.getTitle()))
                             .map(DocumentDto::getId)
-                            .findFirst()
+                            .max(Long::compareTo)
                             .orElse(null);
 
                     if (savedDocumentId != null) {
@@ -1122,7 +1183,6 @@ public class AuthController {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        // Check if the authenticated user is a superadmin
         boolean isSuperAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("superadmin"));
 
@@ -1131,17 +1191,24 @@ public class AuthController {
             documentsToShow = documentService.findAllDocuments();
             logger.info("Superadmin '{}' viewing all documents.", currentUsername);
         } else {
-            // For regular users, fetch from DB
             User user = userRepository.findByUsername(currentUsername);
             if (user == null) {
-                logger.error("User '{}' not found in database, but authenticated. This should not happen for non-superadmin.", currentUsername);
-                // Redirect to login or show an error
+                logger.error("User '{}' not found in database.", currentUsername);
                 return "redirect:/login?error=userNotFound";
             }
             Long userId = user.getUserId();
             userRole = user.getRole().getRoleName();
-            documentsToShow = documentService.findDocumentsAccessibleByUser(userId);
-            logger.info("User '{}' (Role: {}) viewing accessible documents.", currentUsername, userRole);
+
+            boolean canViewAll = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("DOCUMENT_VIEW"));
+
+            if (canViewAll) {
+                documentsToShow = documentService.findAllDocuments();
+                logger.info("User '{}' (Role: {}) viewing all documents.", currentUsername, userRole);
+            } else {
+                documentsToShow = documentService.findDocumentsAccessibleByUser(userId);
+                logger.info("User '{}' (Role: {}) viewing accessible documents.", currentUsername, userRole);
+            }
         }
 
         // Add filtered documents to model
@@ -1432,7 +1499,7 @@ public class AuthController {
     // METHOD 1: viewDocument  (inline serving — used by direct URL access)---L
     // Change: detect MediaType from file extension instead of hardcoding PDF
     // ─────────────────────────────────────────────────────────────────────────
-    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_OPEN')")
     @GetMapping("/documents/DocView/{id}")
     public ResponseEntity<Resource> viewDocument(@PathVariable Long id) {
         try {
@@ -1468,7 +1535,7 @@ public class AuthController {
     @Autowired
     private DocumentConversionService documentConversionService;
 
-    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_OPEN')")
     @GetMapping("/documents/DocViewer-view/{id}")
     public ResponseEntity<byte[]> viewDocumentForViewer(@PathVariable Long id, Principal principal) {
         try {
@@ -1554,7 +1621,7 @@ public class AuthController {
     @Autowired
     private AccessControlLogicRepository accessControlLogicRepository;  // Add this
 
-    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_VIEW')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_OPEN')")
     @GetMapping("/DocViewer")
     public String showPdfViewer(@RequestParam Long id, Model model, Principal principal) {
         logger.info("===== VIEWER METHOD CALLED =====");
@@ -1909,6 +1976,44 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to update bookmark: " + e.getMessage()));
         }
+    }
+
+
+
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('DOCUMENT_UPDATE')")
+    @PatchMapping("/api/documents/{id}/workflow")
+    @ResponseBody
+    public ResponseEntity<?> assignWorkflowToDocument(@PathVariable Long id,
+                                                      @RequestBody Map<String, Long> body,
+                                                      Principal principal) {
+        String username = principal != null ? principal.getName() : "Unknown";
+        try {
+            Long workflowId = body.get("workflowId");
+            if (workflowId == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "workflowId is required"));
+            }
+            documentService.assignWorkflow(id, workflowId);
+            activityLogService.logByUsername(username, ActivityLogService.DOCUMENT_EDIT,
+                    "Assigned workflow ID " + workflowId + " to document ID " + id);
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            logger.error("Failed to assign workflow to document {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/api/auth/my-permissions")
+    @ResponseBody
+    public ResponseEntity<?> getMyPermissions(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("permissions", List.of()));
+        }
+        List<String> permissions = authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(Map.of("permissions", permissions));
     }
     // ─────────────────────────────────────────────────────────────────────────
     // ⭐ NEW PRIVATE HELPER: detectMediaType

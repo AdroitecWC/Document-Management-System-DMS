@@ -4,7 +4,7 @@
     <!-- ==================== META TAGS ==================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Document - Codes & Standards</title>
+    <title>Upload Document - Document Management System</title>
 
     <!-- ==================== STYLESHEETS ==================== -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -916,6 +916,161 @@
         margin-right: 0px;
         transition: transform 0.3s ease;
     }
+
+        /* ==================== UPLOAD STEP 1 — CUSTOM TYPE CARDS ==================== */
+.custom-type-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: white;
+    margin-bottom: 12px;
+    position: relative;
+}
+.custom-type-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 14px rgba(102,126,234,0.12);
+    transform: translateY(-1px);
+}
+.custom-type-card.selected {
+    border-color: #667eea;
+    background: #f0f4ff;
+    box-shadow: 0 4px 14px rgba(102,126,234,0.15);
+}
+.custom-type-card .card-checkmark {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: all 0.2s;
+    background: white;
+}
+.custom-type-card.selected .card-checkmark {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+.custom-type-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-right: 40px;
+}
+.custom-type-icon {
+    width: 44px;
+    height: 44px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    color: #1e3a5f;
+    transition: background 0.2s;
+}
+.custom-type-card.selected .custom-type-icon { background: #e0e7ff; }
+.custom-type-card-badges {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.ct-badge {
+    background: #f3f4f6;
+    color: #374151;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.ct-badge.blue { background: #eff6ff; color: #1d4ed8; }
+
+/* Workflow preview (shown inside selected card) */
+.workflow-preview {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    animation: fadeIn 0.3s;
+}
+.custom-type-card.selected .workflow-preview { display: block; }
+
+.wf-section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e3a5f;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+.wf-state-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.wf-state-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+.wf-state-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.wf-transition-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 9px 14px;
+    margin-bottom: 7px;
+    flex-wrap: wrap;
+}
+.wf-state-box {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    white-space: nowrap;
+}
+.wf-arrow { color: #9ca3af; font-weight: bold; flex-shrink: 0; font-size: 13px; }
+.wf-role-pill {
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.wf-unassigned {
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
     </style>
 </head>
 <body>
@@ -988,6 +1143,7 @@
                 <input type="hidden" name="classificationNames" id="classificationNamesField" />
                 <input type="hidden" name="groupIds" id="groupIdsField" />
                 <input type="hidden" name="metadata" id="metadataField" />
+                <input type="hidden" name="workflowId" id="workflowIdField" />
 
                 <!-- ==================== WIZARD CONTENT AREA ==================== -->
                 <div class="wizard-content">
@@ -998,18 +1154,50 @@
                                 <i class="bi bi-folder"></i>
                                 Select Document Type
                             </div>
+
+                            <!-- Static Type Dropdown -->
                             <div class="form-group">
-                                <label for="docTypeId" class="form-label">
-                                    Document Type
-                                    <span class="required-indicator">*</span>
+                                <label for="staticDocTypeSelect" class="form-label">
+                                    Document Type <span class="required-indicator">*</span>
                                 </label>
-                                <select class="form-control" id="docTypeId" name="docTypeId" required>
+                                <select class="form-control" id="staticDocTypeSelect" onchange="onStaticTypeChange()">
                                     <option value="">Select a Document Type</option>
                                 </select>
                                 <p class="info-text">
                                     <i class="bi bi-info-circle"></i>
-                                    The selected document type will determine the required metadata fields.
+                                    The selected type determines available metadata fields and workflows.
                                 </p>
+                            </div>
+
+                            <!-- Hidden real docTypeId used by metadata loader -->
+                            <input type="hidden" id="docTypeId" name="docTypeId">
+
+                            <!-- Custom Type Cards (shown after static selected) -->
+                            <div id="customTypeSection" style="display:none; margin-top:24px;">
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                    <span style="font-size:13px;color:#6b7280;font-weight:500;">Selected Document Type:</span>
+                                    <span id="staticTypeBadge"
+                                          style="background:#eef2ff;color:#1e3a5f;border:1px solid #c7d2fe;
+                             border-radius:6px;padding:4px 12px;font-size:13px;font-weight:600;
+                             display:inline-flex;align-items:center;gap:6px;">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span id="staticTypeBadgeName"></span>
+                </span>
+                                </div>
+                                <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Select a workflow <strong>(optional)</strong> — you can assign one later from the document page.
+                                </p>
+
+                                <div id="customTypeCards">
+                                    <div class="text-center text-muted py-4">Loading custom types...</div>
+                                </div>
+                                <div id="noCustomTypesMsg" style="display:none;">
+                                    <div class="alert alert-info d-flex align-items-center gap-2" style="border-radius:8px;">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                        <span>No workflows defined for this document type yet. You can still continue — a workflow can be assigned later.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1345,6 +1533,24 @@
     let maxTagsPerDocument = 10;
     let isSubmitting = false;
 
+    // ==================== PERMISSIONS ====================
+let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
+}
+
     // ==================== MODAL POSITIONING ====================
     let activeCustomModalId = null;
 
@@ -1390,9 +1596,16 @@
     }
 
     // ==================== INITIALIZATION ====================
-    document.addEventListener('DOMContentLoaded', async function() {
-        await populateDocTypeDropdown();
-        await fetchUploadSettings();
+   document.addEventListener('DOMContentLoaded', async function() {
+    await fetchMyPermissions();
+    if (!hasPerm('TAG_CREATE')) {
+        const createTagSection = document.getElementById('newTagInput')?.closest('.form-group');
+        if (createTagSection) createTagSection.style.display = 'none';
+        const addTagBtn = document.getElementById('addTagBtn');
+        if (addTagBtn) addTagBtn.closest('.form-group').style.display = 'none';
+    }
+    await populateDocTypeDropdown();
+    await fetchUploadSettings();
         await checkClassificationEditionAccess();
         await fetchTagPolicies();
 
@@ -1513,13 +1726,13 @@ window.addEventListener('load', function() {
     }
 
     document.getElementById('nextBtn').addEventListener('click', function() {
-        if (currentStep === 1) {
-            if (!document.getElementById('docTypeId').value) {
-                showCustomAlert('Please select a document type.');
-                return;
-            }
-            updateWizardStep(2);
-        } else if (currentStep === 2) {
+       if (currentStep === 1) {
+    if (!document.getElementById('staticDocTypeSelect').value) {
+        showCustomAlert('Please select a document type.');
+        return;
+    }
+    updateWizardStep(2);
+} else if (currentStep === 2) {
             if (!uploadedFile) {
                 showCustomAlert('Please upload a document.');
                 return;
@@ -1771,6 +1984,12 @@ window.addEventListener('load', function() {
 
         document.querySelectorAll('.selection-item-flex[data-group-id]').forEach(item => {
             item.addEventListener('click', function() {
+                // Locked groups (auto-selected from doc type) cannot be deselected
+                if (this.getAttribute('data-locked') === 'true') {
+                    this.classList.add('blink');
+                    setTimeout(() => this.classList.remove('blink'), 800);
+                    return;
+                }
                 const checkbox = this.querySelector('.group-checkbox');
                 const groupId = this.getAttribute('data-group-id');
                 const groupName = this.getAttribute('data-group-name');
@@ -1915,13 +2134,17 @@ window.addEventListener('load', function() {
         renderSelectedClassifications();
     }
 
-    function renderSelectedGroups() {
+   function renderSelectedGroups() {
         const container = document.getElementById('selectedGroupsContainer');
         container.innerHTML = selectedGroups.length === 0 ? '<div class="empty-state">No groups selected</div>' : '';
         selectedGroups.forEach(g => {
             const chip = document.createElement('span');
             chip.className = 'selected-chip group-chip';
-            chip.innerHTML = `${g.name} <span class="chip-remove" onclick="removeSelectedGroup('${g.id}')"><i class="bi bi-x"></i></span>`;
+            // Locked groups show a lock icon instead of a remove button
+            const action = g.locked
+                ? `<i class="bi bi-lock-fill" style="font-size:11px;opacity:0.75;" title="Required by document type"></i>`
+                : `<span class="chip-remove" onclick="removeSelectedGroup('${g.id}')"><i class="bi bi-x"></i></span>`;
+            chip.innerHTML = `${g.name} ${action}`;
             container.appendChild(chip);
         });
         document.getElementById('groupIdsField').value = selectedGroups.map(g => g.id).join(',');
@@ -1974,8 +2197,13 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
         document.getElementById('reviewFileName').textContent = uploadedFile ? uploadedFile.name : '-';
         document.getElementById('reviewFileSize').textContent = uploadedFile ? formatFileSize(uploadedFile.size) : '-';
         document.getElementById('reviewTitle').textContent = document.getElementById('title').value || '-';
-        const docTypeSelect = document.getElementById('docTypeId');
-        document.getElementById('reviewDocType').textContent = docTypeSelect.options[docTypeSelect.selectedIndex]?.text || '-';
+     const staticSel = document.getElementById('staticDocTypeSelect');
+        const docTypeName = staticSel.options[staticSel.selectedIndex]?.text || '-';
+        const selectedWfCard = document.querySelector('.custom-type-card.selected');
+        const workflowName = selectedWfCard?.querySelector('.fw-bold')?.textContent?.trim() || null;
+        document.getElementById('reviewDocType').textContent = workflowName
+            ? `${docTypeName} → ${workflowName}`
+            : docTypeName;
         document.getElementById('reviewVersion').textContent = document.getElementById('versionNumber').value || '1.0';
 
         const reviewMetadataGrid = document.getElementById('reviewMetadataGrid');
@@ -2040,27 +2268,211 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
         }
     }
 
-    // ==================== OTHER HELPER FUNCTIONS ====================
-    async function populateDocTypeDropdown() {
-        try {
-            const response = await fetch('/api/document-types');
-            if (!response.ok) return;
-            const types = await response.json();
-            const select = document.getElementById('docTypeId');
-            types.forEach(type => {
-                const option = document.createElement('option');
-                option.value = type.docTypeId;
-                option.textContent = type.docTypeName;
-                select.appendChild(option);
-            });
-            select.addEventListener('change', (e) => {
-                fetchAndRenderMetadataFields(e.target.value);
-                formChanged = true;
-            });
-        } catch (error) {
-            console.error('Error loading document types:', error);
-        }
+    // ==================== UPLOAD STEP 1 — DOC TYPE SELECTION ====================
+let selectedWorkflowId = null;
+
+async function populateDocTypeDropdown() {
+    try {
+        const r = await fetch('/api/document-types');
+        if (!r.ok) return;
+        const types = await r.json();
+        const sel = document.getElementById('staticDocTypeSelect');
+        types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.docTypeId;
+            opt.textContent = t.docTypeName;
+            sel.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('Error loading static doc types:', e);
     }
+}
+
+async function onStaticTypeChange() {
+    const sel = document.getElementById('staticDocTypeSelect');
+    const docTypeId = sel.value;
+    const typeName  = sel.options[sel.selectedIndex]?.text || '';
+
+    // reset custom selection
+    selectedWorkflowId = null;
+    document.getElementById('workflowIdField').value = '';
+    document.getElementById('docTypeId').value = '';
+
+    if (!docTypeId) {
+        document.getElementById('customTypeSection').style.display = 'none';
+        return;
+    }
+
+    // update static badge
+    document.getElementById('staticTypeBadgeName').textContent = typeName;
+    document.getElementById('customTypeSection').style.display  = 'block';
+    document.getElementById('noCustomTypesMsg').style.display   = 'none';
+    document.getElementById('customTypeCards').innerHTML =
+        '<div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>';
+
+    // load metadata for this static type immediately
+    fetchAndRenderMetadataFields(docTypeId);
+    document.getElementById('docTypeId').value = docTypeId;
+    // auto-select the groups that were assigned to this doc type in Settings
+    autoSelectDocTypeGroups(docTypeId);
+    formChanged = true;
+
+    try {
+        const r = await fetch('/api/workflows/by-doc-type/' + docTypeId);
+        const workflows = await r.json();
+        if (!workflows || workflows.length === 0) {
+            document.getElementById('customTypeCards').innerHTML = '';
+            document.getElementById('noCustomTypesMsg').style.display = 'block';
+            return;
+        }
+        renderWorkflowCards(workflows);
+    } catch (e) {
+        document.getElementById('customTypeCards').innerHTML =
+            '<div class="text-center text-danger py-3">Failed to load workflows.</div>';
+    }
+}
+/**
+ * Auto-selects in Step 4 the groups that were assigned to the chosen document
+ * type via Settings → Document Types → Team Assignment.
+ */
+async function autoSelectDocTypeGroups(docTypeId) {
+    if (!docTypeId) return;
+    try {
+        const r = await fetch(`/api/document-types/${docTypeId}/full`);
+        if (!r.ok) return;
+        const docType = await r.json();
+        const teamGroups = docType.teamGroups || [];
+
+        // Clear any previously auto-selected groups first (and remove any locks)
+        selectedGroups = [];
+        document.querySelectorAll('.selection-item-flex[data-group-id]').forEach(item => {
+            item.classList.remove('selected');
+            item.removeAttribute('data-locked');
+            item.style.cursor = '';
+            item.title = '';
+            const cb = item.querySelector('.group-checkbox');
+            if (cb) cb.checked = false;
+        });
+
+        if (teamGroups.length === 0) {
+            renderSelectedGroups();
+            return;
+        }
+
+        // Auto-select each group that belongs to this doc type
+        teamGroups.forEach(group => {
+            const gid  = String(group.groupId);
+            const item = document.querySelector(`.selection-item-flex[data-group-id="${gid}"]`);
+            if (item) {
+                item.classList.add('selected');
+                const cb = item.querySelector('.group-checkbox');
+                if (cb) cb.checked = true;
+                // Use the name from the DOM element (already rendered by Thymeleaf)
+                const gname = item.getAttribute('data-group-name') || group.groupName || '';
+               // Mark the DOM item as locked so the click handler blocks deselection
+                item.setAttribute('data-locked', 'true');
+                item.style.cursor = 'not-allowed';
+                item.title = 'This group is required by the selected document type';
+                if (!selectedGroups.find(g => g.id === gid)) {
+                    selectedGroups.push({ id: gid, name: gname, locked: true });
+                }
+            }
+        });
+
+        renderSelectedGroups();
+    } catch (e) {
+        console.error('Failed to auto-select doc type groups:', e);
+    }
+}
+
+
+
+
+function renderWorkflowCards(workflows) {
+    const container = document.getElementById('customTypeCards');
+    container.innerHTML = workflows.map(w => {
+        const statePills = (w.selectedStates || []).map(s =>
+            `<span class="wf-state-pill" style="background:${s.color}15;color:${s.color};border-color:${s.color}40;">
+                <span class="wf-state-dot" style="background:${s.color};"></span>
+                ${escapeHtmlUpload(s.stateName)}
+             </span>`
+        ).join('');
+
+        const transitionRows = (w.transitions || []).map(t => {
+            const rc = uploadRoleColor(t.roleName || '');
+            const actorBadge = t.userName
+                ? `<span class="wf-role-pill" style="background:${rc}15;color:${rc};border:1px solid ${rc}40;">
+                       ${escapeHtmlUpload(t.roleName)} (${escapeHtmlUpload(t.userName)})
+                   </span>`
+                : `<span class="wf-unassigned">${escapeHtmlUpload(t.roleName || 'Unassigned')}</span>`;
+            return `<div class="wf-transition-row">
+                <span class="wf-state-box">${escapeHtmlUpload(t.fromStateName)}</span>
+                <span class="wf-arrow">→</span>
+                <span class="wf-state-box">${escapeHtmlUpload(t.toStateName)}</span>
+                <span class="wf-arrow">→</span>
+                ${actorBadge}
+            </div>`;
+        }).join('');
+
+        const transCount = (w.transitions || []).length;
+        return `
+        <div class="custom-type-card" id="ctCard_${w.workflowId}"
+             onclick="selectWorkflowCard(${w.workflowId}, this)">
+            <div class="card-checkmark"><i class="bi bi-check"></i></div>
+            <div class="custom-type-card-header">
+                <div class="custom-type-icon"><i class="bi bi-diagram-3"></i></div>
+                <div>
+                    <div class="fw-bold" style="font-size:15px;">${escapeHtmlUpload(w.workflowName)}</div>
+                    <div class="text-muted" style="font-size:12px;">${escapeHtmlUpload(w.description || '')}</div>
+                </div>
+            </div>
+            <div class="custom-type-card-badges">
+                <span class="ct-badge">${w.stateCount} State${w.stateCount !== 1 ? 's' : ''}</span>
+                <span class="ct-badge blue">${transCount} Transition${transCount !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="workflow-preview">
+                <div class="wf-section-label">Workflow States</div>
+                <div class="wf-state-pills">
+                    ${statePills || '<span class="text-muted" style="font-size:12px;">No states defined</span>'}
+                </div>
+                <div class="wf-section-label">Transitions with Assigned Actors</div>
+                ${transitionRows || '<div class="text-muted" style="font-size:12px;">No transitions defined</div>'}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function selectWorkflowCard(workflowId, cardEl) {
+    if (cardEl.classList.contains('selected')) {
+        // clicking selected card deselects it — workflow is optional
+        cardEl.classList.remove('selected');
+        selectedWorkflowId = null;
+        document.getElementById('workflowIdField').value = '';
+    } else {
+        document.querySelectorAll('.custom-type-card').forEach(c => c.classList.remove('selected'));
+        cardEl.classList.add('selected');
+        selectedWorkflowId = workflowId;
+        document.getElementById('workflowIdField').value = workflowId;
+    }
+    formChanged = true;
+}
+
+function uploadRoleColor(roleName) {
+    const m = {
+        'reviewer': '#7c3aed', 'approver': '#059669', 'initiator': '#2563eb',
+        'verifier': '#0891b2', 'signer': '#d97706', 'coordinator': '#0891b2',
+    };
+    if (!roleName) { return '#1e3a5f'; }
+    const color = m[roleName.toLowerCase()];
+    if (!color) { return '#1e3a5f'; }
+    return color;
+}
+
+function escapeHtmlUpload(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[c]));
+}
 
     async function fetchUploadSettings() {
         try {

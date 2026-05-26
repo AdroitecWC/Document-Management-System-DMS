@@ -46,4 +46,7 @@ public class Document {
 
     @Column(name = "file_extension", length = 10, nullable = false)
     private String fileExtension;
+
+    @Column(name = "workflow_id", nullable = true)
+    private Long workflowId;
 }

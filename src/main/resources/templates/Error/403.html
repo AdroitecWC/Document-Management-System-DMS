@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .modal {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 40px 36px 32px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0);    }
+        }
+
+        .icon-wrap {
+            width: 72px;
+            height: 72px;
+            background: #fff0f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .icon-wrap svg {
+            width: 36px;
+            height: 36px;
+            color: #ef4444;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a2332;
+            margin-bottom: 12px;
+        }
+
+        p {
+            font-size: 14px;
+            color: #6b7a99;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .btn-ok {
+            display: inline-block;
+            padding: 11px 40px;
+            background: #1e3a5f;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .btn-ok:hover {
+            background: #16304f;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+<div class="overlay">
+    <div class="modal">
+        <div class="icon-wrap">
+            <!-- lock icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke="#ef4444" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-6V7a4 4 0 00-8 0v4"/>
+                <rect x="3" y="11" width="18" height="11" rx="2"
+                      stroke="#ef4444" stroke-width="2" fill="none"/>
+            </svg>
+        </div>
+        <h2>No Access Assigned</h2>
+        <p>
+            Your account exists but does not have permission to access any page.
+            Please contact your administrator to assign the appropriate roles.
+        </p>
+        <a href="/logout" class="btn-ok">OK</a>
+    </div>
+</div>
+</body>
+</html>

@@ -6,6 +6,7 @@ import codesAndStandards.springboot.registrationlogin.entity.User;
 import codesAndStandards.springboot.registrationlogin.repository.ActionRepository;
 import codesAndStandards.springboot.registrationlogin.repository.PermissionRepository;
 import codesAndStandards.springboot.registrationlogin.repository.UserRepository;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -72,7 +73,10 @@ public class CustomUserDetailsService implements UserDetailsService {
             authorities.add(new SimpleGrantedAuthority(actionName));
             System.out.println("User: " + username + " has action permission: " + actionName);
         }
-
+// Add this check after fetching the user from DB
+        if (!user.isActive()) {
+            throw new DisabledException("Your account has been suspended. Contact administrator.");
+        }
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())

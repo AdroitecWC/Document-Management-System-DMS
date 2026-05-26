@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Viewer - DMS</title>
+    <title>Document Viewer - Document Management System</title>
 
     <!-- CSRF Tokens -->
     <meta name="_csrf" th:content="${_csrf.token}"/>
@@ -529,7 +529,7 @@ body.light-mode .custom-meta-value {
 
     <div class="nav-right">
         <button class="nav-icon-btn" id="downloadIconBtn" onclick="showDownloadModal()"
-                th:if="${userRole != 'Viewer'}" style="display: none;" title="Download">
+                style="display: none;" title="Download">
             <i class="bi bi-download"></i>
         </button>
         <button class="nav-icon-btn" id="bookmarkIconBtn" onclick="handleBookmarkClick()" title="Bookmark">
@@ -654,6 +654,37 @@ body.light-mode .custom-meta-value {
 </script>
 
 <script>
+    // ==================== PERMISSIONS ====================
+let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
+}
+
+function applyViewerPermissions() {
+    // Download button — requires DOCUMENT_DOWNLOAD
+    const downloadBtn = document.getElementById('downloadIconBtn');
+    if (downloadBtn && hasPerm('DOCUMENT_DOWNLOAD')) {
+        downloadBtn.style.display = 'flex';
+    }
+
+    // Bookmark button — requires BOOKMARK_CREATE to interact
+const bookmarkBtn = document.getElementById('bookmarkIconBtn');
+if (bookmarkBtn && !hasPerm('BOOKMARK_CREATE')) {
+    bookmarkBtn.style.display = 'none';
+}
+}
     // ==================== GLOBAL STATE ====================
     let isCurrentlyBookmarked = false;
     let isDarkMode = true;
@@ -705,19 +736,19 @@ body.light-mode .custom-meta-value {
     }
 
     // ==================== INITIALIZATION ====================
-    document.addEventListener('DOMContentLoaded', function() {
-        loadThemePreference();
-        loadWatermarkSettings();
+    document.addEventListener('DOMContentLoaded', async function() {
+    await fetchMyPermissions();
+    applyViewerPermissions();
 
-        if (window.documentInfo) {
-            currentFileType = (window.documentInfo.fileType || 'PDF').toUpperCase();
-            updateDocumentInfo(window.documentInfo);
-        }
+    loadThemePreference();
+    loadWatermarkSettings();
 
-        formatAllDates();
+    if (window.documentInfo) {
+        currentFileType = (window.documentInfo.fileType || 'PDF').toUpperCase();
+        updateDocumentInfo(window.documentInfo);
+    }
 
-        const downloadBtn = document.getElementById('downloadIconBtn');
-        if (downloadBtn && window.userRole !== 'Viewer') downloadBtn.style.display = 'flex';
+    formatAllDates();
 
         const badge = document.getElementById('navFiletypeBadge');
         if (badge) {
@@ -1983,9 +2014,14 @@ async function loadCustomMetadata() {
         } catch(e) { showNotification('Failed to save bookmark','error'); }
     }
 
-    async function confirmRemoveBookmark() {
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+   async function confirmRemoveBookmark() {
+    if (!hasPerm('BOOKMARK_DELETE')) {
+        closeRemoveBookmarkModal();
+        showNotification('You do not have permission to remove bookmarks.', 'error');
+        return;
+    }
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
         try {
             const response = await fetch(`/bookmarks/document/${documentId}`, { method:'DELETE', headers:{[csrfHeader]:csrfToken,'Content-Type':'application/json'} });
             if (response.ok) { closeRemoveBookmarkModal(); showNotification('Bookmark removed!','success'); isCurrentlyBookmarked=false; updateBookmarkButton(false); }

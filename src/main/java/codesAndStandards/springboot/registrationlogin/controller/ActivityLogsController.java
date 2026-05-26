@@ -89,7 +89,11 @@ public class ActivityLogsController {
 
         // ✅ Count settings-related logs (all actions starting with SETTINGS_)
         long countSettingsLogs = logs.stream()
-                .filter(log -> log.getAction() != null && log.getAction().startsWith("SETTINGS_"))
+                .filter(log -> log.getAction() != null && (
+                        log.getAction().startsWith("SETTINGS_") ||
+                                log.getAction().startsWith("DOCTYPE_") ||
+                                log.getAction().startsWith("METADATA_")
+                ))
                 .count();
 
         // License check
@@ -145,6 +149,26 @@ public class ActivityLogsController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.ok(List.of());
+        }
+    }
+
+
+    @GetMapping("/activity-logs/download")
+    @ResponseBody
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('ACTIVITY_LOG_VIEW')")
+    public ResponseEntity<?> logActivityLogDownload() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth.getName();
+            activityLogService.logByUsername(
+                    username,
+                    ActivityLogService.ACTIVITY_LOG_DOWNLOAD,
+                    "Downloaded activity logs as CSV"
+            );
+            return ResponseEntity.ok(Map.of("message", "Download logged successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to log download"));
         }
     }
 
