@@ -16,6 +16,8 @@ public interface DocumentService {
     void updateDocument(Long id, DocumentDto documentDto, MultipartFile file, String username, String groupIds) throws Exception;
 
     void deleteDocument(Long id);
+    void assignWorkflow(Long documentId, Long workflowId);
+
 
     String getFilePath(Long id);
 

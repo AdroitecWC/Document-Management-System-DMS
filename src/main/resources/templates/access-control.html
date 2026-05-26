@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Control - Codes & Standards</title>
+    <title>Access Control - Document Management System</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
     <!-- Include Sidebar Styles -->
@@ -1031,7 +1031,24 @@
     let deleteGroupId = null;
     let currentEditGroupData = null;
     let activeModalId = null; // Track which modal is currently open
+// ==================== PERMISSIONS ====================
+let myPermissions = [];
 
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        console.error('Failed to load permissions', e);
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
+}
     // Edition permissions
     let editionPermissions = {
         isLicenseValid: false,
@@ -1205,6 +1222,8 @@ function cleanupModal(modalId) {
     // ==================== INITIALIZATION ====================
 
     document.addEventListener('DOMContentLoaded', async function() {
+
+        await fetchMyPermissions();
         // Load edition permissions first
         await loadEditionPermissions();
 
@@ -1322,26 +1341,15 @@ function cleanupModal(modalId) {
     }
 
     // Apply role-based AND edition-based restrictions
-    function applyRoleBasedRestrictions() {
-        const isAdmin = userRole === 'Admin';
-        const canCreate = isAdmin && editionPermissions.canCreateGroups;
+  function applyRoleBasedRestrictions() {
+    const canCreate = hasPerm('GROUP_CREATE') && editionPermissions.canCreateGroups;
 
-        console.log('====== ACCESS RESTRICTIONS ======');
-        console.log('Is Admin:', isAdmin);
-        console.log('Can Create Groups:', canCreate);
-        console.log('=================================');
+    const createBtn = document.getElementById('createGroupBtn');
+    const emptyCreateBtn = document.getElementById('emptyCreateBtn');
 
-        const createBtn = document.getElementById('createGroupBtn');
-        const emptyCreateBtn = document.getElementById('emptyCreateBtn');
-
-        if (canCreate) {
-            if (createBtn) createBtn.style.display = 'flex';
-            if (emptyCreateBtn) emptyCreateBtn.style.display = 'inline-flex';
-        } else {
-            if (createBtn) createBtn.style.display = 'none';
-            if (emptyCreateBtn) emptyCreateBtn.style.display = 'none';
-        }
-    }
+    if (createBtn) createBtn.style.display = canCreate ? 'flex' : 'none';
+    if (emptyCreateBtn) emptyCreateBtn.style.display = canCreate ? 'inline-flex' : 'none';
+}
 
     // Setup all event listeners
     function setupEventListeners() {
@@ -1547,39 +1555,43 @@ function cleanupModal(modalId) {
         const userCount = group.userCount || 0;
         const description = group.description || 'Access to all ' + escapeHtml(group.groupName).toLowerCase() + ' documents';
 
-        const isAdmin = userRole === 'Admin';
         const isDefaultGroup = Array.isArray(editionPermissions.defaultGroups) && editionPermissions.defaultGroups.includes(group.groupName);
-        const canDeleteThisGroup = isAdmin && editionPermissions.canDeleteGroups &&
-                                   (editionPermissions.edition === 'ED2' || !isDefaultGroup);
+const canEdit   = hasPerm('GROUP_UPDATE');
+const canDelete = hasPerm('GROUP_DELETE') && editionPermissions.canDeleteGroups &&
+                  (editionPermissions.edition === 'ED2' || !isDefaultGroup);
+const hasAny    = canEdit || hasPerm('GROUP_DELETE');
 
-        let actionsHTML = '';
+let actionsHTML = '';
 
-        if (isAdmin && editionPermissions.canEditGroups) {
-            actionsHTML = `
-                <div class="group-actions" onclick="event.stopPropagation();">
-                    <button class="btn-action-icon btn-edit-group" title="Edit group"
-                        onclick="openEditGroupModal(${group.id})">
-                        <i class="bi bi-pencil"></i>
-                    </button>`;
+if (hasAny) {
+    actionsHTML = `<div class="group-actions" onclick="event.stopPropagation();">`;
 
-            if (canDeleteThisGroup) {
-                actionsHTML += `
-                    <button class="btn-action-icon btn-delete-group" title="Delete group"
-                        onclick="openDeleteModal(${group.id}, '${escapeHtml(group.groupName).replace(/'/g, "\\'")}')">
-                        <i class="bi bi-trash"></i>
-                    </button>`;
-            } else if (isDefaultGroup && editionPermissions.edition === 'ED1') {
-                actionsHTML += `
-                    <button class="btn-action-icon btn-delete-group"
-                        style="opacity: 0.5; cursor: not-allowed;"
-                        title="Cannot delete default groups in Essential Edition"
-                        onclick="event.stopPropagation(); showEditionRestrictionAlert('delete');">
-                        <i class="bi bi-trash"></i>
-                    </button>`;
-            }
+    if (canEdit) {
+        actionsHTML += `
+            <button class="btn-action-icon btn-edit-group" title="Edit group"
+                onclick="openEditGroupModal(${group.id})">
+                <i class="bi bi-pencil"></i>
+            </button>`;
+    }
 
-            actionsHTML += `</div>`;
-        }
+    if (canDelete) {
+        actionsHTML += `
+            <button class="btn-action-icon btn-delete-group" title="Delete group"
+                onclick="openDeleteModal(${group.id}, '${escapeHtml(group.groupName).replace(/'/g, "\\'")}')">
+                <i class="bi bi-trash"></i>
+            </button>`;
+    } else if (hasPerm('GROUP_DELETE') && isDefaultGroup && editionPermissions.edition === 'ED1') {
+        actionsHTML += `
+            <button class="btn-action-icon btn-delete-group"
+                style="opacity: 0.5; cursor: not-allowed;"
+                title="Cannot delete default groups in Essential Edition"
+                onclick="event.stopPropagation(); showEditionRestrictionAlert('delete');">
+                <i class="bi bi-trash"></i>
+            </button>`;
+    }
+
+    actionsHTML += `</div>`;
+}
 
         div.innerHTML = `
             <div class="group-header">
@@ -1796,13 +1808,17 @@ function cleanupModal(modalId) {
     // ==================== FORM HANDLERS ====================
 
     // Handle create group
-    async function handleCreateGroup(e) {
-        e.preventDefault();
+   async function handleCreateGroup(e) {
+    e.preventDefault();
 
-        if (!editionPermissions.canCreateGroups) {
-            showEditionRestrictionAlert('create');
-            return;
-        }
+    if (!hasPerm('GROUP_CREATE')) {
+        showAlert('You do not have permission to create groups.', 'danger');
+        return;
+    }
+    if (!editionPermissions.canCreateGroups) {
+        showEditionRestrictionAlert('create');
+        return;
+    }
 
         const groupName = document.getElementById('createGroupName').value.trim();
         const description = document.getElementById('createGroupDescription').value.trim();
@@ -1852,9 +1868,14 @@ function cleanupModal(modalId) {
 
     // Handle edit group
     async function handleEditGroup(e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        const groupId = document.getElementById('editGroupId').value;
+    if (!hasPerm('GROUP_UPDATE')) {
+        showAlert('You do not have permission to update groups.', 'danger');
+        return;
+    }
+
+    const groupId = document.getElementById('editGroupId').value;
         const groupName = document.getElementById('editGroupName').value.trim();
         const description = document.getElementById('editGroupDescription').value.trim();
         const errorEl = getOrCreateErrorElement(document.getElementById('editGroupName'));
@@ -1913,10 +1934,16 @@ function cleanupModal(modalId) {
     }
 
     // Handle delete group
-    async function handleDeleteGroup() {
-        if (!deleteGroupId) return;
+   async function handleDeleteGroup() {
+    if (!deleteGroupId) return;
 
-        try {
+    if (!hasPerm('GROUP_DELETE')) {
+        showAlert('You do not have permission to delete groups.', 'danger');
+        closeModal('deleteModal');
+        return;
+    }
+
+    try {
             const response = await fetch(`${API_BASE_URL}/${deleteGroupId}`, {
                 method: 'DELETE',
                 credentials: 'same-origin'

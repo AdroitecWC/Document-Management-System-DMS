@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Document - Codes & Standards</title>
+    <title>Edit Document - Document Management System</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
@@ -1268,6 +1268,24 @@
     let maxTagsPerDocument = 10;
     let maxTagsExceeded = false;
 
+    // ==================== PERMISSIONS ====================
+let myPermissions = [];
+
+async function fetchMyPermissions() {
+    try {
+        const r = await fetch('/api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
+    } catch (e) {
+        myPermissions = [];
+    }
+}
+
+function hasPerm(perm) {
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
+}
+
     // ==================== MODAL POSITIONING (sidebar-aware, matching Upload page) ====================
     let activeCustomModalId = null;
 
@@ -1352,9 +1370,15 @@
     // ============== INITIALIZATION ==============
     document.addEventListener('DOMContentLoaded', async function() {
     console.log('Page loaded, initializing...');
-
+    await fetchMyPermissions();
+    if (!hasPerm('TAG_CREATE')) {
+        const createTagSection = document.getElementById('newTagInput')?.closest('.form-group');
+        if (createTagSection) createTagSection.style.display = 'none';
+        const addTagBtnGroup = document.getElementById('addTagBtn')?.closest('.form-group');
+        if (addTagBtnGroup) addTagBtnGroup.style.display = 'none';
+    }
     initializeData();
-        await fetchMaxTagsPerDocument();
+    await fetchMaxTagsPerDocument();
         await checkClassificationEditAccess();
 
         // Setup modal resize/sidebar observers (matching Upload page)
@@ -1499,6 +1523,12 @@
     // Attach click handlers to existing groups
     document.querySelectorAll('.selection-item-flex[data-group-id]').forEach(item => {
         item.addEventListener('click', function() {
+            // Locked groups (from doc type team assignment) cannot be deselected
+            if (this.getAttribute('data-locked') === 'true') {
+                this.classList.add('blink');
+                setTimeout(() => this.classList.remove('blink'), 800);
+                return;
+            }
             const checkbox = this.querySelector('.group-checkbox');
             const groupId = this.getAttribute('data-group-id');
             const groupName = this.getAttribute('data-group-name');
@@ -1590,10 +1620,12 @@ function hasFormChanged() {
         // Set existing value
         // Set existing value
 if (existingDocTypeId) {
-    select.value = existingDocTypeId;
-    document.getElementById('docTypeIdHidden').value = existingDocTypeId;
-    await loadMetadataFieldsForEdit(existingDocTypeId);
-}
+            select.value = existingDocTypeId;
+            document.getElementById('docTypeIdHidden').value = existingDocTypeId;
+            await loadMetadataFieldsForEdit(existingDocTypeId);
+            // Auto-select and lock the doc type's assigned groups
+            await autoSelectDocTypeGroupsForEdit(existingDocTypeId);
+        }
     } catch (error) {
         console.error('Error loading document types:', error);
     }
@@ -1686,6 +1718,48 @@ async function loadMetadataFieldsForEdit(docTypeId) {
         });
     } catch (error) {
         console.error('Error loading existing metadata:', error);
+    }
+}
+/**
+ * Fetches the groups assigned to this document type in Settings → Team Assignment,
+ * auto-selects them, and marks them as locked so users cannot deselect them.
+ */
+async function autoSelectDocTypeGroupsForEdit(docTypeId) {
+    if (!docTypeId) return;
+    try {
+        const r = await fetch(`/api/document-types/${docTypeId}/full`);
+        if (!r.ok) return;
+        const docType = await r.json();
+        const teamGroups = docType.teamGroups || [];
+        if (teamGroups.length === 0) return;
+
+        teamGroups.forEach(group => {
+            const gid  = String(group.groupId);
+            const item = document.querySelector(`.selection-item-flex[data-group-id="${gid}"]`);
+
+            // Lock the DOM item so the click handler blocks deselection
+            if (item) {
+                item.setAttribute('data-locked', 'true');
+                item.style.cursor = 'not-allowed';
+                item.title = 'This group is required by the document type';
+                item.classList.add('selected');
+                const cb = item.querySelector('.group-checkbox');
+                if (cb) cb.checked = true;
+            }
+
+            // Mark as locked in the data model (or add if not already present)
+            const existing = selectedGroups.find(g => g.id === gid);
+            if (existing) {
+                existing.locked = true;
+            } else {
+                const gname = item?.getAttribute('data-group-name') || group.groupName || '';
+                selectedGroups.push({ id: gid, name: gname, locked: true });
+            }
+        });
+
+        renderSelectedGroups();
+    } catch (e) {
+        console.error('Failed to lock doc type groups on edit page:', e);
     }
 }
 
@@ -1998,7 +2072,7 @@ async function loadMetadataFieldsForEdit(docTypeId) {
     }
 
     // ============== GROUPS HANDLING ==============
-    function renderSelectedGroups() {
+ function renderSelectedGroups() {
         const container = document.getElementById('selectedGroupsContainer');
         container.innerHTML = '';
         if (selectedGroups.length === 0) {
@@ -2007,14 +2081,18 @@ async function loadMetadataFieldsForEdit(docTypeId) {
             selectedGroups.forEach(group => {
                 const chip = document.createElement('span');
                 chip.className = 'selected-chip group-chip';
-                chip.innerHTML = `${group.name}<span class="chip-remove" onclick="removeSelectedGroup('${group.id}')"><i class="bi bi-x"></i></span>`;
+                const action = group.locked
+                    ? `<i class="bi bi-lock-fill" style="font-size:11px;opacity:0.75;" title="Required by document type"></i>`
+                    : `<span class="chip-remove" onclick="removeSelectedGroup('${group.id}')"><i class="bi bi-x"></i></span>`;
+                chip.innerHTML = `${group.name} ${action}`;
                 container.appendChild(chip);
             });
         }
         document.getElementById('groupIdsField').value = selectedGroups.map(g => g.id).join(',');
     }
-
-    function removeSelectedGroup(groupId) {
+   function removeSelectedGroup(groupId) {
+        const target = selectedGroups.find(g => g.id === groupId);
+        if (target && target.locked) return;  // locked groups cannot be removed
         selectedGroups = selectedGroups.filter(g => g.id !== groupId);
         const checkbox = document.querySelector(`.group-checkbox[data-group-id="${groupId}"]`);
         if (checkbox) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Application Settings - Codes & Standards</title>
+    <title>Application Settings - Document Management System</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/bootstrap-icons/bootstrap-icons.css">
     <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
@@ -226,7 +226,39 @@
         #logRetentionSection { transition: all 0.3s ease; }
         .bulk-item:hover { background: #f8fafc !important; }
 
-        /* ==================== FULLSCREEN MODAL STYLES ==================== */
+/* ── Workflow Diagram Fullscreen Overlay ── */
+        #wfDiagramFullscreenOverlay {
+            display: none;           /* toggled via JS */
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 10001;          /* always above custom-modal (9999) */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        #wfDiagramFullscreenOverlay.active { opacity: 1; }
+
+        #wfDiagramFullscreenPanel {
+            background: white;
+            border-radius: 16px;
+            width: 92%;
+            height: 88vh;        /* explicit height so flex:1 on body works */
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+            transform: translateY(-24px) scale(0.97);
+            opacity: 0;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+        #wfDiagramFullscreenOverlay.active #wfDiagramFullscreenPanel {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
         /* ==================== FULLSCREEN MODAL STYLES ==================== */
 
 #wmFullscreenModal {
@@ -433,6 +465,106 @@
 .modal-overlay-custom.active {
     opacity: 1;
 }
+
+        /* ==================== DOCUMENT TYPE MANAGEMENT ==================== */
+.dt-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+.dt-card:hover { border-color: #c7d2fe; box-shadow: 0 4px 12px rgba(102,126,234,0.08); }
+
+.dt-badge {
+    display: inline-flex; align-items: center;
+    background: #f3f4f6; color: #374151;
+    border-radius: 6px; padding: 3px 10px;
+    font-size: 12px; font-weight: 600;
+}
+.dt-badge.blue { background: #eff6ff; color: #1d4ed8; }
+.dt-badge.green { background: #f0fdf4; color: #15803d; }
+
+.custom-row {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+}
+.custom-row:hover { border-color: #c7d2fe; }
+.custom-row-header {
+    display: flex; align-items: center;
+    padding: 16px 20px;
+    cursor: pointer; background: white;
+}
+.custom-row-body {
+    display: none;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+}
+.custom-row-body.open { display: block; }
+
+.transition-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: white; border: 1px solid #e5e7eb;
+    border-radius: 8px; margin-bottom: 8px;
+}
+.transition-arrow {
+    color: #9ca3af; font-weight: bold; flex-shrink: 0;
+}
+.state-pill {
+    background: #f3f4f6; color: #374151;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px; padding: 4px 10px;
+    font-size: 13px; font-weight: 500; white-space: nowrap;
+}
+.role-pill {
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+
+/* Transition row builder inside modal */
+.transition-builder-row {
+    display: flex; align-items: center; gap: 8px;
+    background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+}
+.transition-builder-row select {
+    border: 1px solid #d1d5db; border-radius: 6px;
+    padding: 6px 8px; font-size: 13px; background: white;
+    flex: 1; min-width: 0;
+}
+.transition-builder-row select:focus { border-color: #667eea; outline: none; }
+
+/* State checkbox card */
+.state-check-card {
+    display: flex; align-items: center; gap: 10px;
+    border: 2px solid #e5e7eb; border-radius: 8px;
+    padding: 10px 12px; cursor: pointer; transition: all 0.2s;
+}
+.state-check-card.selected {
+    border-color: #1e3a5f; background: #eef2ff;
+}
+.state-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Actor assignment row */
+.actor-row {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 8px; background: white;
+}
+.actor-row .unassigned-badge {
+    background: #fee2e2; color: #dc2626;
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 12px; font-weight: 600;
+}
+.actor-row .assigned-badge {
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 12px; font-weight: 600;
+}
     </style>
 </head>
 <body>
@@ -469,6 +601,20 @@
                         <div class="settings-menu-item-text">
                             <div>Metadata Management</div>
                             <div class="settings-menu-item-desc">Manage reusable metadata fields</div>
+                        </div>
+                    </a>
+                    <a href="#" class="settings-menu-item" data-section="lcstates">
+                        <i class="bi bi-activity"></i>
+                        <div class="settings-menu-item-text">
+                            <div>Lifecycle States</div>
+                            <div class="settings-menu-item-desc">Manage reusable workflow states</div>
+                        </div>
+                    </a>
+                    <a href="#" class="settings-menu-item" data-section="lcroles">
+                        <i class="bi bi-person-badge"></i>
+                        <div class="settings-menu-item-text">
+                            <div>Lifecycle Roles</div>
+                            <div class="settings-menu-item-desc">Manage workflow-based role assignments</div>
                         </div>
                     </a>
                     <a href="#" class="settings-menu-item" data-section="tags">
@@ -623,6 +769,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="d-flex gap-3 mt-4">
                             <button type="submit" class="btn btn-save" style="background:#1e3a5f;color:#fff;"><i class="bi bi-check-circle me-2"></i>Save Changes</button>
                             <button type="button" class="btn btn-secondary" onclick="loadSettings()"><i class="bi bi-arrow-clockwise me-2"></i>Reset</button>
@@ -990,25 +1137,105 @@
                         </ul>
                     </div>
                 </div>
-                <!-- ==================== DOCUMENT TYPES MANAGEMENT ==================== -->
+                <!-- ==================== LIFECYCLE STATES ==================== -->
+                <div class="settings-card" id="lcstatesSection" style="display:none;">
+                    <div class="settings-header">
+                        <div class="settings-icon"><i class="bi bi-activity"></i></div>
+                        <div>
+                            <h3 class="settings-title">Lifecycle States</h3>
+                            <p class="settings-subtitle">Manage reusable workflow states for document types</p>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <p class="text-muted mb-0" style="font-size:14px;">
+                            Create and manage reusable lifecycle states that can be assigned to document type workflows.
+                        </p>
+                        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;"
+                                onclick="openLcStateModal()">
+                            <i class="bi bi-plus-circle me-2"></i>Add Lifecycle State
+                        </button>
+                    </div>
+                    <div id="lcStatesList" class="row g-3">
+                        <div class="col-12 text-center text-muted py-4">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- ==================== LIFECYCLE ROLES ==================== -->
+                <div class="settings-card" id="lcrolesSection" style="display:none;">
+                    <div class="settings-header">
+                        <div class="settings-icon"><i class="bi bi-person-badge"></i></div>
+                        <div>
+                            <h3 class="settings-title">Lifecycle Roles</h3>
+                            <p class="settings-subtitle">Manage workflow-based roles for document permissions</p>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <p class="text-muted mb-0" style="font-size:14px;">
+                            Create and manage reusable lifecycle roles that can be assigned to document type workflows.
+                        </p>
+                        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;"
+                                onclick="openLcRoleModal()">
+                            <i class="bi bi-plus-circle me-2"></i>Add Lifecycle Role
+                        </button>
+                    </div>
+                    <div id="lcRolesList" class="row g-3">
+                        <div class="col-12 text-center text-muted py-4">Loading...</div>
+                    </div>
+                </div>
+                <!-- ==================== DOCUMENT TYPE MANAGEMENT ==================== -->
                 <div class="settings-card" id="doctypesSection" style="display:none;">
                     <div class="settings-header">
                         <div class="settings-icon"><i class="bi bi-diagram-3"></i></div>
                         <div>
-                            <h3 class="settings-title">Document Types</h3>
-                            <p class="settings-subtitle">Configure document types and their metadata fields</p>
+                            <h3 class="settings-title">Document Type Management</h3>
+                            <p class="settings-subtitle">Manage document types and their workflows</p>
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                        <p class="text-muted mb-0" style="font-size:14px;">Define document types and assign metadata fields to them.</p>
-                        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;" onclick="openDocTypeModal()">
-                            <i class="bi bi-plus-circle me-2"></i>Add Document Type
+                    <!-- Tabs -->
+                    <div class="d-flex mb-4" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+                        <button id="tabDoctypeBtn" onclick="switchDocTypeTab('doctype')"
+                                class="btn flex-fill py-3 fw-semibold"
+                                style="border-radius:0;border:none;background:#1e3a5f;color:white;font-size:14px;">
+                            <i class="bi bi-file-earmark-text me-2"></i>Document Types
+                        </button>
+                        <button id="tabWorkflowBtn" onclick="switchDocTypeTab('workflow')"
+                                class="btn flex-fill py-3 fw-semibold"
+                                style="border-radius:0;border:none;background:white;color:#6b7280;font-size:14px;">
+                            <i class="bi bi-diagram-3 me-2"></i>Workflows
                         </button>
                     </div>
 
-                    <div id="docTypesList">
-                        <div class="text-center text-muted py-4">Loading...</div>
+                    <!-- ── Document Types Tab ────────────────────────────────── -->
+                    <div id="doctypeTab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <p class="text-muted mb-0" style="font-size:14px;">
+                                Define document types with metadata fields, lifecycle states, and team assignments.
+                            </p>
+                            <button class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;"
+                                    onclick="openDocTypeModal()">
+                                <i class="bi bi-plus-circle me-2"></i>Add Document Type
+                            </button>
+                        </div>
+                        <div id="docTypeList" class="row g-3">
+                            <div class="col-12 text-center text-muted py-4">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- ── Workflows Tab ────────────────────────────────────── -->
+                    <div id="workflowTab" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <p class="text-muted mb-0" style="font-size:14px;">
+                                Create workflows that define states, transitions, roles, and assigned people.
+                            </p>
+                            <button class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;"
+                                    onclick="openWorkflowModal()">
+                                <i class="bi bi-plus-circle me-2"></i>Add Workflow
+                            </button>
+                        </div>
+                        <div id="workflowList">
+                            <div class="text-center text-muted py-4">Loading...</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1024,7 +1251,7 @@
 
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                         <p class="text-muted mb-0" style="font-size:14px;">Create reusable metadata fields that can be assigned to document types.</p>
-                        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;" onclick="openMetadataModal()">
+                        <button type="button" id="addMetadataBtn" class="btn fw-bold" style="background:#1e3a5f;color:white;border-radius:8px;display:none;" onclick="openMetadataModal()">
                             <i class="bi bi-plus-circle me-2"></i>Add Metadata Field
                         </button>
                     </div>
@@ -1091,11 +1318,106 @@
                         </div>
                     </div>
                 </div>
-            </div><!-- end settings-content -->
+            </div>
         </div><!-- end settings-container -->
     </div>
 </div>
 
+
+<!-- ==================== WORKFLOW DIAGRAM FULLSCREEN OVERLAY ==================== -->
+<!-- position:fixed + z-index:10001 — sits above every custom modal (9999) and Bootstrap modal (1055) -->
+<div id="wfDiagramFullscreenOverlay" onclick="if(event.target===this)closeWfDiagramFullscreen()">
+    <div id="wfDiagramFullscreenPanel">
+
+        <!-- Header -->
+        <div style="background:#1e3a5f;color:white;padding:16px 24px;
+                    display:flex;align-items:center;gap:14px;flex-shrink:0;">
+            <div style="width:38px;height:38px;background:rgba(255,255,255,0.15);border-radius:10px;
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="bi bi-diagram-3" style="font-size:19px;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:16px;line-height:1.2;">Workflow Diagram</div>
+                <div id="wfDiagramFsSubtitle" style="font-size:12px;opacity:0.72;margin-top:2px;">Fullscreen view</div>
+            </div>
+            <button onclick="closeWfDiagramFullscreen()"
+                    style="width:34px;height:34px;border-radius:8px;border:none;cursor:pointer;
+                           background:rgba(255,255,255,0.15);color:white;font-size:20px;line-height:1;
+                           display:flex;align-items:center;justify-content:center;transition:background 0.2s;flex-shrink:0;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.28)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.15)'">&times;</button>
+        </div>
+
+        <!-- Body — pan + zoom viewport (overflow:hidden; transform layer inside) -->
+        <div id="wfDiagramFsBody"
+             style="flex:1;overflow:hidden;background:#f1f5f9;position:relative;
+                    cursor:grab;user-select:none;-webkit-user-select:none;">
+            <!-- Transform layer: translate + scale applied here via JS -->
+            <div id="wfDiagramFsTransform"
+                 style="position:absolute;top:0;left:0;transform-origin:0 0;
+                        will-change:transform;display:inline-block;">
+                <!-- White card wraps the SVG tightly -->
+                <div id="wfDiagramFsCard"
+                     style="margin:32px;background:white;border-radius:12px;padding:28px;
+                            display:inline-block;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+                    <svg id="wf_diagramSvgFs" style="display:block;"></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background:#f9fafb;padding:13px 24px;border-top:1px solid #e5e7eb;
+                    display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            <span style="font-size:13px;color:#6b7280;flex:1;min-width:0;">
+                <i class="bi bi-info-circle me-1"></i>Diagram updates automatically.
+                <span style="margin-left:8px;font-size:11px;color:#b0b7c3;">
+                    <i class="bi bi-arrows-move me-1"></i>Drag canvas to pan &nbsp;·&nbsp;
+                    <i class="bi bi-mouse2 me-1"></i>Ctrl+scroll to zoom &nbsp;·&nbsp;
+                    <i class="bi bi-cursor me-1"></i>Drag a node to reposition it
+                </span>
+            </span>
+            <!-- Reset layout button -->
+            <button onclick="wfFsResetLayout()" title="Reset all nodes to auto layout"
+                    style="flex-shrink:0;height:30px;padding:0 11px;border-radius:8px;
+                           border:1px solid #e5e7eb;background:white;color:#6b7280;
+                           font-size:11px;font-weight:600;cursor:pointer;
+                           display:flex;align-items:center;gap:5px;transition:all 0.15s;"
+                    onmouseover="this.style.background='#f3f4f6';this.style.borderColor='#d1d5db'"
+                    onmouseout="this.style.background='white';this.style.borderColor='#e5e7eb'">
+                <i class="bi bi-arrow-counterclockwise"></i>Reset Layout
+            </button>
+            <!-- Zoom buttons -->
+            <div style="display:flex;align-items:center;gap:3px;background:white;
+                        border:1px solid #e5e7eb;border-radius:10px;padding:3px;flex-shrink:0;">
+                <button onclick="wfFsZoomOut()" title="Zoom out (Ctrl −)"
+                        style="width:30px;height:30px;border-radius:7px;border:none;background:transparent;
+                               color:#374151;font-size:18px;font-weight:700;cursor:pointer;line-height:1;
+                               display:flex;align-items:center;justify-content:center;transition:background 0.15s;"
+                        onmouseover="this.style.background='#f3f4f6'"
+                        onmouseout="this.style.background='transparent'">−</button>
+                <button onclick="wfFsZoomReset()" id="wfFsZoomLabel" title="Reset view (Ctrl 0)"
+                        style="min-width:52px;height:30px;border-radius:7px;border:none;background:transparent;
+                               color:#1e3a5f;font-size:12px;font-weight:700;cursor:pointer;
+                               display:flex;align-items:center;justify-content:center;transition:background 0.15s;"
+                        onmouseover="this.style.background='#eef2ff'"
+                        onmouseout="this.style.background='transparent'">100%</button>
+                <button onclick="wfFsZoomIn()" title="Zoom in (Ctrl +)"
+                        style="width:30px;height:30px;border-radius:7px;border:none;background:transparent;
+                               color:#374151;font-size:18px;font-weight:700;cursor:pointer;line-height:1;
+                               display:flex;align-items:center;justify-content:center;transition:background 0.15s;"
+                        onmouseover="this.style.background='#f3f4f6'"
+                        onmouseout="this.style.background='transparent'">+</button>
+            </div>
+            <button onclick="closeWfDiagramFullscreen()" style="flex-shrink:0;
+                    background:#1e3a5f;color:white;border:none;border-radius:8px;
+                    padding:8px 22px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;"
+                    onmouseover="this.style.background='#2d5080'"
+                    onmouseout="this.style.background='#1e3a5f'">
+                <i class="bi bi-x-circle me-1"></i>Close
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- ==================== MODAL OVERLAY ==================== -->
 <div class="modal-overlay-custom" id="modalOverlay" onclick="closeActiveSettingsModal()"></div>
@@ -1184,38 +1506,6 @@
         </button>
     </div>
 </div>
-<!-- ==================== DOCUMENT TYPE MODAL ==================== -->
-<div class="custom-modal modal-lg" id="docTypeModal">
-    <div class="modal-header" style="background:#1e3a5f;color:white;">
-        <h5 class="modal-title" id="docTypeModalTitle"><i class="bi bi-diagram-3 me-2"></i>Add Document Type</h5>
-        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('docTypeModal')" style="color:white;">&times;</button>
-    </div>
-    <div class="modal-body">
-        <input type="hidden" id="docTypeIdField">
-        <div class="mb-3">
-            <label class="form-label fw-bold">Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="docTypeNameField" placeholder="e.g., Resume, Invoice, Contract">
-        </div>
-        <div class="mb-4">
-            <label class="form-label fw-bold">Description</label>
-            <textarea class="form-control" id="docTypeDescField" rows="2" placeholder="Brief description of this document type"></textarea>
-        </div>
-        <div class="mb-2">
-            <label class="form-label fw-bold">Metadata Fields</label>
-            <p class="text-muted mb-2" style="font-size:13px;">Select which metadata fields apply to this document type. Toggle "Required" for mandatory fields.</p>
-        </div>
-        <div id="docTypeMetadataList" style="max-height:300px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;">
-            <div class="text-center text-muted py-3">Loading fields...</div>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('docTypeModal')">Cancel</button>
-        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;" onclick="saveDocType()">
-            <i class="bi bi-check-circle me-2"></i>Save
-        </button>
-    </div>
-</div>
-
 <!-- ==================== METADATA FIELD MODAL ==================== -->
 <div class="custom-modal" id="metadataModal">
     <div class="modal-header" style="background:#1e3a5f;color:white;">
@@ -1242,7 +1532,7 @@
         <div id="enumValuesSection" style="display:none;">
             <label class="form-label fw-bold"><i class="bi bi-list-ul me-1"></i>Dropdown Values <span class="text-danger">*</span></label>
             <p class="text-muted mb-2" style="font-size:13px;">Add the options that will appear in this dropdown field.</p>
-            <div class="d-flex gap-2 mb-3">
+            <div class="gap-2 mb-3" id="enumAddRow" style="display:none;">
                 <input type="text" class="form-control" id="enumValueInput" placeholder="Type a value and press Add">
                 <button type="button" class="btn btn-sm fw-bold" style="background:#1e3a5f;color:white;white-space:nowrap;" onclick="addEnumValue()">
                     <i class="bi bi-plus-circle me-1"></i>Add
@@ -1257,6 +1547,272 @@
         <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('metadataModal')">Cancel</button>
         <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;" onclick="saveMetadataField()">
             <i class="bi bi-check-circle me-2"></i>Save
+        </button>
+    </div>
+</div>
+<!-- ==================== LIFECYCLE STATE MODAL ==================== -->
+<div class="custom-modal" id="lcStateModal">
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title" id="lcStateModalTitle">
+            <i class="bi bi-activity me-2"></i>Add Lifecycle State
+        </h5>
+        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('lcStateModal')"
+                style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="lcStateIdField">
+        <div class="mb-3">
+            <label class="form-label fw-bold">State Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="lcStateNameField"
+                   placeholder="e.g., Under Review, Approved, Rejected">
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Description</label>
+            <textarea class="form-control" id="lcStateDescField" rows="2"
+                      placeholder="Brief description of what this state represents"></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Color</label>
+            <p class="text-muted mb-2" style="font-size:13px;">Choose a color to identify this state visually.</p>
+            <div class="d-flex flex-wrap gap-2" id="lcStateColorPicker">
+                <!-- rendered by JS -->
+            </div>
+            <input type="hidden" id="lcStateColorField" value="#6b7280">
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('lcStateModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;"
+                onclick="saveLcState()">
+            <i class="bi bi-check-circle me-2"></i>Save
+        </button>
+    </div>
+</div>
+
+<!-- ==================== LIFECYCLE ROLE MODAL ==================== -->
+<div class="custom-modal" id="lcRoleModal">
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title" id="lcRoleModalTitle">
+            <i class="bi bi-person-badge me-2"></i>Add Lifecycle Role
+        </h5>
+        <button type="button" class="modal-close-btn-custom" onclick="closeSettingsModal('lcRoleModal')"
+                style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="lcRoleIdField">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Role Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="lcRoleNameField"
+                   placeholder="e.g., Approver, Reviewer, Initiator">
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="lcRoleDescField" rows="2"
+                      placeholder="What does this role do in the workflow?"></textarea>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal('lcRoleModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;"
+                onclick="saveLcRole()">
+            <i class="bi bi-check-circle me-2"></i>Save
+        </button>
+    </div>
+</div>
+<!-- ==================== DOCUMENT TYPE MODAL ==================== -->
+<div class="custom-modal modal-lg" id="docTypeModal" style="max-width:700px;">
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title" id="docTypeModalTitle">
+            <i class="bi bi-file-earmark-text me-2"></i>Add Document Type
+        </h5>
+        <button type="button" class="modal-close-btn-custom"
+                onclick="closeSettingsModal('docTypeModal')" style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="dt_id">
+
+        <!-- Name + Description -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Type Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dt_name" placeholder="e.g., Resume, Contract">
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold">Description</label>
+            <textarea class="form-control" id="dt_desc" placeholder="Brief description of this document type" rows="2"></textarea>
+        </div>
+
+        <!-- Metadata Fields with Mandatory toggle -->
+        <div class="mb-4">
+            <h6 class="fw-bold mb-1">Metadata Fields
+                <span class="text-muted fw-normal" style="font-size:12px;">
+                    — Toggle <strong>Mandatory</strong> for required fields on upload
+                </span>
+            </h6>
+            <div id="dt_metaList"
+                 style="max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;">
+                <div class="text-muted text-center py-2">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Lifecycle States -->
+        <div class="mb-4">
+            <h6 class="fw-bold mb-1">Lifecycle States <span class="text-danger">*</span></h6>
+            <div id="dt_statesGrid" class="row g-2"
+                 style="max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;">
+                <div class="text-muted text-center py-2">Loading...</div>
+            </div>
+        </div>
+        <!-- Team -->
+        <div>
+            <h6 class="fw-bold mb-1">Team Assignment
+                <span class="text-muted fw-normal" style="font-size:12px;">
+                    — Select groups; click a group to preview its members
+                </span>
+            </h6>
+            <div class="row g-3 mt-1">
+                <!-- Groups -->
+                <div class="col-6">
+                    <div class="fw-semibold mb-2" style="font-size:13px;">
+                        <i class="bi bi-people me-1"></i>Groups
+                    </div>
+                    <div id="dt_groupsList"
+                         style="max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;">
+                        <div class="text-muted text-center py-2">Loading...</div>
+                    </div>
+                </div>
+                <!-- Members Preview (read-only) -->
+                <div class="col-6">
+                    <div class="fw-semibold mb-2" style="font-size:13px;">
+                        <i class="bi bi-person-lines-fill me-1"></i>
+                        <span id="dt_membersPreviewLabel">Members Preview</span>
+                    </div>
+                    <div id="dt_membersPreview"
+                         style="max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;background:#f9fafb;">
+                        <div class="text-muted text-center py-3" style="font-size:12px;">
+                            <i class="bi bi-cursor me-1"></i>Click a group to see its members
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- end modal-body -->
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                onclick="closeSettingsModal('docTypeModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;"
+                onclick="saveDocType()">
+            <i class="bi bi-check-circle me-2"></i>Save
+        </button>
+    </div>
+</div>
+
+<!-- ==================== WORKFLOW MODAL ==================== -->
+<div class="custom-modal modal-lg" id="workflowModal" style="max-width:700px;">
+    <div class="modal-header" style="background:#1e3a5f;color:white;">
+        <h5 class="modal-title" id="workflowModalTitle">
+            <i class="bi bi-diagram-3 me-2"></i>Add Workflow
+        </h5>
+        <button type="button" class="modal-close-btn-custom"
+                onclick="closeSettingsModal('workflowModal')" style="color:white;">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="wf_id">
+
+        <!-- Parent Doc Type -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Document Type <span class="text-danger">*</span></label>
+            <select class="form-select" id="wf_parentId" onchange="onWfParentChange()">
+                <option value="">Select document type...</option>
+            </select>
+        </div>
+        <div id="wf_parentInfo" style="display:none;" class="mb-3"></div>
+
+        <!-- Name + Description -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Workflow Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="wf_name"
+                   placeholder="e.g., Software Development Resume">
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold">Description</label>
+            <textarea class="form-control" id="wf_desc" rows="2"></textarea>
+        </div>
+
+        <!-- States (shown after parent selected) -->
+        <div id="wf_statesSection" style="display:none;" class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">Select States <span class="text-danger">*</span></h6>
+                <span id="wf_stateCounter" style="font-size:12px;color:#6b7280;"></span>
+            </div>
+            <div id="wf_statesGrid" class="row g-2"
+                 style="max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px;">
+            </div>
+        </div>
+
+        <!-- Transitions (shown after parent selected) -->
+        <div id="wf_transitionsSection" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">Transitions</h6>
+                <button class="btn btn-sm fw-bold"
+                        style="background:#eef2ff;color:#1e3a5f;border-radius:6px;"
+                        onclick="addWfTransitionRow()">
+                    <i class="bi bi-plus-circle me-1"></i>Add Transition
+                </button>
+            </div>
+            <p class="text-muted mb-2" style="font-size:13px;">
+                Define how documents move between states, which role performs the transition, and who is assigned.
+            </p>
+            <div id="wf_transitionHeaders" style="padding:4px 12px 4px;margin-bottom:4px;display:none;align-items:center;gap:8px;">
+                <span style="flex:1;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;min-width:0;">Source</span>
+                <span style="width:16px;flex-shrink:0;"></span>
+                <span style="flex:1;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;min-width:0;">Destination</span>
+                <span style="width:16px;flex-shrink:0;"></span>
+                <span style="flex:1;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;min-width:0;">LC Role</span>
+                <span style="width:16px;flex-shrink:0;"></span>
+                <span style="flex:1;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;min-width:0;">Responsible</span>
+                <span style="width:30px;flex-shrink:0;"></span>
+            </div>
+            <div id="wf_transitionsContainer"></div>
+            <div id="wf_noTransitions" class="text-muted text-center py-2" style="font-size:13px;">
+                No transitions defined yet.
+            </div>
+        </div>
+
+        <!-- ── Live Workflow Diagram ─────────────────────────────── -->
+        <div id="wf_diagramSection" style="display:none;margin-top:20px;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="fw-bold mb-0" style="font-size:13px;">
+                    <i class="bi bi-diagram-3 me-1"></i>Live Diagram
+                </h6>
+                <span style="font-size:11px;color:#9ca3af;">Updates as you define transitions</span>
+            </div>
+            <!-- Wrapper is position:relative so the button can anchor to it, not to the scroll div -->
+            <div style="position:relative;">
+                <div style="border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;
+                            overflow-x:auto;padding:16px;">
+                    <svg id="wf_diagramSvg" style="display:block;min-width:400px;"></svg>
+                </div>
+                <!-- Button lives OUTSIDE the overflow:auto div — stays pinned when diagram scrolls -->
+                <button onclick="openWfDiagramFullscreen()"
+                        title="View fullscreen"
+                        style="position:absolute;bottom:10px;right:10px;width:30px;height:30px;
+                               border-radius:7px;background:white;border:1px solid #e5e7eb;
+                               display:flex;align-items:center;justify-content:center;
+                               cursor:pointer;transition:all 0.2s;color:#6b7280;
+                               box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:0;"
+                        onmouseover="this.style.background='#1e3a5f';this.style.color='white';this.style.borderColor='#1e3a5f';"
+                        onmouseout="this.style.background='white';this.style.color='#6b7280';this.style.borderColor='#e5e7eb';">
+                    <i class="bi bi-arrows-fullscreen" style="font-size:12px;pointer-events:none;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                onclick="closeSettingsModal('workflowModal')">Cancel</button>
+        <button type="button" class="btn fw-bold" style="background:#1e3a5f;color:white;"
+                id="wfSaveBtn" onclick="saveWorkflow()">
+            <i class="bi bi-check-circle me-2"></i>Save Workflow
         </button>
     </div>
 </div>
@@ -1286,6 +1842,7 @@
     // ==================== GLOBAL VARIABLES ====================
     let pendingUpdate = null;
     let confirmationModal = null;
+    let myPermissions = [];
     let passwordModal = null;
     let bulkDeleteModal = null;
     let bulkDeleteConfirmModal = null;
@@ -1300,16 +1857,20 @@ function centerSettingsModal(modalId) {
     if (!modal || !mainContent) return;
 
     const mainRect = mainContent.getBoundingClientRect();
-    const modalWidth = modal.offsetWidth;
+    const modalWidth  = modal.offsetWidth;
     const modalHeight = modal.offsetHeight;
+    const padding = 12;
 
-    const left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
-    const top = Math.max(80, (window.innerHeight / 2) - (modalHeight / 2));
+    // Center over main content, then clamp so it never overflows the viewport
+    let left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
+    left = Math.max(padding, Math.min(left, window.innerWidth - modalWidth - padding));
+
+    let top = (window.innerHeight / 2) - (modalHeight / 2);
+    top = Math.max(80, Math.min(top, window.innerHeight - modalHeight - padding));
 
     modal.style.left = `${left}px`;
-    modal.style.top = `${top}px`;
+    modal.style.top  = `${top}px`;
 }
-
 function openSettingsModal(modalId) {
     const modal = document.getElementById(modalId);
     const overlay = document.getElementById('modalOverlay');
@@ -1350,7 +1911,7 @@ function closeActiveSettingsModal() {
 }
 
     // ==================== INITIALIZATION ====================
-    document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', async function() {
     // Re-center custom modals on resize
 window.addEventListener('resize', function() {
     if (activeSettingsModalId) centerSettingsModal(activeSettingsModalId);
@@ -1377,14 +1938,23 @@ if (sidebar) {
     observer.observe(sidebar, { attributes: true, attributeFilter: ['class', 'style'] });
 }
 
-// Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && activeSettingsModalId) closeSettingsModal(activeSettingsModalId);
+
+    // Fullscreen diagram keyboard zoom (only when overlay is open)
+    const fsOverlay = document.getElementById('wfDiagramFullscreenOverlay');
+    if (fsOverlay && fsOverlay.style.display === 'flex' && (e.ctrlKey || e.metaKey)) {
+        if (e.key === '=' || e.key === '+') { e.preventDefault(); wfFsZoomIn();    }
+        if (e.key === '-' || e.key === '_') { e.preventDefault(); wfFsZoomOut();   }
+        if (e.key === '0')                  { e.preventDefault(); wfFsZoomReset(); }
+    }
 });
 
-        loadSettings();
-        initializeTagPolicies();
-        initializeWatermarkSettings();
+   await fetchMyPermissions();
+       updateSidebarVisibility();
+       loadSettings();
+       initializeTagPolicies();
+       initializeWatermarkSettings();
 
         document.getElementById('repositorySettingsForm').addEventListener('submit', function(e) {
             e.preventDefault(); saveSettings();
@@ -1472,13 +2042,15 @@ document.addEventListener('keydown', function(e) {
         document.querySelectorAll('.settings-card').forEach(c => c.style.display = 'none');
         const sectionMap = {
             'repository': { id: 'repositorySection',  load: loadSettings },
-            'doctypes':   { id: 'doctypesSection',    load: loadDocTypes },
+            'doctypes': { id: 'doctypesSection', load: () => { loadDocTypes(); switchDocTypeTab('doctype'); } },
             'metadata':   { id: 'metadataSection',    load: loadMetadataFields },
             'tags':       { id: 'tagPoliciesSection', load: loadTagPolicies },
             'watermark':  { id: 'watermarkSection',   load: loadWatermarkSettings },
             'security':   { id: 'securitySection',    load: loadSecuritySettings },
             'logging':    { id: 'loggingSection',     load: loadLoggingSettings },
-            'bulkdelete': { id: 'bulkdeleteSection',  load: null }
+'bulkdelete': { id: 'bulkdeleteSection',  load: null },
+'lcstates':   { id: 'lcstatesSection',    load: loadLcStates },
+'lcroles':    { id: 'lcrolesSection',     load: loadLcRoles }
         };
         const s = sectionMap[section];
         if (s) {
@@ -2004,165 +2576,56 @@ document.addEventListener('keydown', function(e) {
         }).catch(err => { showLoading(false); showAlert('danger', 'Failed to delete: ' + err.message); });
     }
 
-    // ==================== DOCUMENT TYPES MANAGEMENT ====================
+// ==================== DOCUMENT TYPES MANAGEMENT ====================
 let allMetadataFields = [];
 let allDocTypes = [];
-
-async function loadDocTypes() {
-    showLoading(true);
+let allAvailableStates  = [];
+let allAvailableRoles   = [];
+let allAvailablePeople  = [];
+let allStaticDocTypes   = [];
+let currentSdtTransitions = [];
+async function fetchMyPermissions() {
     try {
-        const [typesRes, fieldsRes] = await Promise.all([
-            fetch(contextPath + 'api/document-types'),
-            fetch(contextPath + 'api/metadata-definitions')
-        ]);
-        allDocTypes = await typesRes.json();
-        allMetadataFields = await fieldsRes.json();
-        renderDocTypesList();
+        const r = await fetch(contextPath + 'api/auth/my-permissions');
+        const data = await r.json();
+        myPermissions = data.permissions || [];
     } catch (e) {
-        showAlert('danger', 'Failed to load document types');
-    } finally {
-        showLoading(false);
+        console.error('Failed to load permissions', e);
+        myPermissions = [];
     }
 }
 
-function renderDocTypesList() {
-    const container = document.getElementById('docTypesList');
-    if (!allDocTypes || allDocTypes.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted py-4">No document types yet. Click "Add Document Type" to create one.</div>';
-        return;
-    }
-    container.innerHTML = allDocTypes.map(t => `
-        <div class="border rounded p-3 mb-3" style="border:1px solid #e5e7eb !important;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                    <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-text me-2" style="color:#1e3a5f;"></i>${escapeHtml(t.docTypeName)}</h6>
-                    <p class="text-muted mb-2" style="font-size:13px;">${escapeHtml(t.description || 'No description')}</p>
-                    <span class="badge" style="background:#eef2ff;color:#1e3a5f;font-size:11px;">${(t.metadataFieldIds || []).length} Fields</span>
-                </div>
-                <div>
-                    <button class="btn btn-sm" style="color:#3b82f6;" onclick="openDocTypeModal(${t.docTypeId})" title="Edit"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm" style="color:#dc2626;" onclick="confirmDeleteDocType(${t.docTypeId}, '${escapeHtml(t.docTypeName).replace(/'/g,"\\'")}')" title="Delete"><i class="bi bi-trash"></i></button>
-                </div>
-            </div>
-        </div>
-    `).join('');
+function hasPerm(perm) {
+    if (myPermissions.includes('superadmin')) return true;
+    return myPermissions.includes(perm);
 }
 
-async function openDocTypeModal(docTypeId) {
-    document.getElementById('docTypeIdField').value = docTypeId || '';
-    document.getElementById('docTypeModalTitle').innerHTML = docTypeId
-        ? '<i class="bi bi-pencil me-2"></i>Edit Document Type'
-        : '<i class="bi bi-diagram-3 me-2"></i>Add Document Type';
-
-    let existing = { docTypeName: '', description: '', metadataFieldIds: [], mandatoryFieldIds: [] };
-    if (docTypeId) {
-        try {
-            const r = await fetch(contextPath + 'api/document-types/' + docTypeId);
-            existing = await r.json();
-        } catch (e) {}
-    }
-    document.getElementById('docTypeNameField').value = existing.docTypeName || '';
-    document.getElementById('docTypeDescField').value = existing.description || '';
-
-    // Render metadata fields with checkboxes + mandatory toggles
-    if (!allMetadataFields || allMetadataFields.length === 0) {
-        try { const r = await fetch(contextPath + 'api/metadata-definitions'); allMetadataFields = await r.json(); } catch(e){}
-    }
-    const list = document.getElementById('docTypeMetadataList');
-    if (!allMetadataFields || allMetadataFields.length === 0) {
-        list.innerHTML = '<div class="text-muted text-center py-3">No metadata fields exist. Create some in "Metadata Management" first.</div>';
-    } else {
-        // metadataDefinitions comes back with { metadataId, fieldName, fieldType, mandatory }
-    const assigned = existing.metadataDefinitions || [];
-    const assignedIds = assigned.map(m => m.metadataId);
-    const mandatoryIds = assigned.filter(m => m.mandatory).map(m => m.metadataId);
-        list.innerHTML = allMetadataFields.map(f => {
-            const isChecked = assignedIds.includes(f.metadataId);
-            const isMandatory = mandatoryIds.includes(f.metadataId);
-            return `
-                <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
-                    <div class="form-check">
-                        <input class="form-check-input dt-meta-check" type="checkbox" value="${f.metadataId}" id="dtMeta_${f.metadataId}" ${isChecked?'checked':''}>
-                        <label class="form-check-label" for="dtMeta_${f.metadataId}">
-                            ${escapeHtml(f.fieldName)} <span class="badge bg-secondary" style="font-size:10px;">${escapeHtml(f.fieldType)}</span>
-                        </label>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input dt-meta-required" type="checkbox" data-meta-id="${f.metadataId}" ${isMandatory?'checked':''}>
-                        <label class="form-check-label text-muted" style="font-size:12px;">Required</label>
-                    </div>
-                </div>`;
-        }).join('');
-    }
-    openSettingsModal('docTypeModal');
+function updateSidebarVisibility() {
+    const permMap = [
+        { section: 'doctypes',  perm: 'DOCUMENT_TYPE_VIEW' },
+        { section: 'metadata',  perm: 'METADATA_VIEW' }
+    ];
+    permMap.forEach(({ section, perm }) => {
+        const item = document.querySelector(`.settings-menu-item[data-section="${section}"]`);
+        if (item) item.style.display = hasPerm(perm) ? '' : 'none';
+    });
 }
-
-async function saveDocType() {
-    const id = document.getElementById('docTypeIdField').value;
-    const name = document.getElementById('docTypeNameField').value.trim();
-    const desc = document.getElementById('docTypeDescField').value.trim();
-    if (!name) { showAlert('danger', 'Name is required'); return; }
-
-    const metadataFieldIds = Array.from(document.querySelectorAll('.dt-meta-check:checked')).map(cb => parseInt(cb.value));
-    const mandatoryFieldIds = Array.from(document.querySelectorAll('.dt-meta-required:checked')).map(cb => parseInt(cb.dataset.metaId));
-
-    const payload = { docTypeName: name, description: desc, metadataFieldIds, mandatoryFieldIds };
-    const url = id ? (contextPath + 'api/document-types/' + id) : (contextPath + 'api/document-types');
-    const method = id ? 'PUT' : 'POST';
-    showLoading(true);
-    try {
-        const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-        if (!r.ok) throw new Error(await r.text());
-        showAlert('success', 'Document type saved!');
-        closeSettingsModal('docTypeModal');
-        loadDocTypes();
-    } catch (e) {
-        showAlert('danger', 'Failed to save: ' + e.message);
-    } finally { showLoading(false); }
-}
-
-function confirmDeleteDocType(id, name) {
-    const docType = (allDocTypes || []).find(dt => dt.docTypeId === id || dt.docTypeId === parseInt(id));
-    const fieldCount = docType ? (docType.metadataFieldIds || docType.metadataDefinitions || []).length : 0;
-
-    let bodyHtml = `<p class="fw-bold">Delete document type "<strong>${escapeHtml(name)}</strong>"?</p>`;
-    bodyHtml += `
-        <div class="mt-3 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">
-            <p style="color:#991b1b;font-size:13px;margin-bottom:6px;"><i class="bi bi-exclamation-triangle-fill me-1"></i><strong>This will permanently:</strong></p>
-            <ul style="color:#991b1b;font-size:13px;margin:0;padding-left:18px;">
-                <li>Remove this document type from the system</li>
-                ${fieldCount > 0 ? `<li>Unassign <strong>${fieldCount} metadata field(s)</strong> from this type</li>` : ''}
-                <li>Affect all documents currently tagged with this type</li>
-            </ul>
-        </div>
-        <p class="text-danger mt-3 mb-0" style="font-size:13px;"><i class="bi bi-info-circle me-1"></i>This action cannot be undone.</p>`;
-
-    document.getElementById('genericDeleteText').innerHTML = bodyHtml;
-    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
-        closeSettingsModal('genericDeleteModal');
-        showLoading(true);
-        try {
-            const r = await fetch(contextPath + 'api/document-types/' + id, { method: 'DELETE' });
-            if (!r.ok) throw new Error(await r.text());
-            showAlert('success', 'Deleted');
-            loadDocTypes();
-        } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
-        finally { showLoading(false); }
-    };
-    openSettingsModal('genericDeleteModal');
-}
-
 // ==================== METADATA MANAGEMENT ====================
 async function loadMetadataFields() {
     showLoading(true);
     try {
-        const [metaRes, typesRes] = await Promise.all([
-            fetch(contextPath + 'api/metadata-definitions'),
-            fetch(contextPath + 'api/document-types')
-        ]);
+        const metaRes = await fetch(contextPath + 'api/metadata-definitions');
         allMetadataFields = await metaRes.json();
-        allDocTypes = await typesRes.json();
+       try {
+            const typesRes = await fetch(contextPath + 'api/document-types');
+            allDocTypes = await typesRes.json();
+        } catch (e) {
+            allDocTypes = [];
+        }
         renderMetadataList();
+        // Show Add button only if permitted
+        const addBtn = document.getElementById('addMetadataBtn');
+        if (addBtn) addBtn.style.display = hasPerm('METADATA_CREATE') ? 'inline-flex' : 'none';
     } catch (e) {
         showAlert('danger', 'Failed to load metadata fields');
     } finally { showLoading(false); }
@@ -2203,8 +2666,8 @@ function renderMetadataList() {
                         </div>
                     </div>
                     <div class="ms-2 d-flex flex-column gap-1">
-                        <button class="btn btn-sm" style="color:#3b82f6;" onclick="openMetadataModal(${f.metadataId})" title="Edit"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm" style="color:#dc2626;" onclick="confirmDeleteMetadata(${f.metadataId}, '${escapeHtml(f.fieldName).replace(/'/g,"\\'")}')" title="Delete"><i class="bi bi-trash"></i></button>
+                       ${hasPerm('METADATA_UPDATE') ? `<button class="btn btn-sm" style="color:#3b82f6;" onclick="openMetadataModal(${f.metadataId})" title="Edit"><i class="bi bi-pencil"></i></button>` : ''}
+${hasPerm('METADATA_DELETE') ? `<button class="btn btn-sm" style="color:#dc2626;" onclick="confirmDeleteMetadata(${f.metadataId}, '${escapeHtml(f.fieldName).replace(/'/g,"\\'")}')" title="Delete"><i class="bi bi-trash"></i></button>` : ''}
                     </div>
                 </div>
             </div>
@@ -2213,7 +2676,7 @@ function renderMetadataList() {
 }
 
 let enumValues = []; // holds current dropdown values
-
+let deletedEnumIds = [];
 async function openMetadataModal(metadataId) {
     document.getElementById('metadataIdField').value = metadataId || '';
     document.getElementById('metadataModalTitle').innerHTML = metadataId
@@ -2222,7 +2685,7 @@ async function openMetadataModal(metadataId) {
 
     let existing = { fieldName:'', fieldType:'text' };
     enumValues = [];
-
+deletedEnumIds = [];
     if (metadataId) {
         try {
             const r = await fetch(contextPath + 'api/metadata-definitions/' + metadataId);
@@ -2234,7 +2697,7 @@ async function openMetadataModal(metadataId) {
             try {
                 const er = await fetch(contextPath + 'api/metadata-enums/by-metadata/' + metadataId);
                 const enumData = await er.json();
-                enumValues = enumData.map(e => e.value);
+enumValues = enumData.map(e => ({ id: e.id, value: e.value }));
             } catch (e) {}
         }
     }
@@ -2252,24 +2715,32 @@ document.getElementById('metadataTypeField').disabled = !!metadataId;
 
 function toggleEnumSection() {
     const type = document.getElementById('metadataTypeField').value;
-    document.getElementById('enumValuesSection').style.display = (type === 'dropdown') ? 'block' : 'none';
+    const isDropdown = type === 'dropdown';
+    document.getElementById('enumValuesSection').style.display = isDropdown ? 'block' : 'none';
+
+    const enumAddRow = document.getElementById('enumAddRow');
+    if (enumAddRow) {
+       enumAddRow.style.display = (isDropdown && hasPerm('METADATA_ENUM_CREATE')) ? 'flex' : 'none';
+    }
 }
 
 function addEnumValue() {
     const input = document.getElementById('enumValueInput');
     const val = input.value.trim();
     if (!val) return;
-    if (enumValues.includes(val)) {
+    if (enumValues.find(e => e.value === val)) {
         showAlert('danger', 'This value already exists');
         return;
     }
-    enumValues.push(val);
+    enumValues.push({ id: null, value: val }); // no id = new
     input.value = '';
     input.focus();
     renderEnumValues();
 }
 
 function removeEnumValue(index) {
+    const item = enumValues[index];
+    if (item.id) deletedEnumIds.push(item.id); // track for deletion
     enumValues.splice(index, 1);
     renderEnumValues();
 }
@@ -2280,26 +2751,25 @@ function renderEnumValues() {
         container.innerHTML = '<div class="text-center text-muted py-2" style="font-size:13px;">No values added yet</div>';
         return;
     }
-    container.innerHTML = enumValues.map((val, i) => `
+    container.innerHTML = enumValues.map((item, i) => `
         <div class="d-flex align-items-center justify-content-between p-2 ${i < enumValues.length - 1 ? 'border-bottom' : ''}" id="enumRow_${i}">
             <div class="d-flex align-items-center gap-2 flex-grow-1">
                 <span class="badge" style="background:#eef2ff;color:#1e3a5f;font-size:11px;flex-shrink:0;">${i + 1}</span>
                 <span class="enum-value-label"
-                      style="font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-grow:1;"
-                      title="Click to rename"
-                      onclick="startEnumRename(${i}, this)">
-                    ${escapeHtml(val)}
+                    style="font-size:14px;cursor:${hasPerm('METADATA_ENUM_CREATE') ? 'pointer' : 'default'};padding:2px 6px;border-radius:4px;flex-grow:1;"
+                    title="${hasPerm('METADATA_ENUM_CREATE') ? 'Click to rename' : ''}"
+                    onclick="startEnumRename(${i}, this)">
+                    ${escapeHtml(item.value)}
                 </span>
             </div>
-            <button class="btn btn-sm p-0 ms-2" style="color:#dc2626;flex-shrink:0;" onclick="removeEnumValue(${i})" title="Remove">
-                <i class="bi bi-x-circle"></i>
-            </button>
+            ${hasPerm('METADATA_ENUM_DELETE') ? `<button class="btn btn-sm p-0 ms-2" style="color:#dc2626;flex-shrink:0;" onclick="removeEnumValue(${i})" title="Remove"><i class="bi bi-x-circle"></i></button>` : ''}
         </div>
     `).join('');
 }
 
 function startEnumRename(index, labelEl) {
-    const currentVal = enumValues[index];
+    if (!hasPerm('METADATA_ENUM_CREATE')) return;
+    const currentVal = enumValues[index].value; // CHANGED
     const row = document.getElementById('enumRow_' + index);
 
     const input = document.createElement('input');
@@ -2315,16 +2785,13 @@ function startEnumRename(index, labelEl) {
 
     function commit() {
         const newVal = input.value.trim();
-        if (!newVal) {
-            renderEnumValues(); // revert
-            return;
-        }
-        if (newVal !== currentVal && enumValues.includes(newVal)) {
+        if (!newVal) { renderEnumValues(); return; }
+        if (newVal !== currentVal && enumValues.find(e => e.value === newVal)) {
             showAlert('danger', `"${newVal}" already exists in the list.`);
             input.focus();
             return;
         }
-        enumValues[index] = newVal;
+        enumValues[index].value = newVal; // CHANGED
         renderEnumValues();
     }
 
@@ -2340,10 +2807,10 @@ async function saveMetadataField() {
     const name = document.getElementById('metadataNameField').value.trim();
     const type = document.getElementById('metadataTypeField').value;
     if (!name) { showAlert('danger', 'Field name is required'); return; }
-    if (type === 'dropdown' && enumValues.length === 0) {
-        showAlert('danger', 'Please add at least one dropdown value');
-        return;
-    }
+    if (type === 'dropdown' && enumValues.length === 0 && hasPerm('METADATA_ENUM_CREATE')) {
+    showAlert('danger', 'Please add at least one dropdown value');
+    return;
+}
 
     const payload = { fieldName: name, fieldType: type };
     const url = id ? (contextPath + 'api/metadata-definitions/' + id) : (contextPath + 'api/metadata-definitions');
@@ -2356,13 +2823,32 @@ async function saveMetadataField() {
         const savedId = id || savedField.metadataId;
 
         // Save enum values if dropdown
-        if (type === 'dropdown' && savedId) {
-            await fetch(contextPath + 'api/metadata-enums/by-metadata/' + savedId, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(enumValues)
+      if (type === 'dropdown' && savedId) {
+
+    // DELETE removed values (requires METADATA_ENUM_DELETE)
+    for (const deletedId of deletedEnumIds) {
+        await fetch(contextPath + 'api/metadata-enums/' + deletedId, { method: 'DELETE' });
+    }
+
+    // CREATE new values (requires METADATA_ENUM_CREATE)
+    for (const item of enumValues) {
+        if (!item.id && hasPerm('METADATA_ENUM_CREATE')) {
+            await fetch(contextPath + 'api/metadata-enums', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ metadataId: savedId, value: item.value })
             });
         }
+        // UPDATE renamed existing values (requires METADATA_ENUM_CREATE)
+        if (item.id && hasPerm('METADATA_ENUM_CREATE')) {
+            await fetch(contextPath + 'api/metadata-enums/' + item.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ metadataId: savedId, value: item.value })
+            });
+        }
+    }
+}
 
         showAlert('success', 'Metadata field saved!');
         closeSettingsModal('metadataModal');
@@ -2414,6 +2900,2335 @@ function confirmDeleteMetadata(id, name) {
     };
     openSettingsModal('genericDeleteModal');
 }
+
+// ==================== LIFECYCLE STATE PRESETS ====================
+const LC_STATE_COLORS = [
+    { hex: '#6b7280', label: 'Gray'       },
+    { hex: '#3b82f6', label: 'Blue'       },
+    { hex: '#16a34a', label: 'Green'      },
+    { hex: '#dc2626', label: 'Red'        },
+    { hex: '#a855f7', label: 'Purple'     },
+    { hex: '#f97316', label: 'Orange'     },
+    { hex: '#eab308', label: 'Yellow'     },
+    { hex: '#0891b2', label: 'Teal'       },
+    { hex: '#1e3a5f', label: 'Navy'       },
+    { hex: '#ec4899', label: 'Pink'       },
+];
+
+function renderColorPicker(selectedColor) {
+    const container = document.getElementById('lcStateColorPicker');
+    if (!container) return;
+    container.innerHTML = LC_STATE_COLORS.map(c => `
+        <div onclick="selectStateColor('${c.hex}')" title="${c.label}"
+             style="width:32px;height:32px;border-radius:50%;background:${c.hex};cursor:pointer;
+                    border:3px solid ${selectedColor === c.hex ? '#1e3a5f' : 'transparent'};
+                    box-shadow:${selectedColor === c.hex ? '0 0 0 2px #c7d2fe' : 'none'};
+                    transition:all 0.2s;" id="colorSwatch_${c.hex.replace('#','')}">
+        </div>`).join('');
+}
+
+function selectStateColor(hex) {
+    document.getElementById('lcStateColorField').value = hex;
+    renderColorPicker(hex);
+}
+
+// ==================== LIFECYCLE STATES CRUD ====================
+async function loadLcStates() {
+    showLoading(true);
+    try {
+        const r = await fetch(contextPath + 'api/lifecycle-states');
+        const states = await r.json();
+        renderLcStatesList(states);
+    } catch (e) {
+        showAlert('danger', 'Failed to load lifecycle states');
+    } finally { showLoading(false); }
+}
+
+function renderLcStatesList(states) {
+    const container = document.getElementById('lcStatesList');
+    if (!states || states.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted py-5">
+            <i class="bi bi-activity" style="font-size:2.5rem;opacity:0.3;"></i>
+            <p class="mt-3">No lifecycle states yet. Click "Add Lifecycle State" to create one.</p>
+        </div>`;
+        return;
+    }
+    container.innerHTML = states.map(s => {
+        const color = s.color || '#6b7280';
+        const usedBadge = s.usedInTypesCount > 0
+            ? `<span class="badge" style="background:#eef2ff;color:#1e3a5f;font-size:11px;">
+                   Used in ${s.usedInTypesCount} type${s.usedInTypesCount > 1 ? 's' : ''}
+               </span>`
+            : `<span class="badge" style="background:#f3f4f6;color:#9ca3af;font-size:11px;">Not assigned</span>`;
+        return `
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100" style="border:1px solid #e5e7eb !important;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex align-items-center gap-2 flex-grow-1 me-2">
+                        <div style="width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+                        <h6 class="fw-bold mb-0" style="font-size:15px;">${escapeHtml(s.stateName)}</h6>
+                    </div>
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button class="btn btn-sm p-1" style="color:#3b82f6;"
+                                onclick="openLcStateModal(${s.stateId})" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm p-1" style="color:#dc2626;"
+                                onclick="confirmDeleteLcState(${s.stateId}, '${escapeHtml(s.stateName).replace(/'/g,"\\'")}', ${s.usedInTypesCount})"
+                                title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-muted mt-2 mb-2" style="font-size:13px;min-height:36px;">
+                    ${escapeHtml(s.description || 'No description')}
+                </p>
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                    <span class="badge px-3 py-1 fw-semibold" style="background:${color}20;color:${color};border:1px solid ${color}40;border-radius:20px;">
+                        ${escapeHtml(s.stateName)}
+                    </span>
+                    ${usedBadge}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function openLcStateModal(stateId) {
+    document.getElementById('lcStateIdField').value = stateId || '';
+    document.getElementById('lcStateModalTitle').innerHTML = stateId
+        ? '<i class="bi bi-pencil me-2"></i>Edit Lifecycle State'
+        : '<i class="bi bi-activity me-2"></i>Add Lifecycle State';
+
+    let existing = { stateName: '', description: '', color: '#6b7280' };
+    if (stateId) {
+        try {
+            const r = await fetch(contextPath + 'api/lifecycle-states/' + stateId);
+            existing = await r.json();
+        } catch (e) {}
+    }
+    document.getElementById('lcStateNameField').value  = existing.stateName   || '';
+    document.getElementById('lcStateDescField').value  = existing.description || '';
+    document.getElementById('lcStateColorField').value = existing.color       || '#6b7280';
+    renderColorPicker(existing.color || '#6b7280');
+    openSettingsModal('lcStateModal');
+}
+
+async function saveLcState() {
+    const id   = document.getElementById('lcStateIdField').value;
+    const name = document.getElementById('lcStateNameField').value.trim();
+    const desc = document.getElementById('lcStateDescField').value.trim();
+    const color = document.getElementById('lcStateColorField').value;
+    if (!name) { showAlert('danger', 'State name is required'); return; }
+
+    const payload = { stateName: name, description: desc, color };
+    const url    = id ? (contextPath + 'api/lifecycle-states/' + id) : (contextPath + 'api/lifecycle-states');
+    const method = id ? 'PUT' : 'POST';
+    showLoading(true);
+    try {
+        const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Request failed'); }
+        showAlert('success', 'Lifecycle state saved!');
+        closeSettingsModal('lcStateModal');
+        loadLcStates();
+    } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function confirmDeleteLcState(id, name, usedCount) {
+    let bodyHtml = `<p class="fw-bold">Delete lifecycle state "<strong>${escapeHtml(name)}</strong>"?</p>`;
+    if (usedCount > 0) {
+        bodyHtml += `<div class="mt-2 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">
+            <p style="color:#991b1b;font-size:13px;margin:0;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                This state is currently used in <strong>${usedCount} document type(s)</strong>.
+                Remove it from those types before deleting.
+            </p>
+        </div>`;
+    }
+    bodyHtml += `<p class="text-danger mt-3 mb-0" style="font-size:13px;">This action cannot be undone.</p>`;
+    document.getElementById('genericDeleteText').innerHTML = bodyHtml;
+    document.getElementById('genericDeleteConfirmBtn').disabled = usedCount > 0;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/lifecycle-states/' + id, { method: 'DELETE' });
+            if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+            showAlert('success', 'Lifecycle state deleted');
+            loadLcStates();
+        } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+// ==================== LIFECYCLE ROLES CRUD ====================
+async function loadLcRoles() {
+    showLoading(true);
+    try {
+        const r = await fetch(contextPath + 'api/lifecycle-roles');
+        const roles = await r.json();
+        renderLcRolesList(roles);
+    } catch (e) {
+        showAlert('danger', 'Failed to load lifecycle roles');
+    } finally { showLoading(false); }
+}
+
+function renderLcRolesList(roles) {
+    const container = document.getElementById('lcRolesList');
+    if (!roles || roles.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted py-5">
+            <i class="bi bi-person-badge" style="font-size:2.5rem;opacity:0.3;"></i>
+            <p class="mt-3">No lifecycle roles yet. Click "Add Lifecycle Role" to create one.</p>
+        </div>`;
+        return;
+    }
+    container.innerHTML = roles.map(r => {
+        const usedBadge = r.usedInTypesCount > 0
+            ? `<span class="badge" style="background:#eef2ff;color:#1e3a5f;font-size:11px;">
+                   Used in ${r.usedInTypesCount} type${r.usedInTypesCount > 1 ? 's' : ''}
+               </span>`
+            : `<span class="badge" style="background:#f3f4f6;color:#9ca3af;font-size:11px;">Not assigned</span>`;
+        return `
+        <div class="col-md-4">
+            <div class="border rounded p-3 h-100" style="border:1px solid #e5e7eb !important;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex align-items-center gap-2 flex-grow-1 me-2">
+                        <div style="width:12px;height:12px;border-radius:50%;background:#1e3a5f;flex-shrink:0;"></div>
+                        <h6 class="fw-bold mb-0" style="font-size:15px;">${escapeHtml(r.roleName)}</h6>
+                    </div>
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button class="btn btn-sm p-1" style="color:#3b82f6;"
+                                onclick="openLcRoleModal(${r.lcRoleId})" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm p-1" style="color:#dc2626;"
+                                onclick="confirmDeleteLcRole(${r.lcRoleId}, '${escapeHtml(r.roleName).replace(/'/g,"\\'")}', ${r.usedInTypesCount})"
+                                title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-muted mt-2 mb-2" style="font-size:13px;min-height:36px;">
+                    ${escapeHtml(r.description || 'No description')}
+                </p>
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                    <span class="badge px-3 py-1 fw-semibold"
+                          style="background:#eef2ff;color:#1e3a5f;border:1px solid #c7d2fe;border-radius:20px;">
+                        <i class="bi bi-person-badge me-1"></i>${escapeHtml(r.roleName)}
+                    </span>
+                    ${usedBadge}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function openLcRoleModal(roleId) {
+    document.getElementById('lcRoleIdField').value = roleId || '';
+    document.getElementById('lcRoleModalTitle').innerHTML = roleId
+        ? '<i class="bi bi-pencil me-2"></i>Edit Lifecycle Role'
+        : '<i class="bi bi-person-badge me-2"></i>Add Lifecycle Role';
+
+    let existing = { roleName: '', description: '' };
+    if (roleId) {
+        try {
+            const r = await fetch(contextPath + 'api/lifecycle-roles/' + roleId);
+            existing = await r.json();
+        } catch (e) {}
+    }
+    document.getElementById('lcRoleNameField').value = existing.roleName    || '';
+    document.getElementById('lcRoleDescField').value = existing.description || '';
+    openSettingsModal('lcRoleModal');
+}
+
+async function saveLcRole() {
+    const id   = document.getElementById('lcRoleIdField').value;
+    const name = document.getElementById('lcRoleNameField').value.trim();
+    const desc = document.getElementById('lcRoleDescField').value.trim();
+    if (!name) { showAlert('danger', 'Role name is required'); return; }
+    if (!desc) { showAlert('danger', 'Description is required'); return; }
+
+    const payload = { roleName: name, description: desc };
+    const url    = id ? (contextPath + 'api/lifecycle-roles/' + id) : (contextPath + 'api/lifecycle-roles');
+    const method = id ? 'PUT' : 'POST';
+    showLoading(true);
+    try {
+        const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Request failed'); }
+        showAlert('success', 'Lifecycle role saved!');
+        closeSettingsModal('lcRoleModal');
+        loadLcRoles();
+    } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function confirmDeleteLcRole(id, name, usedCount) {
+    let bodyHtml = `<p class="fw-bold">Delete lifecycle role "<strong>${escapeHtml(name)}</strong>"?</p>`;
+    if (usedCount > 0) {
+        bodyHtml += `<div class="mt-2 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">
+            <p style="color:#991b1b;font-size:13px;margin:0;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                This role is currently used in <strong>${usedCount} document type(s)</strong>.
+                Remove it from those types before deleting.
+            </p>
+        </div>`;
+    }
+    bodyHtml += `<p class="text-danger mt-3 mb-0" style="font-size:13px;">This action cannot be undone.</p>`;
+    document.getElementById('genericDeleteText').innerHTML = bodyHtml;
+    document.getElementById('genericDeleteConfirmBtn').disabled = usedCount > 0;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/lifecycle-roles/' + id, { method: 'DELETE' });
+            if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+            showAlert('success', 'Lifecycle role deleted');
+            loadLcRoles();
+        } catch (e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+
+
+
+// ── Role color helper ─────────────────────────────────────────────
+function roleColor(roleName) {
+    const m = {
+        'reviewer': '#7c3aed', 'approver': '#059669', 'initiator': '#2563eb',
+        'verifier': '#0891b2', 'signer': '#d97706', 'auditor': '#6b7280',
+        'coordinator': '#0891b2', 'publisher': '#7c3aed', 'legal reviewer': '#dc2626',
+    };
+    return m[(roleName || '').toLowerCase()] || '#1e3a5f';
+}
+
+// ── STATIC DOC TYPES ──────────────────────────────────────────────
+async function loadStaticDocTypes() {
+    showLoading(true);
+    try {
+        const r = await fetch(contextPath + 'api/static-doc-types');
+        allStaticDocTypes = await r.json();
+        renderStaticDocTypes(allStaticDocTypes);
+    } catch (e) { showAlert('danger', 'Failed to load static document types'); }
+    finally { showLoading(false); }
+}
+
+function renderStaticDocTypes(types) {
+    const container = document.getElementById('staticDocTypeList');
+    if (!types || types.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted py-5">
+            <i class="bi bi-file-earmark-text" style="font-size:2.5rem;opacity:0.3;"></i>
+            <p class="mt-3">No static document types yet.</p>
+        </div>`;
+        return;
+    }
+    container.innerHTML = types.map(t => `
+    <div class="col-md-6">
+        <div class="dt-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:40px;height:40px;background:#f3f4f6;border-radius:8px;
+                                display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-file-earmark-text" style="font-size:18px;color:#1e3a5f;"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="font-size:15px;">${escapeHtml(t.docTypeName)}</h6>
+                        <p class="text-muted mb-0" style="font-size:12px;">${escapeHtml(t.description || 'No description')}</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm p-1" style="color:#3b82f6;"
+                            onclick="openStaticDocTypeModal(${t.docTypeId})" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm p-1" style="color:#dc2626;"
+                            onclick="confirmDeleteStaticType(${t.docTypeId}, '${escapeHtml(t.docTypeName).replace(/'/g,"\\'")}', ${t.customTypeCount})"
+                            title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <span class="dt-badge"><i class="bi bi-database me-1"></i>${t.fieldCount} field${t.fieldCount !== 1 ? 's' : ''}</span>
+                <span class="dt-badge"><i class="bi bi-activity me-1"></i>${t.stateCount} state${t.stateCount !== 1 ? 's' : ''}</span>
+                <span class="dt-badge blue">${t.transitionCount} transition${t.transitionCount !== 1 ? 's' : ''}</span>
+                <span class="dt-badge"><i class="bi bi-people me-1"></i>${t.peopleCount} people</span>
+                <span class="dt-badge">${t.customTypeCount} custom type${t.customTypeCount !== 1 ? 's' : ''}</span>
+            </div>
+        </div>
+    </div>`).join('');
+}
+
+async function loadModalMasterData() {
+    const [sr, rr, pr] = await Promise.all([
+        fetch(contextPath + 'api/static-doc-types/available-states'),
+        fetch(contextPath + 'api/static-doc-types/available-roles'),
+        fetch(contextPath + 'api/document-types/reference/people'),
+    ]);
+    allAvailableStates  = await sr.json();
+    allAvailableRoles   = await rr.json();
+    allAvailablePeople  = await pr.json();
+}
+
+async function openStaticDocTypeModal(docTypeId) {
+    showLoading(true);
+    try {
+        await loadModalMasterData();
+        currentSdtTransitions = [];
+
+        document.getElementById('sdt_id').value = docTypeId || '';
+        document.getElementById('staticDocTypeModalTitle').innerHTML = docTypeId
+            ? '<i class="bi bi-pencil me-2"></i>Edit Static Document Type'
+            : '<i class="bi bi-file-earmark-text me-2"></i>Add Static Document Type';
+        document.getElementById('sdtSaveBtn').textContent = docTypeId ? 'Update Static Type' : 'Save Static Type';
+
+        let existing = { docTypeName:'', description:'', metadataDefinitions:[], states:[], people:[], transitions:[] };
+        if (docTypeId) {
+            const r = await fetch(contextPath + 'api/static-doc-types/' + docTypeId);
+            existing = await r.json();
+        }
+
+        document.getElementById('sdt_name').value = existing.docTypeName || '';
+        document.getElementById('sdt_desc').value = existing.description || '';
+
+        const assignedMetaIds = (existing.metadataDefinitions || []).map(m => m.metadataId);
+        const mandatoryMetaIds = (existing.metadataDefinitions || []).filter(m => m.mandatory).map(m => m.metadataId);
+        const allMeta = await fetch(contextPath + 'api/metadata-definitions').then(r => r.json());
+        renderSdtMetaGrid(allMeta, assignedMetaIds, mandatoryMetaIds);
+
+        // States — reset I/F tracking then render
+        dtStateInitialId = null;
+        dtStateFinalIds  = new Set();
+        const selStateIds = (existing.states || []).map(s => s.stateId);
+        renderDtStatesGrid(selStateIds, existing.states || []);
+
+        const selPeopleIds = (existing.people || []).map(p => p.userId);
+        renderSdtPeopleGrid(selPeopleIds);
+
+        currentSdtTransitions = (existing.transitions || []).map(t => ({
+            id: t.id, fromStateId: t.fromStateId, toStateId: t.toStateId, lcRoleId: t.lcRoleId
+        }));
+        renderSdtTransitions();
+
+        openSettingsModal('staticDocTypeModal');
+    } catch(e) { showAlert('danger', 'Failed to load: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function renderSdtMetaGrid(allMeta, assignedIds, mandatoryIds) {
+    const el = document.getElementById('sdt_metaGrid');
+    if (!allMeta || allMeta.length === 0) {
+        el.innerHTML = '<div class="text-muted text-center py-2" style="font-size:13px;">No metadata fields defined yet.</div>';
+        return;
+    }
+    el.innerHTML = allMeta.map(m => `
+    <div class="col-6">
+        <label class="d-flex align-items-center gap-2 p-2 border rounded" style="cursor:pointer;font-size:13px;">
+            <input type="checkbox" class="sdt-meta-check" value="${m.metadataId}"
+                   ${assignedIds.includes(m.metadataId) ? 'checked' : ''}>
+            ${escapeHtml(m.fieldName)}
+            <span class="badge bg-secondary ms-auto" style="font-size:10px;">${escapeHtml(m.fieldType)}</span>
+        </label>
+    </div>`).join('');
+}
+
+function renderSdtStatesGrid(selectedIds) {
+    const el = document.getElementById('sdt_statesGrid');
+    if (!allAvailableStates || allAvailableStates.length === 0) {
+        el.innerHTML = '<div class="text-muted text-center py-2" style="font-size:13px;">No lifecycle states defined yet.</div>';
+        return;
+    }
+    el.innerHTML = allAvailableStates.map(s => `
+    <div class="col-6">
+        <label class="state-check-card ${selectedIds.includes(s.stateId) ? 'selected' : ''}"
+               onclick="toggleSdtState(this, ${s.stateId})">
+            <input type="checkbox" class="sdt-state-check d-none" value="${s.stateId}"
+                   ${selectedIds.includes(s.stateId) ? 'checked' : ''}>
+            <div class="state-dot" style="background:${s.color};"></div>
+            <span style="font-size:13px;font-weight:500;">${escapeHtml(s.stateName)}</span>
+        </label>
+    </div>`).join('');
+}
+
+function toggleSdtState(cardEl, stateId) {
+    const cb = cardEl.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    cardEl.classList.toggle('selected', cb.checked);
+    // update transition dropdowns
+    renderSdtTransitions();
+}
+
+function renderSdtPeopleGrid(selectedIds) {
+    const el = document.getElementById('sdt_peopleGrid');
+    if (!allAvailablePeople || allAvailablePeople.length === 0) {
+        el.innerHTML = '<div class="text-muted text-center py-2" style="font-size:13px;">No users found.</div>';
+        return;
+    }
+    el.innerHTML = allAvailablePeople.map(u => `
+    <label class="d-flex align-items-center gap-3 p-2 border-bottom"
+           style="cursor:pointer;font-size:13px;">
+        <input type="checkbox" class="sdt-people-check" value="${u.userId}"
+               ${selectedIds.includes(u.userId) ? 'checked' : ''}
+               style="width:16px;height:16px;">
+        <div>
+            <div class="fw-semibold">${escapeHtml(u.username)}</div>
+            <div class="text-muted" style="font-size:11px;">${escapeHtml(u.email)}</div>
+        </div>
+    </label>`).join('');
+}
+
+function getSelectedSdtStates() {
+    return Array.from(document.querySelectorAll('.sdt-state-check:checked'))
+        .map(cb => parseInt(cb.value));
+}
+
+function renderSdtTransitions() {
+    const container = document.getElementById('sdt_transitionsContainer');
+    const noMsg     = document.getElementById('sdt_noTransitions');
+    const selStates = getSelectedSdtStates();
+    const stateOptions = allAvailableStates.filter(s => selStates.includes(s.stateId));
+
+    const makeStateOpts = (selId) => stateOptions.map(s =>
+        `<option value="${s.stateId}" ${s.stateId === selId ? 'selected' : ''}>${escapeHtml(s.stateName)}</option>`
+    ).join('');
+    const makeRoleOpts = (selId) => allAvailableRoles.map(r =>
+        `<option value="${r.lcRoleId}" ${r.lcRoleId === selId ? 'selected' : ''}>${escapeHtml(r.roleName)}</option>`
+    ).join('');
+
+    if (noMsg) noMsg.style.display = currentSdtTransitions.length === 0 ? '' : 'none';
+
+    // Remove existing builder rows (but not the noMsg)
+    container.querySelectorAll('.transition-builder-row').forEach(el => el.remove());
+
+    currentSdtTransitions.forEach((tr, idx) => {
+        const row = document.createElement('div');
+        row.className = 'transition-builder-row';
+        row.innerHTML = `
+            <select class="tr-from" onchange="updateSdtTransition(${idx},'from',this.value)">
+                <option value="">From State</option>${makeStateOpts(tr.fromStateId)}
+            </select>
+            <span class="transition-arrow">→</span>
+            <select class="tr-to" onchange="updateSdtTransition(${idx},'to',this.value)">
+                <option value="">To State</option>${makeStateOpts(tr.toStateId)}
+            </select>
+            <span class="transition-arrow">→</span>
+            <select class="tr-role" onchange="updateSdtTransition(${idx},'role',this.value)"
+                    style="background:${tr.lcRoleId ? roleColor(allAvailableRoles.find(r=>r.lcRoleId===tr.lcRoleId)?.roleName||'')+'15' : 'white'};">
+                <option value="">Select Role</option>${makeRoleOpts(tr.lcRoleId)}
+            </select>
+            <button class="btn btn-sm p-1 ms-auto" style="color:#dc2626;flex-shrink:0;"
+                    onclick="removeSdtTransition(${idx})">
+                <i class="bi bi-x-circle"></i>
+            </button>`;
+        container.appendChild(row);
+    });
+}
+
+function addTransitionRow() {
+    currentSdtTransitions.push({ id: null, fromStateId: null, toStateId: null, lcRoleId: null });
+    renderSdtTransitions();
+}
+
+function removeSdtTransition(idx) {
+    currentSdtTransitions.splice(idx, 1);
+    renderSdtTransitions();
+}
+
+function updateSdtTransition(idx, field, val) {
+    const v = val ? parseInt(val) : null;
+    if (field === 'from')  currentSdtTransitions[idx].fromStateId = v;
+    if (field === 'to')    currentSdtTransitions[idx].toStateId   = v;
+    if (field === 'role')  currentSdtTransitions[idx].lcRoleId    = v;
+}
+
+async function saveStaticDocType() {
+    const id   = document.getElementById('sdt_id').value;
+    const name = document.getElementById('sdt_name').value.trim();
+    const desc = document.getElementById('sdt_desc').value.trim();
+    if (!name) { showAlert('danger', 'Type name is required'); return; }
+
+    const metadataFieldIds = Array.from(document.querySelectorAll('.sdt-meta-check:checked')).map(cb => parseInt(cb.value));
+    const mandatoryFieldIds = [];
+    const stateIds         = getSelectedSdtStates();
+    const peopleIds        = Array.from(document.querySelectorAll('.sdt-people-check:checked')).map(cb => parseInt(cb.value));
+
+    const transitionPayloads = currentSdtTransitions
+        .filter(t => t.fromStateId && t.toStateId && t.lcRoleId)
+        .map(t => ({ id: t.id, fromStateId: t.fromStateId, toStateId: t.toStateId, lcRoleId: t.lcRoleId }));
+
+    const payload = { docTypeName: name, description: desc, metadataFieldIds, mandatoryFieldIds,
+                      stateIds, peopleIds, transitionPayloads };
+
+    const url    = id ? (contextPath + 'api/static-doc-types/' + id) : (contextPath + 'api/static-doc-types');
+    const method = id ? 'PUT' : 'POST';
+    showLoading(true);
+    try {
+        const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Request failed'); }
+        showAlert('success', 'Static document type saved!');
+        closeSettingsModal('staticDocTypeModal');
+        loadStaticDocTypes();
+    } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function confirmDeleteStaticType(id, name, customCount) {
+    let body = `<p class="fw-bold">Delete static type "<strong>${escapeHtml(name)}</strong>"?</p>`;
+    if (customCount > 0) {
+        body += `<div class="mt-2 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">
+            <p style="color:#991b1b;font-size:13px;margin:0;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <strong>${customCount} custom type(s)</strong> are based on this static type and will also be affected.
+                Delete or reassign them first.
+            </p></div>`;
+    }
+    body += `<p class="text-danger mt-3 mb-0" style="font-size:13px;">This cannot be undone.</p>`;
+    document.getElementById('genericDeleteText').innerHTML = body;
+    document.getElementById('genericDeleteConfirmBtn').disabled = customCount > 0;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/static-doc-types/' + id, { method:'DELETE' });
+            if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+            showAlert('success', 'Deleted');
+            loadStaticDocTypes();
+        } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+// ── CUSTOM DOC TYPES ──────────────────────────────────────────────
+async function loadCustomDocTypes() {
+    showLoading(true);
+    try {
+        const r = await fetch(contextPath + 'api/custom-doc-types');
+        const customs = await r.json();
+        renderCustomDocTypes(customs);
+    } catch(e) { showAlert('danger', 'Failed to load custom document types'); }
+    finally { showLoading(false); }
+}
+
+function renderCustomDocTypes(customs) {
+    const container = document.getElementById('customDocTypeList');
+    if (!customs || customs.length === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-5">
+            <i class="bi bi-diagram-3" style="font-size:2.5rem;opacity:0.3;"></i>
+            <p class="mt-3">No custom document types yet.</p>
+        </div>`;
+        return;
+    }
+    container.innerHTML = customs.map(c => `
+    <div class="custom-row" id="customRow_${c.customDocTypeId}">
+        <div class="custom-row-header" onclick="toggleCustomRow(${c.customDocTypeId})">
+            <div style="width:40px;height:40px;background:#f3f4f6;border-radius:8px;
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;">
+                <i class="bi bi-file-earmark-text" style="font-size:18px;color:#1e3a5f;"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-bold mb-0" style="font-size:14px;">${escapeHtml(c.customTypeName)}</h6>
+                <p class="text-muted mb-0" style="font-size:12px;">${escapeHtml(c.description || '')}</p>
+                <div class="d-flex gap-2 mt-1">
+                    <span class="dt-badge" style="font-size:11px;">${escapeHtml(c.parentTypeName)}</span>
+                    <span class="dt-badge" style="font-size:11px;">${c.stateCount} State${c.stateCount !== 1 ? 's' : ''}</span>
+                    <span class="dt-badge blue" style="font-size:11px;">${c.transitionCount} Transition${c.transitionCount !== 1 ? 's' : ''}</span>
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center ms-3" onclick="event.stopPropagation()">
+                <button class="btn btn-sm p-1" style="color:#3b82f6;"
+                        onclick="openCustomDocTypeModal(${c.customDocTypeId})" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm p-1" style="color:#dc2626;"
+                        onclick="confirmDeleteCustomType(${c.customDocTypeId},'${escapeHtml(c.customTypeName).replace(/'/g,"\\'")}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <i class="bi bi-chevron-down ms-1" id="chevron_${c.customDocTypeId}" style="color:#9ca3af;"></i>
+            </div>
+        </div>
+        <div class="custom-row-body" id="customBody_${c.customDocTypeId}">
+            <div class="text-center text-muted py-2" style="font-size:13px;">
+                <span class="spinner-border spinner-border-sm me-2"></span>Loading...
+            </div>
+        </div>
+    </div>`).join('');
+}
+
+async function toggleCustomRow(customDocTypeId) {
+    const body    = document.getElementById('customBody_' + customDocTypeId);
+    const chevron = document.getElementById('chevron_'  + customDocTypeId);
+    const isOpen  = body.classList.contains('open');
+
+    if (isOpen) {
+        body.classList.remove('open');
+        chevron.classList.replace('bi-chevron-up', 'bi-chevron-down');
+    } else {
+        body.classList.add('open');
+        chevron.classList.replace('bi-chevron-down', 'bi-chevron-up');
+        if (body.querySelector('.spinner-border')) {
+            await loadCustomRowDetail(customDocTypeId);
+        }
+    }
+}
+
+async function loadCustomRowDetail(customDocTypeId) {
+    const body = document.getElementById('customBody_' + customDocTypeId);
+    try {
+        const r = await fetch(contextPath + 'api/custom-doc-types/' + customDocTypeId);
+        const detail = await r.json();
+
+        const parentType = (allStaticDocTypes || []).find(t => t.docTypeId === detail.docTypeId);
+        const parentName = parentType ? parentType.docTypeName : detail.parentTypeName;
+
+        const statePills = (detail.selectedStates || []).map(s =>
+            `<span class="d-inline-flex align-items-center gap-1 me-2 mb-1" style="background:${s.color}15;
+             border:1px solid ${s.color}40;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;color:${s.color};">
+                <span style="width:8px;height:8px;border-radius:50%;background:${s.color};"></span>
+                ${escapeHtml(s.stateName)}
+             </span>`
+        ).join('');
+
+        const actorRows = (detail.transitionActors || []).map(ta => {
+            const rc = roleColor(ta.roleName || '');
+            const badge = ta.assigned
+                ? `<span class="assigned-badge" style="background:${rc}15;color:${rc};border:1px solid ${rc}40;">
+                       ${escapeHtml(ta.roleName)} (${escapeHtml(ta.userName)})
+                   </span>`
+                : `<span class="unassigned-badge">${escapeHtml(ta.roleName || 'Unassigned')}</span>`;
+            return `<div class="transition-row" style="margin-bottom:6px;">
+                <span class="state-pill">${escapeHtml(ta.fromStateName)}</span>
+                <span class="transition-arrow">→</span>
+                <span class="state-pill">${escapeHtml(ta.toStateName)}</span>
+                <span class="transition-arrow">→</span>
+                ${badge}
+            </div>`;
+        }).join('');
+
+        body.innerHTML = `
+        <div class="p-2 rounded mb-3" style="background:#eff6ff;border:1px solid #bfdbfe;">
+            <div style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
+                Inherits From Static Type
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-text" style="color:#1e3a5f;font-size:18px;"></i>
+                <span class="fw-bold" style="font-size:14px;">${escapeHtml(parentName)}</span>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="fw-bold mb-2" style="font-size:13px;">Selected Workflow States</div>
+            <div>${statePills || '<span class="text-muted" style="font-size:12px;">None selected</span>'}</div>
+        </div>
+        <div>
+            <div class="fw-bold mb-2" style="font-size:13px;">State Transitions with Actors</div>
+            ${actorRows || '<div class="text-muted" style="font-size:12px;">No transitions defined in parent type.</div>'}
+        </div>`;
+    } catch(e) {
+        body.innerHTML = '<div class="text-danger" style="font-size:13px;">Failed to load details.</div>';
+    }
+}
+
+async function openCustomDocTypeModal(customDocTypeId) {
+    showLoading(true);
+    try {
+        if (allStaticDocTypes.length === 0) {
+            const r = await fetch(contextPath + 'api/static-doc-types');
+            allStaticDocTypes = await r.json();
+        }
+
+        document.getElementById('cdt_id').value = customDocTypeId || '';
+        document.getElementById('customDocTypeModalTitle').innerHTML = customDocTypeId
+            ? '<i class="bi bi-pencil me-2"></i>Edit Custom Document Type'
+            : '<i class="bi bi-diagram-3 me-2"></i>Create Custom Document Type';
+        document.getElementById('cdtSaveBtn').textContent = customDocTypeId
+            ? 'Update Custom Type' : 'Create Custom Type';
+
+        // Populate parent dropdown
+        const sel = document.getElementById('cdt_parentId');
+        sel.innerHTML = '<option value="">Select static type...</option>' +
+            allStaticDocTypes.map(t =>
+                `<option value="${t.docTypeId}">${escapeHtml(t.docTypeName)}</option>`
+            ).join('');
+
+        let existing = { docTypeId: null, customTypeName:'', description:'', selectedStates:[], transitionActors:[] };
+        if (customDocTypeId) {
+            const r = await fetch(contextPath + 'api/custom-doc-types/' + customDocTypeId);
+            existing = await r.json();
+        }
+
+        document.getElementById('cdt_name').value = existing.customTypeName || '';
+        document.getElementById('cdt_desc').value  = existing.description    || '';
+
+        if (existing.docTypeId) {
+            sel.value = existing.docTypeId;
+            await populateCustomModalFromParent(
+                existing.docTypeId,
+                (existing.selectedStates || []).map(s => s.stateId),
+                existing.transitionActors || []
+            );
+        } else {
+            document.getElementById('cdt_statesSection').style.display = 'none';
+            document.getElementById('cdt_actorsSection').style.display  = 'none';
+            document.getElementById('cdt_parentBadge').style.display    = 'none';
+        }
+
+        openSettingsModal('customDocTypeModal');
+    } catch(e) { showAlert('danger', 'Failed to load: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+async function onCustomParentChange() {
+    const docTypeId = parseInt(document.getElementById('cdt_parentId').value);
+    if (!docTypeId) {
+        document.getElementById('cdt_statesSection').style.display = 'none';
+        document.getElementById('cdt_actorsSection').style.display  = 'none';
+        document.getElementById('cdt_parentBadge').style.display    = 'none';
+        return;
+    }
+    showLoading(true);
+    try {
+        await populateCustomModalFromParent(docTypeId, [], []);
+    } finally { showLoading(false); }
+}
+
+async function populateCustomModalFromParent(docTypeId, selectedStateIds, existingActors) {
+    const r = await fetch(contextPath + 'api/static-doc-types/' + docTypeId);
+    const parent = await r.json();
+
+    // Parent badge
+    const badge = document.getElementById('cdt_parentBadge');
+    badge.style.display = '';
+    badge.innerHTML = `<div class="p-2 rounded" style="background:#eff6ff;border:1px solid #bfdbfe;font-size:13px;">
+        <i class="bi bi-file-earmark-text me-2" style="color:#1e3a5f;"></i>
+        <strong>${escapeHtml(parent.docTypeName)}</strong>
+        <span class="ms-2 dt-badge" style="font-size:11px;">${parent.stateCount} states</span>
+    </div>`;
+
+    // States grid
+    document.getElementById('cdt_statesSection').style.display = '';
+    const statesGrid = document.getElementById('cdt_statesGrid');
+    const parentStates = parent.states || [];
+    statesGrid.innerHTML = parentStates.map(s => {
+        const sel = selectedStateIds.includes(s.stateId);
+        return `<div class="col-6">
+            <label class="state-check-card ${sel ? 'selected' : ''}"
+                   onclick="toggleCdtState(this)">
+                <input type="checkbox" class="cdt-state-check d-none" value="${s.stateId}"
+                       ${sel ? 'checked' : ''}>
+                <div class="state-dot" style="background:${s.color};"></div>
+                <span style="font-size:13px;font-weight:500;">${escapeHtml(s.stateName)}</span>
+            </label>
+        </div>`;
+    }).join('');
+    updateCdtStateCounter(parentStates.length);
+
+    // Actor assignments
+    document.getElementById('cdt_actorsSection').style.display = (parent.transitions || []).length > 0 ? '' : 'none';
+    const actorsByTrans = {};
+    existingActors.forEach(a => { if (a.assigned) actorsByTrans[a.transitionId] = a; });
+
+    const peopleResp = await fetch(contextPath + 'api/static-doc-types/available-people');
+    const allPeople = await peopleResp.json();
+    const whitelistIds = (parent.people || []).map(p => p.userId);
+    const eligible = allPeople.filter(u => whitelistIds.includes(u.userId));
+
+    const actorsList = document.getElementById('cdt_actorsList');
+    actorsList.innerHTML = (parent.transitions || []).map(t => {
+        const rc = roleColor(t.roleName || '');
+        const existActor = actorsByTrans[t.id];
+        const unassigned = !existActor;
+        const badgeCls = unassigned ? 'unassigned-badge' : 'assigned-badge';
+        const badgeStyle = unassigned ? '' : `style="background:${rc}15;color:${rc};border:1px solid ${rc}40;"`;
+        const badgeText = unassigned
+            ? `${escapeHtml(t.roleName)} (Unassigned)`
+            : `${escapeHtml(t.roleName)} (${escapeHtml(existActor.userName || '')})`;
+
+        const opts = eligible.map(u =>
+            `<option value="${u.userId}" ${existActor && existActor.userId === u.userId ? 'selected' : ''}>${escapeHtml(u.username)} — ${escapeHtml(u.email)}</option>`
+        ).join('');
+
+        return `<div class="actor-row">
+            <span class="state-pill">${escapeHtml(t.fromStateName)}</span>
+            <span class="transition-arrow">→</span>
+            <span class="state-pill">${escapeHtml(t.toStateName)}</span>
+            <span class="transition-arrow">→</span>
+            <span class="${badgeCls}" ${badgeStyle}>${badgeText}</span>
+            <select class="form-select form-select-sm ms-auto cdt-actor-select"
+                    data-transition-id="${t.id}"
+                    style="max-width:180px;font-size:12px;"
+                    onchange="updateActorBadge(this, '${escapeHtml(t.roleName)}')">
+                <option value="">— Assign person —</option>
+                ${opts}
+            </select>
+        </div>`;
+    }).join('');
+}
+
+function toggleCdtState(cardEl) {
+    const cb = cardEl.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    cardEl.classList.toggle('selected', cb.checked);
+    const total = document.querySelectorAll('.cdt-state-check').length;
+    updateCdtStateCounter(total);
+}
+
+function updateCdtStateCounter(total) {
+    const sel = document.querySelectorAll('.cdt-state-check:checked').length;
+    document.getElementById('cdt_stateCounter').textContent = `${sel} of ${total} selected`;
+}
+
+function updateActorBadge(selectEl, roleName) {
+    const row    = selectEl.closest('.actor-row');
+    const badge  = row.querySelector('.unassigned-badge, .assigned-badge');
+    const userId = selectEl.value;
+    const rc     = roleColor(roleName);
+    if (!userId) {
+        badge.className  = 'unassigned-badge';
+        badge.removeAttribute('style');
+        badge.textContent = `${roleName} (Unassigned)`;
+    } else {
+        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+        const uName = selectedOpt.text.split(' — ')[0];
+        badge.className     = 'assigned-badge';
+        badge.style.cssText = `background:${rc}15;color:${rc};border:1px solid ${rc}40;`;
+        badge.textContent   = `${roleName} (${uName})`;
+    }
+}
+
+async function saveCustomDocType() {
+    const id       = document.getElementById('cdt_id').value;
+    const docTypeId = parseInt(document.getElementById('cdt_parentId').value);
+    const name     = document.getElementById('cdt_name').value.trim();
+    const desc     = document.getElementById('cdt_desc').value.trim();
+    if (!docTypeId) { showAlert('danger', 'Please select a parent static type'); return; }
+    if (!name)      { showAlert('danger', 'Custom type name is required'); return; }
+
+    const selectedStateIds = Array.from(document.querySelectorAll('.cdt-state-check:checked'))
+        .map(cb => parseInt(cb.value));
+    if (selectedStateIds.length === 0) { showAlert('danger', 'Please select at least one state'); return; }
+
+    const actorAssignments = Array.from(document.querySelectorAll('.cdt-actor-select'))
+        .filter(sel => sel.value)
+        .map(sel => ({ transitionId: parseInt(sel.dataset.transitionId), userId: parseInt(sel.value) }));
+
+    const payload = { docTypeId, customTypeName: name, description: desc, selectedStateIds, actorAssignments };
+    const url    = id ? (contextPath + 'api/custom-doc-types/' + id) : (contextPath + 'api/custom-doc-types');
+    const method = id ? 'PUT' : 'POST';
+    showLoading(true);
+    try {
+        const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Request failed'); }
+        showAlert('success', 'Custom document type saved!');
+        closeSettingsModal('customDocTypeModal');
+        loadCustomDocTypes();
+    } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function confirmDeleteCustomType(id, name) {
+    document.getElementById('genericDeleteText').innerHTML =
+        `<p class="fw-bold">Delete custom type "<strong>${escapeHtml(name)}</strong>"?</p>
+         <p class="text-muted" style="font-size:13px;">All state selections and actor assignments will be removed.</p>
+         <p class="text-danger mb-0" style="font-size:13px;">This cannot be undone.</p>`;
+    document.getElementById('genericDeleteConfirmBtn').disabled = false;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/custom-doc-types/' + id, { method:'DELETE' });
+            if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+            showAlert('success', 'Custom type deleted');
+            loadCustomDocTypes();
+        } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+
+
+// ==================== DOCUMENT TYPE MANAGEMENT ====================
+let allDtAvailableStates  = [];
+let allDtAvailableGroups  = [];
+let allDtAvailablePeople  = [];
+let allDocTypeSummaries   = [];
+let currentWfTransitions  = [];
+let dtStateInitialId = null;       // only one initial state (radio)
+let dtStateFinalIds  = new Set();  // multiple finals (checkbox)
+// ── Tab switching ─────────────────────────────────────────────────
+function switchDocTypeTab(tab) {
+    const isDt = tab === 'doctype';
+    document.getElementById('doctypeTab').style.display   = isDt ? '' : 'none';
+    document.getElementById('workflowTab').style.display  = isDt ? 'none' : '';
+    document.getElementById('tabDoctypeBtn').style.background  = isDt ? '#1e3a5f' : 'white';
+    document.getElementById('tabDoctypeBtn').style.color       = isDt ? 'white' : '#6b7280';
+    document.getElementById('tabWorkflowBtn').style.background = isDt ? 'white' : '#1e3a5f';
+    document.getElementById('tabWorkflowBtn').style.color      = isDt ? '#6b7280' : 'white';
+    if (isDt) loadDocTypes(); else loadWorkflows();
+}
+
+// ── DOCUMENT TYPES ────────────────────────────────────────────────
+async function loadDocTypes() {
+    showLoading(true);
+    try {
+        const r = await fetch(contextPath + 'api/document-types/full-list');
+        allDocTypeSummaries = await r.json();
+        renderDocTypes(allDocTypeSummaries);
+    } catch (e) { showAlert('danger', 'Failed to load document types'); }
+    finally { showLoading(false); }
+}
+
+function renderDocTypes(types) {
+    const container = document.getElementById('docTypeList');
+    if (!types || types.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted py-5">
+            <i class="bi bi-file-earmark-text" style="font-size:2.5rem;opacity:0.3;"></i>
+            <p class="mt-3">No document types yet.</p></div>`;
+        return;
+    }
+    container.innerHTML = types.map(t => `
+    <div class="col-md-6">
+        <div class="dt-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:40px;height:40px;background:#f3f4f6;border-radius:8px;
+                                display:flex;align-items:center;justify-content:center;">
+                        <i class="bi bi-file-earmark-text" style="font-size:18px;color:#1e3a5f;"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="font-size:15px;">${escapeHtml(t.docTypeName)}</h6>
+                        <p class="text-muted mb-0" style="font-size:12px;">${escapeHtml(t.description || '')}</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm p-1" style="color:#3b82f6;"
+                            onclick="openDocTypeModal(${t.docTypeId})" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm p-1" style="color:#dc2626;"
+                            onclick="confirmDeleteDocType(${t.docTypeId},'${escapeHtml(t.docTypeName).replace(/'/g,"\\'")}',${t.workflowCount})"
+                            title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <span class="dt-badge"><i class="bi bi-database me-1"></i>${t.fieldCount} field${t.fieldCount!==1?'s':''}</span>
+                <span class="dt-badge"><i class="bi bi-activity me-1"></i>${t.stateCount} state${t.stateCount!==1?'s':''}</span>
+                <span class="dt-badge"><i class="bi bi-people me-1"></i>${t.teamMemberCount} team member${t.teamMemberCount!==1?'s':''}</span>
+                <span class="dt-badge blue">${t.workflowCount} workflow${t.workflowCount!==1?'s':''}</span>
+            </div>
+        </div>
+    </div>`).join('');
+}
+
+async function loadDtMasterData() {
+    const [sr, gr, pr, mr] = await Promise.all([
+        fetch(contextPath + 'api/document-types/reference/states'),
+        fetch(contextPath + 'api/document-types/reference/groups'),
+      fetch(contextPath + 'api/document-types/reference/people'),  // reuse existing
+        fetch(contextPath + 'api/metadata-definitions'),
+    ]);
+    allDtAvailableStates = await sr.json();
+    allDtAvailableGroups = await gr.json();
+    allDtAvailablePeople = await pr.json();
+    return await mr.json();
+}
+
+async function openDocTypeModal(docTypeId) {
+    showLoading(true);
+    try {
+        const allMeta = await loadDtMasterData();
+
+        document.getElementById('dt_id').value = docTypeId || '';
+        document.getElementById('docTypeModalTitle').innerHTML = docTypeId
+            ? '<i class="bi bi-pencil me-2"></i>Edit Document Type'
+            : '<i class="bi bi-file-earmark-text me-2"></i>Add Document Type';
+
+        let existing = { docTypeName:'', description:'', metadataDefinitions:[], states:[], teamGroups:[], teamUsers:[] };
+        if (docTypeId) {
+            const r = await fetch(contextPath + 'api/document-types/' + docTypeId + '/full');
+            existing = await r.json();
+        }
+
+        document.getElementById('dt_name').value = existing.docTypeName || '';
+        document.getElementById('dt_desc').value  = existing.description  || '';
+
+        // Metadata with mandatory toggles
+        const assignedMeta  = existing.metadataDefinitions || [];
+        const assignedIds   = assignedMeta.map(m => m.metadataId);
+        const mandatoryIds  = assignedMeta.filter(m => m.mandatory).map(m => m.metadataId);
+        renderDtMetaList(allMeta, assignedIds, mandatoryIds);
+
+        // States — reset I/F tracking then render
+        dtStateInitialId = null;
+        dtStateFinalIds  = new Set();
+        const selStateIds = (existing.states || []).map(s => s.stateId);
+        renderDtStatesGrid(selStateIds, existing.states || []);
+
+        // Groups (members preview built inside renderDtGroupsList)
+        const selGroupIds = (existing.teamGroups || []).map(g => g.groupId);
+        renderDtGroupsList(selGroupIds);
+
+        openSettingsModal('docTypeModal');
+    } catch(e) { showAlert('danger', 'Failed to load: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function renderDtMetaList(allMeta, assignedIds, mandatoryIds) {
+    const el = document.getElementById('dt_metaList');
+    if (!allMeta || allMeta.length === 0) {
+        el.innerHTML = '<div class="text-muted text-center py-2" style="font-size:13px;">No metadata fields defined yet.</div>';
+        return;
+    }
+    el.innerHTML = allMeta.map(m => {
+        const checked   = assignedIds.includes(m.metadataId);
+        const mandatory = mandatoryIds.includes(m.metadataId);
+        return `
+        <div class="d-flex align-items-center justify-content-between py-2 border-bottom" id="metaRow_${m.metadataId}">
+            <div class="form-check mb-0">
+                <input class="form-check-input dt-meta-check" type="checkbox" value="${m.metadataId}"
+                       id="dtMeta_${m.metadataId}" ${checked ? 'checked' : ''}
+                       onchange="onDtMetaCheck(${m.metadataId}, this.checked)">
+                <label class="form-check-label" for="dtMeta_${m.metadataId}" style="font-size:13px;">
+                    ${escapeHtml(m.fieldName)}
+                    <span class="badge bg-secondary ms-1" style="font-size:10px;">${escapeHtml(m.fieldType)}</span>
+                </label>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span style="font-size:11px;color:#6b7280;">Mandatory</span>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input dt-meta-mandatory" type="checkbox"
+                           data-meta-id="${m.metadataId}"
+                           ${mandatory ? 'checked' : ''}
+                           ${!checked ? 'disabled' : ''}
+                           style="width:34px;height:17px;">
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function onDtMetaCheck(metaId, isChecked) {
+    const mandatoryToggle = document.querySelector(`.dt-meta-mandatory[data-meta-id="${metaId}"]`);
+    if (mandatoryToggle) {
+        mandatoryToggle.disabled = !isChecked;
+        if (!isChecked) mandatoryToggle.checked = false;
+    }
+}
+
+function renderDtStatesGrid(selectedIds, existingStates) {
+    // Init I/F tracking from existing data if present
+    if (existingStates && existingStates.length > 0) {
+        const initState = existingStates.find(s => s.isInitial);
+        dtStateInitialId = initState ? initState.stateId : null;
+        dtStateFinalIds  = new Set(existingStates.filter(s => s.isFinal).map(s => s.stateId));
+    }
+
+    const el = document.getElementById('dt_statesGrid');
+    const sorted = [...allDtAvailableStates].sort((a,b) => a.stateName.localeCompare(b.stateName));
+
+    el.innerHTML = sorted.map(s => {
+        const isSelected = selectedIds.includes(s.stateId);
+        const isInitial  = dtStateInitialId === s.stateId;
+        const isFinal    = dtStateFinalIds.has(s.stateId);
+        let cardBg = 'white', cardBorder = '#e5e7eb';
+        if (isInitial && isFinal) { cardBg = '#fef3c7'; cardBorder = '#f59e0b'; }
+        else if (isInitial)       { cardBg = '#eff6ff'; cardBorder = '#3b82f6'; }
+        else if (isFinal)         { cardBg = '#f0fdf4'; cardBorder = '#16a34a'; }
+        else if (isSelected)      { cardBg = '#f8faff'; cardBorder = '#c7d2fe'; }
+
+        return `
+        <div class="col-6">
+            <div class="dt-state-card" data-state-id="${s.stateId}"
+                 style="display:flex;align-items:center;gap:8px;border:2px solid ${cardBorder};
+                        border-radius:10px;padding:10px 12px;cursor:pointer;
+                        background:${cardBg};transition:all 0.2s;"
+                 onclick="toggleDtStateSelect(${s.stateId})">
+                <!-- Select checkbox (hidden, driven by card click) -->
+                <input type="checkbox" class="dt-state-check d-none" value="${s.stateId}"
+                       ${isSelected ? 'checked' : ''}>
+                <!-- Color dot -->
+                <div style="width:10px;height:10px;border-radius:50%;
+                            background:${s.color};flex-shrink:0;"></div>
+                <!-- Name -->
+                <span class="flex-grow-1" style="font-size:13px;font-weight:500;
+                      color:${isSelected ? '#1e3a5f' : '#9ca3af'};">
+                    ${escapeHtml(s.stateName)}
+                </span>
+                <!-- I badge (radio: only one initial) -->
+                <button type="button"
+                        onclick="event.stopPropagation(); toggleDtInitial(${s.stateId})"
+                        title="Mark as Start state (only one allowed)"
+                        style="width:26px;height:26px;border-radius:6px;border:none;
+                               font-size:11px;font-weight:700;cursor:pointer;
+                               background:${isInitial ? '#3b82f6' : '#e5e7eb'};
+                               color:${isInitial ? 'white' : '#9ca3af'};
+                               opacity:${isSelected ? '1' : '0.35'};
+                               transition:all 0.2s;flex-shrink:0;">S</button>
+                <!-- E badge (checkbox: multiple ends) -->
+                <button type="button"
+                        onclick="event.stopPropagation(); toggleDtFinal(${s.stateId})"
+                        title="Mark as End state (multiple allowed)"
+                        style="width:26px;height:26px;border-radius:6px;border:none;
+                               font-size:11px;font-weight:700;cursor:pointer;
+                               background:${isFinal ? '#16a34a' : '#e5e7eb'};
+                               color:${isFinal ? 'white' : '#9ca3af'};
+                               opacity:${isSelected ? '1' : '0.35'};
+                               transition:all 0.2s;flex-shrink:0;">E</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Add summary + legend below grid
+    const container = el.closest('.mb-4') || el.parentElement;
+    let summary = document.getElementById('dt_statesSummary');
+    if (!summary) {
+        summary = document.createElement('div');
+        summary.id = 'dt_statesSummary';
+        summary.style.cssText = 'margin-top:10px;font-size:12px;';
+        container.appendChild(summary);
+    }
+    updateDtStatesSummary();
+}
+
+function toggleDtStateSelect(stateId) {
+    const cb = document.querySelector(`.dt-state-check[value="${stateId}"]`);
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    if (!cb.checked) {
+        // Deselecting: also clear I/F flags
+        if (dtStateInitialId === stateId) dtStateInitialId = null;
+        dtStateFinalIds.delete(stateId);
+    }
+    // Re-render with current selections
+    const selectedIds = Array.from(document.querySelectorAll('.dt-state-check:checked'))
+        .map(c => parseInt(c.value));
+    renderDtStatesGrid(selectedIds, null);
+}
+
+function toggleDtInitial(stateId) {
+    const cb = document.querySelector(`.dt-state-check[value="${stateId}"]`);
+    if (!cb || !cb.checked) return; // must be selected first
+    // Radio behavior: only one initial
+    dtStateInitialId = (dtStateInitialId === stateId) ? null : stateId;
+    const selectedIds = Array.from(document.querySelectorAll('.dt-state-check:checked'))
+        .map(c => parseInt(c.value));
+    renderDtStatesGrid(selectedIds, null);
+}
+
+function toggleDtFinal(stateId) {
+    const cb = document.querySelector(`.dt-state-check[value="${stateId}"]`);
+    if (!cb || !cb.checked) return; // must be selected first
+    if (dtStateFinalIds.has(stateId)) dtStateFinalIds.delete(stateId);
+    else dtStateFinalIds.add(stateId);
+    const selectedIds = Array.from(document.querySelectorAll('.dt-state-check:checked'))
+        .map(c => parseInt(c.value));
+    renderDtStatesGrid(selectedIds, null);
+}
+
+function updateDtStatesSummary() {
+    const summary = document.getElementById('dt_statesSummary');
+    if (!summary) return;
+    const stateMap = {};
+    allDtAvailableStates.forEach(s => { stateMap[s.stateId] = s; });
+
+    const initName  = dtStateInitialId && stateMap[dtStateInitialId]
+        ? `<span style="background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;
+                        border-radius:20px;padding:2px 10px;font-weight:600;">
+               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;
+                            background:${stateMap[dtStateInitialId].color};margin-right:4px;vertical-align:middle;"></span>
+               ${escapeHtml(stateMap[dtStateInitialId].stateName)}</span>`
+        : '<span style="color:#9ca3af;">None</span>';
+
+    const finalNames = [...dtStateFinalIds]
+        .map(id => stateMap[id])
+        .filter(Boolean)
+        .map(s => `<span style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;
+                               border-radius:20px;padding:2px 10px;font-weight:600;margin-right:4px;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;
+                             background:${s.color};margin-right:4px;vertical-align:middle;"></span>
+                ${escapeHtml(s.stateName)}</span>`).join('');
+
+   summary.innerHTML = `
+    <div style="border-top:1px solid #e5e7eb;padding-top:10px;display:flex;flex-direction:column;gap:6px;">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span style="font-weight:600;color:#374151;min-width:80px;">Start state</span>
+            ${initName}
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span style="font-weight:600;color:#374151;min-width:80px;">End states</span>
+            ${finalNames || '<span style="color:#9ca3af;">None</span>'}
+        </div>
+        <div class="d-flex align-items-center gap-3 mt-1" style="font-size:11px;">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;
+                              background:#eff6ff;border:1px solid #3b82f6;margin-right:3px;"></span>Start only</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;
+                              background:#f0fdf4;border:1px solid #16a34a;margin-right:3px;"></span>End only</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;
+                              background:#fef3c7;border:1px solid #f59e0b;margin-right:3px;"></span>Both</span>
+        </div>
+    </div>`;
+}
+
+function renderDtGroupsList(selectedIds) {
+    const el = document.getElementById('dt_groupsList');
+    if (!allDtAvailableGroups || allDtAvailableGroups.length === 0) {
+        el.innerHTML = '<div class="text-muted text-center py-2" style="font-size:12px;">No groups available</div>';
+        return;
+    }
+    el.innerHTML = allDtAvailableGroups.map((g, i) => `
+    <div class="dt-group-row d-flex align-items-center gap-2 p-2 ${i < allDtAvailableGroups.length-1 ? 'border-bottom' : ''}"
+         style="cursor:pointer;border-radius:6px;transition:background 0.15s;"
+         data-group-id="${g.groupId}"
+         onclick="dtPreviewGroupMembers(${g.groupId}, event)">
+        <input type="checkbox" class="dt-group-check" value="${g.groupId}"
+               ${selectedIds.includes(g.groupId) ? 'checked' : ''}
+               style="width:15px;height:15px;flex-shrink:0;"
+               onclick="event.stopPropagation(); dtPreviewGroupMembers(${g.groupId}, null)">
+        <div class="flex-grow-1" style="font-size:13px;">
+            <div class="fw-semibold">${escapeHtml(g.groupName)}</div>
+            <div class="text-muted" style="font-size:11px;">${g.memberCount} member${g.memberCount!==1?'s':''}</div>
+        </div>
+        <i class="bi bi-chevron-right" style="color:#c7d2fe;font-size:10px;"></i>
+    </div>`).join('');
+
+    // Auto-preview the first selected group (or first group)
+    const first = allDtAvailableGroups.find(g => selectedIds.includes(g.groupId)) || allDtAvailableGroups[0];
+    if (first) dtPreviewGroupMembers(first.groupId, null);
+}
+
+function dtPreviewGroupMembers(groupId, event) {
+    // Highlight active row
+    document.querySelectorAll('.dt-group-row').forEach(r => r.style.background = '');
+    const row = document.querySelector(`.dt-group-row[data-group-id="${groupId}"]`);
+    if (row) row.style.background = '#eef2ff';
+
+    const group = (allDtAvailableGroups || []).find(g => g.groupId === groupId);
+    if (!group) return;
+
+    document.getElementById('dt_membersPreviewLabel').textContent = group.groupName + ' — Members';
+    const preview = document.getElementById('dt_membersPreview');
+    const members = group.members || [];
+
+    if (members.length === 0) {
+        preview.innerHTML = `<div class="text-muted text-center py-3" style="font-size:12px;">
+            <i class="bi bi-people me-1"></i>No members in this group</div>`;
+        return;
+    }
+    preview.innerHTML = members.map((m, i) => `
+    <div class="d-flex align-items-center gap-2 py-2 ${i < members.length-1 ? 'border-bottom' : ''}">
+        <div style="width:28px;height:28px;border-radius:50%;background:#eef2ff;display:flex;
+                    align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-person" style="font-size:13px;color:#1e3a5f;"></i>
+        </div>
+        <div>
+            <div class="fw-semibold" style="font-size:12px;">${escapeHtml(m.username || '')}</div>
+            <div class="text-muted" style="font-size:11px;">${escapeHtml(m.email || '')}</div>
+        </div>
+    </div>`).join('');
+}
+
+async function saveDocType() {
+    const id   = document.getElementById('dt_id').value;
+    const name = document.getElementById('dt_name').value.trim();
+    const desc = document.getElementById('dt_desc').value.trim();
+    if (!name) { showAlert('danger', 'Type name is required'); return; }
+
+    const metadataFieldIds = Array.from(document.querySelectorAll('.dt-meta-check:checked'))
+        .map(cb => parseInt(cb.value));
+    const mandatoryFieldIds = Array.from(document.querySelectorAll('.dt-meta-mandatory:checked'))
+        .map(cb => parseInt(cb.dataset.metaId));
+    const stateIds = Array.from(document.querySelectorAll('.dt-state-check:checked'))
+        .map(cb => parseInt(cb.value));
+    const stateConfigs = stateIds.map(sid => ({
+        stateId:   sid,
+        isInitial: dtStateInitialId === sid,
+        isFinal:   dtStateFinalIds.has(sid)
+    }));
+    const teamGroupIds = Array.from(document.querySelectorAll('.dt-group-check:checked'))
+        .map(cb => parseInt(cb.value));
+    const teamUserIds  = []; // individual user selection removed; team is group-based only
+
+    if (!id) {
+        // Create basic first, then save lifecycle
+        showLoading(true);
+        try {
+            const cr = await fetch(contextPath + 'api/document-types', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ docTypeName: name, description: desc })
+            });
+            if (!cr.ok) { const e = await cr.json(); throw new Error(e.error); }
+            const created = await cr.json();
+            await saveDocTypeLifecycle(created.docTypeId,
+                { docTypeName: name, description: desc, metadataFieldIds, mandatoryFieldIds,
+                  stateIds, stateConfigs, teamGroupIds, teamUserIds });
+        } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    } else {
+        showLoading(true);
+        try {
+            await saveDocTypeLifecycle(parseInt(id),
+                { docTypeName: name, description: desc, metadataFieldIds, mandatoryFieldIds,
+                  stateIds, stateConfigs, teamGroupIds, teamUserIds });
+        } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    }
+}
+
+async function saveDocTypeLifecycle(docTypeId, payload) {
+    const r = await fetch(contextPath + 'api/document-types/' + docTypeId + '/full', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Request failed'); }
+    showAlert('success', 'Document type saved!');
+    closeSettingsModal('docTypeModal');
+    loadDocTypes();
+}
+
+function confirmDeleteDocType(id, name, workflowCount) {
+    let body = `<p class="fw-bold">Delete document type "<strong>${escapeHtml(name)}</strong>"?</p>`;
+    if (workflowCount > 0) {
+        body += `<div class="mt-2 p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca;">
+            <p style="color:#991b1b;font-size:13px;margin:0;">
+                <strong>${workflowCount} workflow(s)</strong> are based on this type. Delete them first.
+            </p></div>`;
+    }
+    document.getElementById('genericDeleteText').innerHTML = body;
+    document.getElementById('genericDeleteConfirmBtn').disabled = workflowCount > 0;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/document-types/' + id, { method: 'DELETE' });
+            if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+            showAlert('success', 'Document type deleted');
+            loadDocTypes();
+        } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+// ── WORKFLOWS ─────────────────────────────────────────────────────
+async function loadWorkflows() {
+    showLoading(true);
+    try {
+        const r = await fetch(contextPath + 'api/workflows');
+        const workflows = await r.json();
+        renderWorkflows(workflows);
+    } catch(e) { showAlert('danger', 'Failed to load workflows'); }
+    finally { showLoading(false); }
+}
+
+function renderWorkflows(workflows) {
+    const container = document.getElementById('workflowList');
+    if (!workflows || workflows.length === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-5">
+            <i class="bi bi-diagram-3" style="font-size:2.5rem;opacity:0.3;"></i>
+            <p class="mt-3">No workflows yet.</p></div>`;
+        return;
+    }
+    container.innerHTML = workflows.map(w => `
+    <div class="custom-row" id="wfRow_${w.workflowId}">
+        <div class="custom-row-header" onclick="toggleWfRow(${w.workflowId})">
+            <div style="width:40px;height:40px;background:#f3f4f6;border-radius:8px;
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;">
+                <i class="bi bi-diagram-3" style="font-size:18px;color:#1e3a5f;"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-bold mb-0" style="font-size:14px;">${escapeHtml(w.workflowName)}</h6>
+                <p class="text-muted mb-0" style="font-size:12px;">${escapeHtml(w.description || '')}</p>
+                <div class="d-flex gap-2 mt-1">
+                    <span class="dt-badge" style="font-size:11px;">${escapeHtml(w.parentTypeName)}</span>
+                    <span class="dt-badge" style="font-size:11px;">${w.stateCount} State${w.stateCount!==1?'s':''}</span>
+                    <span class="dt-badge blue" style="font-size:11px;">${w.transitionCount} Transition${w.transitionCount!==1?'s':''}</span>
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center ms-3" onclick="event.stopPropagation()">
+                <button class="btn btn-sm p-1" style="color:#3b82f6;"
+                        onclick="openWorkflowModal(${w.workflowId})" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm p-1" style="color:#dc2626;"
+                        onclick="confirmDeleteWorkflow(${w.workflowId},'${escapeHtml(w.workflowName).replace(/'/g,"\\'")}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <i class="bi bi-chevron-down ms-1" id="wfChevron_${w.workflowId}" style="color:#9ca3af;"></i>
+            </div>
+        </div>
+        <div class="custom-row-body" id="wfBody_${w.workflowId}">
+            <div class="text-center text-muted py-2" style="font-size:13px;">
+                <span class="spinner-border spinner-border-sm me-2"></span>Loading...
+            </div>
+        </div>
+    </div>`).join('');
+}
+
+async function toggleWfRow(workflowId) {
+    const body    = document.getElementById('wfBody_' + workflowId);
+    const chevron = document.getElementById('wfChevron_' + workflowId);
+    if (body.classList.contains('open')) {
+        body.classList.remove('open');
+        chevron.classList.replace('bi-chevron-up', 'bi-chevron-down');
+    } else {
+        body.classList.add('open');
+        chevron.classList.replace('bi-chevron-down', 'bi-chevron-up');
+        if (body.querySelector('.spinner-border')) {
+            await loadWfRowDetail(workflowId);
+        }
+    }
+}
+
+async function loadWfRowDetail(workflowId) {
+    const body = document.getElementById('wfBody_' + workflowId);
+    try {
+        const r = await fetch(contextPath + 'api/workflows/' + workflowId);
+        const detail = await r.json();
+        const statePills = (detail.selectedStates || []).map(s =>
+            `<span class="d-inline-flex align-items-center gap-1 me-2 mb-1"
+                   style="background:${s.color}15;border:1px solid ${s.color}40;border-radius:20px;
+                          padding:4px 12px;font-size:12px;font-weight:600;color:${s.color};">
+                <span style="width:8px;height:8px;border-radius:50%;background:${s.color};"></span>
+                ${escapeHtml(s.stateName)}
+             </span>`).join('');
+        const transRows = (detail.transitions || []).map(t => {
+            const rc = dtRoleColor(t.roleName || '');
+            return `<div class="transition-row mb-2">
+                <span class="state-pill">${escapeHtml(t.fromStateName)}</span>
+                <span class="transition-arrow">→</span>
+                <span class="state-pill">${escapeHtml(t.toStateName)}</span>
+                <span class="transition-arrow">→</span>
+                <span class="role-pill" style="background:${rc}15;color:${rc};border:1px solid ${rc}40;">
+                    ${escapeHtml(t.roleName)} (${escapeHtml(t.userName)})
+                </span>
+            </div>`;
+        }).join('');
+        body.innerHTML = `
+        <div class="mb-3">
+            <div class="fw-bold mb-2" style="font-size:13px;">Workflow States</div>
+            <div>${statePills || '<span class="text-muted" style="font-size:12px;">No states</span>'}</div>
+        </div>
+        <div>
+            <div class="fw-bold mb-2" style="font-size:13px;">State Transitions</div>
+            ${transRows || '<div class="text-muted" style="font-size:12px;">No transitions defined</div>'}
+        </div>`;
+    } catch(e) {
+        body.innerHTML = '<div class="text-danger" style="font-size:13px;">Failed to load details.</div>';
+    }
+}
+
+// ── Workflow Modal ─────────────────────────────────────────────────
+async function openWorkflowModal(workflowId) {
+    showLoading(true);
+    try {
+        if (allDocTypeSummaries.length === 0) {
+            const r = await fetch(contextPath + 'api/document-types/full-list');
+            allDocTypeSummaries = await r.json();
+        }
+        currentWfTransitions = [];
+
+        document.getElementById('wf_id').value = workflowId || '';
+        document.getElementById('workflowModalTitle').innerHTML = workflowId
+            ? '<i class="bi bi-pencil me-2"></i>Edit Workflow'
+            : '<i class="bi bi-diagram-3 me-2"></i>Add Workflow';
+        document.getElementById('wfSaveBtn').textContent = workflowId ? 'Update Workflow' : 'Save Workflow';
+
+        // Populate parent dropdown
+        const sel = document.getElementById('wf_parentId');
+        sel.innerHTML = '<option value="">Select document type...</option>' +
+            allDocTypeSummaries.map(t =>
+                `<option value="${t.docTypeId}">${escapeHtml(t.docTypeName)}</option>`
+            ).join('');
+
+        let existing = { docTypeId: null, workflowName:'', description:'',
+                         selectedStates:[], transitions:[] };
+        if (workflowId) {
+            const r = await fetch(contextPath + 'api/workflows/' + workflowId);
+            existing = await r.json();
+        }
+
+        document.getElementById('wf_name').value = existing.workflowName || '';
+        document.getElementById('wf_desc').value  = existing.description  || '';
+
+        if (existing.docTypeId) {
+            sel.value = existing.docTypeId;
+            await populateWfModalFromParent(
+                existing.docTypeId,
+                (existing.selectedStates || []).map(s => s.stateId),
+                existing.transitions || []
+            );
+        } else {
+            document.getElementById('wf_statesSection').style.display     = 'none';
+            document.getElementById('wf_transitionsSection').style.display = 'none';
+            document.getElementById('wf_parentInfo').style.display         = 'none';
+        }
+
+        openSettingsModal('workflowModal');
+    } catch(e) { showAlert('danger', 'Failed to load: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+async function onWfParentChange() {
+    const docTypeId = parseInt(document.getElementById('wf_parentId').value);
+    if (!docTypeId) {
+        document.getElementById('wf_statesSection').style.display     = 'none';
+        document.getElementById('wf_transitionsSection').style.display = 'none';
+        document.getElementById('wf_parentInfo').style.display         = 'none';
+        document.getElementById('wf_diagramSection').style.display = 'none';
+        setTimeout(() => centerSettingsModal('workflowModal'), 50);
+        return;
+    }
+    showLoading(true);
+    try { await populateWfModalFromParent(docTypeId, [], []); }
+    finally {
+        showLoading(false);
+        setTimeout(() => centerSettingsModal('workflowModal'), 50); // re-center after content expands
+    }
+}
+
+async function populateWfModalFromParent(docTypeId, selectedStateIds, existingTransitions) {
+    const r = await fetch(contextPath + 'api/document-types/' + docTypeId + '/full');
+    const parent = await r.json();
+
+    // Parent info badge
+    const info = document.getElementById('wf_parentInfo');
+    info.style.display = '';
+    info.innerHTML = `<div class="p-2 rounded mb-2" style="background:#eff6ff;border:1px solid #bfdbfe;font-size:13px;">
+        <i class="bi bi-file-earmark-text me-2" style="color:#1e3a5f;"></i>
+        <strong>${escapeHtml(parent.docTypeName)}</strong>
+        <span class="ms-2 dt-badge" style="font-size:11px;">${parent.stateCount} states available</span>
+    </div>`;
+
+    // States grid
+    document.getElementById('wf_statesSection').style.display = '';
+    const statesGrid = document.getElementById('wf_statesGrid');
+    const parentStates = [...(parent.states || [])].sort((a,b) => a.stateName.localeCompare(b.stateName));
+   // Identify start/end states from doc type and lock them in workflow
+    window._wfLockedStartIds = (parent.states || []).filter(s => s.isInitial).map(s => s.stateId);
+    window._wfLockedEndIds   = (parent.states || []).filter(s => s.isFinal).map(s => s.stateId);
+    const _lockedSet = new Set([...(window._wfLockedStartIds), ...(window._wfLockedEndIds)]);
+
+    statesGrid.innerHTML = parentStates.map(s => {
+        const isStart  = (window._wfLockedStartIds || []).includes(s.stateId);
+        const isEnd    = (window._wfLockedEndIds   || []).includes(s.stateId);
+        const isLocked = isStart || isEnd;
+        // Locked (Start/End) states are always selected; user cannot uncheck them
+        const sel = isLocked || selectedStateIds.includes(s.stateId);
+        const badge = isStart
+            ? `<span style="background:#3b82f6;color:white;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;margin-left:auto;flex-shrink:0;">S</span>`
+            : isEnd
+            ? `<span style="background:#16a34a;color:white;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;margin-left:auto;flex-shrink:0;">E</span>`
+            : '';
+        return `<div class="col-6">
+            <label class="state-check-card ${sel ? 'selected' : ''}"
+                   style="${isLocked ? 'cursor:default;' : ''}"
+                   onclick="${isLocked ? 'event.preventDefault();event.stopPropagation();' : 'toggleWfState(this)'}">
+                <input type="checkbox" class="wf-state-check d-none" value="${s.stateId}"
+                       ${sel ? 'checked' : ''} ${isLocked ? 'data-locked="true"' : ''}>
+                <div class="state-dot" style="background:${s.color};"></div>
+                <span style="font-size:13px;font-weight:500;flex:1;">${escapeHtml(s.stateName)}</span>
+                ${badge}
+                ${isLocked ? `<i class="bi bi-lock-fill" style="font-size:9px;color:#9ca3af;margin-left:3px;flex-shrink:0;" title="${isStart ? 'Start state — always included' : 'End state — always included'}"></i>` : ''}
+            </label>
+        </div>`;
+    }).join('');
+    updateWfStateCounter(parentStates.length);
+
+    // Load team members for person dropdown
+    // Load team members grouped by group for transition dropdowns
+    const tmR = await fetch(contextPath + 'api/document-types/' + docTypeId + '/team-members');
+    const teamMembers = await tmR.json(); // will be [{groupId, groupName, members:[{userId,username,email}]}]
+
+    // Load all LC roles
+    const rolesR = await fetch(contextPath + 'api/lifecycle-roles');
+    const allRoles = await rolesR.json();
+
+    // Set up transitions
+    document.getElementById('wf_transitionsSection').style.display = '';
+    currentWfTransitions = existingTransitions.map(t => ({
+        id: t.id, fromStateId: t.fromStateId, toStateId: t.toStateId,
+        roleId: t.roleId, userId: t.userId
+    }));
+
+    // Store for use in renderWfTransitions
+   window._wfGroupedMembers = Array.isArray(teamMembers) && teamMembers.length > 0 && teamMembers[0].members
+        ? teamMembers   // already grouped [{groupId, groupName, members:[...]}]
+        : [{ groupId: 0, groupName: 'Team Members', members: teamMembers }]; // fallback: flat list wrapped
+    window._wfTeamMembers  = teamMembers; // keep for backward compat
+    window._wfAllRoles     = allRoles;
+    window._wfParentStates = parentStates;
+    renderWfTransitions();
+    document.getElementById('wf_diagramSection').style.display = '';
+    renderWfDiagram();
+}
+
+function toggleWfState(cardEl) {
+    const cb = cardEl.querySelector('input[type="checkbox"]');
+    if (!cb || cb.dataset.locked === 'true') return; // start/end states are locked
+    cb.checked = !cb.checked;
+    cardEl.classList.toggle('selected', cb.checked);
+    const total = document.querySelectorAll('.wf-state-check').length;
+    updateWfStateCounter(total);
+    renderWfTransitions();
+    renderWfDiagram();
+}
+
+function updateWfStateCounter(total) {
+    const sel = document.querySelectorAll('.wf-state-check:checked').length;
+    document.getElementById('wf_stateCounter').textContent = `${sel} of ${total} selected`;
+}
+
+function getSelectedWfStateIds() {
+    return Array.from(document.querySelectorAll('.wf-state-check:checked'))
+        .map(cb => parseInt(cb.value));
+}
+
+function renderWfTransitions() {
+    const container  = document.getElementById('wf_transitionsContainer');
+    const noMsg      = document.getElementById('wf_noTransitions');
+    const selStateIds = getSelectedWfStateIds();
+
+    // State options (only selected states)
+    // State options (only selected states)
+    const stateMap = {};
+    (window._wfParentStates || []).forEach(s => { stateMap[s.stateId] = s.stateName; });
+    const stateOpts = [...selStateIds]
+        .sort((a,b) => (stateMap[a]||'').localeCompare(stateMap[b]||''))
+        .map(sid => `<option value="${sid}">${escapeHtml(stateMap[sid] || String(sid))}</option>`)
+        .join('');
+
+const roleOpts  = (Array.isArray(window._wfAllRoles) ? window._wfAllRoles : []).map(r =>
+        `<option value="${r.lcRoleId}">${escapeHtml(r.roleName)}</option>`).join('');
+    // Collect all currently selected userIds so we can disable them in other rows
+<!--    const allSelectedUserIds = currentWfTransitions.map(t => t.userId).filter(Boolean);-->
+
+   if (noMsg) noMsg.style.display = currentWfTransitions.length === 0 ? '' : 'none';
+    const hdrs = document.getElementById('wf_transitionHeaders');
+    if (hdrs) hdrs.style.display = currentWfTransitions.length === 0 ? 'none' : 'flex';
+    container.querySelectorAll('.transition-builder-row').forEach(el => el.remove());
+
+    currentWfTransitions.forEach((tr, idx) => {
+        const row = document.createElement('div');
+        row.className = 'transition-builder-row';
+        row.innerHTML = `
+            <select class="tr-from" onchange="updateWfTransition(${idx},'from',this.value)">
+                <option value="">From State</option>${stateOpts}
+            </select>
+            <span class="transition-arrow">→</span>
+            <select class="tr-to" onchange="updateWfTransition(${idx},'to',this.value)">
+                <option value="">To State</option>${stateOpts}
+            </select>
+            <span class="transition-arrow">→</span>
+            <select class="tr-role" onchange="updateWfTransition(${idx},'role',this.value)">
+                <option value="">LC Role</option>${roleOpts}
+            </select>
+            <span class="transition-arrow">→</span>
+            <select class="tr-person" onchange="updateWfTransition(${idx},'person',this.value)">
+                <option value="">Person</option>
+              ${buildWfPersonOptgroups(idx)}
+            </select>
+            <button class="btn btn-sm p-1 ms-1 flex-shrink-0" style="color:#dc2626;"
+                    onclick="removeWfTransition(${idx})">
+                <i class="bi bi-x-circle"></i>
+            </button>`;
+
+        // Restore selected values
+        if (tr.fromStateId) row.querySelector('.tr-from').value  = tr.fromStateId;
+        if (tr.toStateId)   row.querySelector('.tr-to').value    = tr.toStateId;
+        if (tr.roleId)      row.querySelector('.tr-role').value  = tr.roleId;
+        if (tr.userId)      row.querySelector('.tr-person').value = tr.userId;
+        container.appendChild(row);
+    });
+}
+
+function buildWfPersonOptgroups(currentIdx) {
+    const groups = window._wfGroupedMembers || [];
+    return groups.map(group => {
+        if (!group.members || group.members.length === 0) return '';
+        const opts = group.members.map(u =>
+            `<option value="${u.userId}">${escapeHtml(u.username)}${u.email ? ' — ' + escapeHtml(u.email) : ''}</option>`
+        ).join('');
+        return `<optgroup label="${escapeHtml(group.groupName)}">${opts}</optgroup>`;
+    }).join('');
+}
+// ==================== SHARED DIAGRAM RENDERER ====================
+function _renderWfDiagramIntoSvg(svgEl, isLarge) {
+    if (!svgEl) return;
+
+    const stateMap = {};
+    (window._wfParentStates || []).forEach(s => { stateMap[s.stateId] = s; });
+    const roleMap = {};
+    (window._wfAllRoles || []).forEach(r => { roleMap[r.lcRoleId] = r.roleName; });
+
+    const selIds = getSelectedWfStateIds();
+    const nodes  = selIds.map(id => stateMap[id]).filter(Boolean);
+    const edges  = currentWfTransitions.filter(t => t.fromStateId && t.toStateId);
+    const startSet = new Set(window._wfLockedStartIds || []);
+    const endSet   = new Set(window._wfLockedEndIds   || []);
+
+    if (nodes.length === 0) {
+        svgEl.setAttribute('width', '200'); svgEl.setAttribute('height', '60');
+        svgEl.innerHTML = `<text x="100" y="35" text-anchor="middle" fill="#9ca3af" font-size="13">Select states to see diagram</text>`;
+        return;
+    }
+
+    // ── Dimensions ────────────────────────────────────────────────
+    const nW   = isLarge ? 148 : 108;
+    const nH   = isLarge ? 50  : 36;
+    const hGap = isLarge ? 130 : 90;
+    const vGap = isLarge ? 62  : 50;
+    const padX = isLarge ? 30  : 20;
+    const padY = isLarge ? 44  : 32;
+    const aId  = isLarge ? 'arFs' : 'arSm';
+    const fs   = isLarge ? 12  : 10;
+    const arcSpacing = isLarge ? 26 : 20;
+
+    // ── Adjacency ─────────────────────────────────────────────────
+    const fwd = {}, bwd = {};
+    nodes.forEach(n => { fwd[n.stateId] = []; bwd[n.stateId] = []; });
+    edges.forEach(e => {
+        if (fwd[e.fromStateId] && e.fromStateId !== e.toStateId) {
+            fwd[e.fromStateId].push(e.toStateId);
+            if (bwd[e.toStateId]) bwd[e.toStateId].push(e.fromStateId);
+        }
+    });
+
+    // ── BFS layer assignment ──────────────────────────────────────
+    const lay = {};
+    const q   = [];
+    nodes.forEach(n => { if (startSet.has(n.stateId)) { lay[n.stateId] = 0; q.push(n.stateId); } });
+    if (!q.length) nodes.forEach(n => { if (!bwd[n.stateId].length) { lay[n.stateId] = 0; q.push(n.stateId); } });
+    if (!q.length && nodes.length) { lay[nodes[0].stateId] = 0; q.push(nodes[0].stateId); }
+    while (q.length) {
+        const cur = q.shift();
+        (fwd[cur] || []).forEach(nxt => {
+            if (lay[nxt] === undefined) { lay[nxt] = (lay[cur] || 0) + 1; q.push(nxt); }
+        });
+    }
+    nodes.forEach(n => { if (lay[n.stateId] === undefined) lay[n.stateId] = 0; });
+    const maxLay = Math.max(0, ...Object.values(lay));
+    endSet.forEach(id => { if (lay[id] !== undefined) lay[id] = maxLay; });
+
+    const byLay = {};
+    nodes.forEach(n => { const l = lay[n.stateId]; if (!byLay[l]) byLay[l] = []; byLay[l].push(n); });
+    const nLayers = maxLay + 1;
+    const maxPerL = Math.max(...Object.values(byLay).map(a => a.length));
+
+    // ── Initial BFS node positions (before any user-drag overrides) ─
+    const pos = {};
+    const svgH_base = padY * 2 + maxPerL * nH + Math.max(0, maxPerL - 1) * vGap;
+    for (let l = 0; l < nLayers; l++) {
+        const lNodes = byLay[l] || [];
+        const cx     = padX + nW / 2 + l * (nW + hGap);
+        const blockH = lNodes.length * nH + Math.max(0, lNodes.length - 1) * vGap;
+        const sy     = (svgH_base - blockH) / 2;
+        lNodes.forEach((n, i) => { pos[n.stateId] = { x: cx, y: sy + nH/2 + i*(nH+vGap), l }; });
+    }
+
+    // ── Count backward edges from BFS layout to size top padding ──
+    // Use BFS x positions (stable, not affected by drag) so padding doesn't jump
+    let backCount = 0;
+    edges.forEach(e => {
+        const from = pos[e.fromStateId], to = pos[e.toStateId];
+        if (!from || !to || e.fromStateId === e.toStateId) return;
+        if (from.x >= to.x) backCount++;
+    });
+    const extraTopPad = backCount > 0 ? arcSpacing * backCount + (isLarge ? 44 : 32) : 0;
+
+    // Shift all BFS Y positions down to expose space for top arcs
+    if (extraTopPad > 0) nodes.forEach(n => { if (pos[n.stateId]) pos[n.stateId].y += extraTopPad; });
+
+    // ── Apply user-dragged position overrides (fullscreen only) ───
+    if (isLarge) {
+        nodes.forEach(n => {
+            if (wfFsNodePositions[n.stateId]) {
+                pos[n.stateId] = {
+                    x: wfFsNodePositions[n.stateId].x,
+                    y: wfFsNodePositions[n.stateId].y,
+                    l: pos[n.stateId].l   // keep BFS layer for S/E badge logic
+                };
+            }
+        });
+        wfFsLastComputedPos = { ...pos };  // save for drag-origin lookup
+    }
+
+    // ── SVG canvas size ───────────────────────────────────────────
+    const svgH = svgH_base + extraTopPad;
+    const svgW = padX * 2 + nLayers * nW + Math.max(0, nLayers - 1) * hGap;
+    svgEl.setAttribute('width',  Math.max(svgW, 200));
+    svgEl.setAttribute('height', Math.max(svgH, 80));
+
+    let html = `<defs>
+        <marker id="${aId}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,8 L8,4 z" fill="#9ca3af"/>
+        </marker></defs>`;
+
+    // ── Draw edges ────────────────────────────────────────────────
+    // minNodeTop computed from FINAL positions (includes drag overrides)
+    const minNodeTop = Math.min(...nodes.map(n => (pos[n.stateId]?.y ?? svgH) - nH/2));
+    let backLevel = 0;
+
+    const pairMap = {};
+    edges.forEach(e => {
+        if (!pos[e.fromStateId] || !pos[e.toStateId]) return;
+        const k = `${e.fromStateId}|${e.toStateId}`;
+        if (!pairMap[k]) pairMap[k] = [];
+        pairMap[k].push(e);
+    });
+
+    Object.values(pairMap).forEach(group => {
+        group.forEach((e, gi) => {
+            const from = pos[e.fromStateId], to = pos[e.toStateId];
+            if (!from || !to) return;
+            const label  = roleMap[e.roleId] || '';
+            const lw     = label.length * (isLarge ? 6.5 : 5.5) + 12;
+            const stroke = isLarge ? 1.8 : 1.5;
+
+            // Self-loop
+            if (e.fromStateId === e.toStateId) {
+                const lx = from.x, ly = from.y - nH/2;
+                const lh = 32 + gi * 14;
+                html += `<path d="M${lx-22},${ly} C${lx-58},${ly-lh} ${lx+58},${ly-lh} ${lx+22},${ly}"
+                    fill="none" stroke="#9ca3af" stroke-width="${stroke}" stroke-dasharray="4" marker-end="url(#${aId})"/>`;
+                if (label) {
+                    html += `<rect x="${lx-lw/2}" y="${ly-lh-19}" width="${lw}" height="14" rx="3" fill="white" stroke="#e5e7eb"/>
+                    <text x="${lx}" y="${ly-lh-9}" text-anchor="middle" font-size="${fs}" fill="#374151" font-weight="500">${escapeHtml(label)}</text>`;
+                }
+                return;
+            }
+
+            // Direction based on VISUAL x position — updates live during drag
+            const isForward = from.x < to.x;
+
+            if (isForward) {
+                const sx = from.x + nW/2, sy = from.y + gi * 7;
+                const ex = to.x   - nW/2, ey = to.y   + gi * 7;
+                const cpx = (sx + ex) / 2;
+                html += `<path d="M${sx},${sy} C${cpx},${sy} ${cpx},${ey} ${ex},${ey}"
+                    fill="none" stroke="#9ca3af" stroke-width="${stroke}" marker-end="url(#${aId})"/>`;
+                if (label) {
+                    const mx = cpx, my = (sy + ey) / 2, offY = -14 - gi * 15;
+                    html += `<rect x="${mx-lw/2}" y="${my+offY-11}" width="${lw}" height="14" rx="3" fill="white" stroke="#e5e7eb" stroke-width="1"/>
+                    <text x="${mx}" y="${my+offY-1}" text-anchor="middle" font-size="${fs}" fill="#374151" font-weight="500">${escapeHtml(label)}</text>`;
+                }
+            } else {
+                // Backward / same-x: arc above all nodes
+                backLevel++;
+                const topY = minNodeTop - arcSpacing * backLevel;
+                const midX = (from.x + to.x) / 2;
+                html += `<path d="M${from.x},${from.y-nH/2} Q${midX},${topY} ${to.x},${to.y-nH/2}"
+                    fill="none" stroke="#c4b5fd" stroke-width="${stroke}" stroke-dasharray="5" marker-end="url(#${aId})"/>`;
+                if (label) {
+                    html += `<rect x="${midX-lw/2}" y="${topY-18}" width="${lw}" height="14" rx="3" fill="white" stroke="#e5e7eb" stroke-width="1"/>
+                    <text x="${midX}" y="${topY-8}" text-anchor="middle" font-size="${fs}" fill="#374151" font-weight="500">${escapeHtml(label)}</text>`;
+                }
+            }
+        });
+    });
+
+    // ── Draw nodes (on top of edges) ──────────────────────────────
+    nodes.forEach(n => {
+        const p = pos[n.stateId];
+        if (!p) return;
+        const col     = n.color || '#6b7280';
+        const isStart = startSet.has(n.stateId);
+        const isEnd   = endSet.has(n.stateId);
+        const dotR    = isLarge ? 7 : 5;
+        const dotX    = p.x - nW/2 + (isLarge ? 17 : 13);
+        const textX   = p.x - nW/2 + (isLarge ? 28 : 21);
+        const maxC    = Math.floor((nW - (isLarge ? 50 : 38)) / (isLarge ? 8 : 6.2));
+        const name    = n.stateName.length > maxC ? n.stateName.slice(0, maxC - 1) + '…' : n.stateName;
+
+        // Fullscreen nodes are individually draggable
+        const gAttr = isLarge
+            ? `style="cursor:move;" onmousedown="startWfNodeDrag(event,${n.stateId})"`
+            : '';
+
+        html += `<g ${gAttr}>`;
+        html += `<rect x="${p.x-nW/2}" y="${p.y-nH/2}" width="${nW}" height="${nH}"
+            rx="8" fill="${col}16" stroke="${col}" stroke-width="${isLarge ? 2 : 1.7}"/>`;
+        html += `<circle cx="${dotX}" cy="${p.y}" r="${dotR}" fill="${col}"/>`;
+        html += `<text x="${textX}" y="${p.y + (isLarge ? 5 : 4)}"
+            font-size="${isLarge ? 12 : 10}" font-weight="600" fill="${col}"
+            font-family="Arial,sans-serif">${escapeHtml(name)}</text>`;
+        if (isStart || isEnd) {
+            const bLabel = isStart ? 'S' : 'E';
+            const bFill  = isStart ? '#3b82f6' : '#16a34a';
+            const bSz    = isLarge ? 16 : 13;
+            const bx = p.x + nW/2 - bSz - 3, by = p.y - nH/2 - bSz/2;
+            html += `<rect x="${bx}" y="${by}" width="${bSz}" height="${bSz}" rx="3" fill="${bFill}"/>
+            <text x="${bx+bSz/2}" y="${by+bSz-3}" text-anchor="middle"
+                font-size="${bSz-4}" font-weight="700" fill="white"
+                font-family="Arial,sans-serif">${bLabel}</text>`;
+        }
+        html += `</g>`;
+    });
+
+    svgEl.innerHTML = html;
+}
+
+
+function renderWfDiagram() {
+    _renderWfDiagramIntoSvg(document.getElementById('wf_diagramSvg'), false);
+}
+
+
+
+function addWfTransitionRow() {
+    currentWfTransitions.push({ id: null, fromStateId: null, toStateId: null, roleId: null, userId: null });
+    renderWfTransitions();
+    const modalBody = document.querySelector('#workflowModal .modal-body');
+    if (modalBody) setTimeout(() => { modalBody.scrollTop = modalBody.scrollHeight; }, 30);
+    setTimeout(() => centerSettingsModal('workflowModal'), 50);
+}
+
+function removeWfTransition(idx) {
+    currentWfTransitions.splice(idx, 1);
+    renderWfTransitions();
+    renderWfDiagram();
+}
+
+function updateWfTransition(idx, field, val) {
+    const v = val ? parseInt(val) : null;
+    if (field === 'from') {
+        currentWfTransitions[idx].fromStateId = v;
+        // Auto-fill role + person from another row with same fromStateId
+        if (v) {
+            const match = currentWfTransitions.find((t, i) => i !== idx && t.fromStateId === v && (t.roleId || t.userId));
+            if (match) {
+                if (!currentWfTransitions[idx].roleId)   currentWfTransitions[idx].roleId   = match.roleId;
+                if (!currentWfTransitions[idx].userId)    currentWfTransitions[idx].userId   = match.userId;
+                renderWfTransitions();
+                return;
+            }
+        }
+    }
+    if (field === 'to')     currentWfTransitions[idx].toStateId   = v;
+    if (field === 'role')   currentWfTransitions[idx].roleId      = v;
+    if (field === 'person') currentWfTransitions[idx].userId      = v;
+    renderWfDiagram();
+}
+
+async function saveWorkflow() {
+    const id       = document.getElementById('wf_id').value;
+    const docTypeId = parseInt(document.getElementById('wf_parentId').value);
+    const name     = document.getElementById('wf_name').value.trim();
+    const desc     = document.getElementById('wf_desc').value.trim();
+    if (!docTypeId) { showAlert('danger', 'Please select a document type'); return; }
+    if (!name)      { showAlert('danger', 'Workflow name is required'); return; }
+
+    const selectedStateIds = getSelectedWfStateIds();
+    if (selectedStateIds.length === 0) { showAlert('danger', 'Please select at least one state'); return; }
+
+    const transitionPayloads = currentWfTransitions
+        .filter(t => t.fromStateId && t.toStateId && t.roleId && t.userId)
+        .map(t => ({ id: t.id, fromStateId: t.fromStateId, toStateId: t.toStateId,
+                     roleId: t.roleId, userId: t.userId }));
+
+    const payload = { docTypeId, workflowName: name, description: desc,
+                      selectedStateIds, transitionPayloads };
+    const url    = id ? (contextPath + 'api/workflows/' + id) : (contextPath + 'api/workflows');
+    const method = id ? 'PUT' : 'POST';
+
+    showLoading(true);
+    try {
+        const r = await fetch(url, { method, headers:{'Content-Type':'application/json'},
+                                     body: JSON.stringify(payload) });
+        if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Request failed'); }
+        showAlert('success', 'Workflow saved!');
+        closeSettingsModal('workflowModal');
+        loadWorkflows();
+    } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+    finally { showLoading(false); }
+}
+
+function confirmDeleteWorkflow(id, name) {
+    document.getElementById('genericDeleteText').innerHTML =
+        `<p class="fw-bold">Delete workflow "<strong>${escapeHtml(name)}</strong>"?</p>
+         <p class="text-muted" style="font-size:13px;">All state selections and transitions will be removed.</p>`;
+    document.getElementById('genericDeleteConfirmBtn').disabled = false;
+    document.getElementById('genericDeleteConfirmBtn').onclick = async () => {
+        closeSettingsModal('genericDeleteModal');
+        showLoading(true);
+        try {
+            const r = await fetch(contextPath + 'api/workflows/' + id, { method:'DELETE' });
+            if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+            showAlert('success', 'Workflow deleted');
+            loadWorkflows();
+        } catch(e) { showAlert('danger', 'Failed: ' + e.message); }
+        finally { showLoading(false); }
+    };
+    openSettingsModal('genericDeleteModal');
+}
+
+function dtRoleColor(roleName) {
+    const m = {
+        'reviewer': '#7c3aed', 'approver': '#059669', 'initiator': '#2563eb',
+        'verifier': '#0891b2', 'signer': '#d97706', 'coordinator': '#0891b2',
+    };
+    return m[(roleName || '').toLowerCase()] || '#1e3a5f';
+}
+
+
+
+// ==================== WORKFLOW DIAGRAM FULLSCREEN ====================
+// Uses a plain position:fixed overlay (z-index 10001) — NOT Bootstrap modal.
+// This avoids: (1) z-index clash with custom-modal (9999),
+//              (2) Bootstrap body padding/overflow side-effects on close.
+
+function openWfDiagramFullscreen() {
+    wfFsZoom = 1.0; wfFsTx = 0; wfFsTy = 0;
+    wfFsNodePositions = {};   // clear any positions from previous session
+
+    renderWfDiagramFullscreen();
+
+    const overlay = document.getElementById('wfDiagramFullscreenOverlay');
+    overlay.style.display = 'flex';
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        overlay.classList.add('active');
+
+        const body = document.getElementById('wfDiagramFsBody');
+        if (body) _wfFsAttachListeners(body);  // attach once
+
+        // Center after overlay fade-in completes (250ms CSS transition)
+        setTimeout(_wfFsCenterDiagram, 280);
+    }));
+}
+
+function closeWfDiagramFullscreen() {
+    const overlay = document.getElementById('wfDiagramFullscreenOverlay');
+    overlay.classList.remove('active');
+    setTimeout(() => { overlay.style.display = 'none'; }, 260);
+}
+
+// ==================== FULLSCREEN DIAGRAM — PAN + ZOOM ENGINE ====================
+
+let wfFsZoom = 1.0;   // current scale
+let wfFsTx   = 0;     // current X translation (px, before scale)
+let wfFsTy   = 0;     // current Y translation (px, before scale)
+
+// Drag state
+let wfFsDragging    = false;
+let wfFsDragStartX  = 0, wfFsDragStartY  = 0;
+let wfFsDragStartTx = 0, wfFsDragStartTy = 0;
+
+// Pinch state
+let wfFsPinchDist = 0, wfFsPinchMidX = 0, wfFsPinchMidY = 0;
+
+const WF_ZOOM_MIN  = 0.10;
+const WF_ZOOM_MAX  = 5.0;
+const WF_ZOOM_STEP = 0.20;
+
+// ── Node drag state (fullscreen only) ─────────────────────────
+let wfFsNodePositions   = {};   // { stateId: { x, y } } — user-dragged overrides
+let wfFsLastComputedPos = {};   // final positions from last render (drag origin lookup)
+let wfFsDragNode        = null; // stateId being dragged, or null
+let wfFsDragNodeOriginX = 0, wfFsDragNodeOriginY = 0; // node centre when drag started
+let wfFsDragStartSvgX   = 0, wfFsDragStartSvgY   = 0; // mouse SVG-space pos when drag started
+
+/** Write current tx/ty/zoom to the DOM transform layer */
+function _applyWfFsTransform(animate) {
+    const el    = document.getElementById('wfDiagramFsTransform');
+    const label = document.getElementById('wfFsZoomLabel');
+    if (!el) return;
+    el.style.transition = animate ? 'transform 0.22s ease' : 'none';
+    el.style.transform  = `translate(${wfFsTx}px,${wfFsTy}px) scale(${wfFsZoom})`;
+    if (label) label.textContent = Math.round(wfFsZoom * 100) + '%';
+}
+
+/** Start dragging a state node — called by inline onmousedown on SVG nodes */
+function startWfNodeDrag(event, stateId) {
+    event.stopPropagation();   // prevent body mousedown (pan) from firing
+    event.preventDefault();
+    const body = document.getElementById('wfDiagramFsBody');
+    if (!body) return;
+    const r = body.getBoundingClientRect();
+    // Convert screen coords → SVG content-space coords
+    wfFsDragStartSvgX = (event.clientX - r.left - wfFsTx) / wfFsZoom;
+    wfFsDragStartSvgY = (event.clientY - r.top  - wfFsTy) / wfFsZoom;
+    const cur = wfFsNodePositions[stateId] || wfFsLastComputedPos[stateId] || { x: 0, y: 0 };
+    wfFsDragNodeOriginX = cur.x;
+    wfFsDragNodeOriginY = cur.y;
+    wfFsDragNode = stateId;
+}
+
+/** Reset all manual node positions and re-center */
+function wfFsResetLayout() {
+    wfFsNodePositions = {};
+    renderWfDiagramFullscreen();
+    setTimeout(_wfFsCenterDiagram, 50);
+}
+
+/**
+ * Zoom by `factor` keeping viewport point (viewX, viewY) stationary.
+ * Math: tx' = viewX − factor × (viewX − tx), same for ty.
+ */
+function _wfFsZoomAt(factor, viewX, viewY) {
+    const newZoom    = Math.min(WF_ZOOM_MAX, Math.max(WF_ZOOM_MIN, wfFsZoom * factor));
+    const realFactor = newZoom / wfFsZoom;
+    wfFsTx   = viewX - realFactor * (viewX - wfFsTx);
+    wfFsTy   = viewY - realFactor * (viewY - wfFsTy);
+    wfFsZoom = newZoom;
+    _applyWfFsTransform(false);
+}
+
+/** Center the card in the viewport at the current zoom level */
+function _wfFsCenterDiagram() {
+    const body = document.getElementById('wfDiagramFsBody');
+    const card = document.getElementById('wfDiagramFsCard');
+    if (!body || !card) { wfFsTx = 0; wfFsTy = 0; _applyWfFsTransform(false); return; }
+    const bW = body.clientWidth,  bH = body.clientHeight;
+    const cW = card.offsetWidth,  cH = card.offsetHeight;   // includes margin
+    wfFsTx = Math.max(0, (bW - cW * wfFsZoom) / 2);
+    wfFsTy = Math.max(0, (bH - cH * wfFsZoom) / 2);
+    _applyWfFsTransform(false);
+}
+
+// ── Button-triggered zoom — always zooms toward viewport centre ───
+function wfFsZoomIn() {
+    const b = document.getElementById('wfDiagramFsBody');
+    if (!b) return;
+    _wfFsZoomAt(1 + WF_ZOOM_STEP, b.clientWidth / 2, b.clientHeight / 2);
+}
+function wfFsZoomOut() {
+    const b = document.getElementById('wfDiagramFsBody');
+    if (!b) return;
+    _wfFsZoomAt(1 - WF_ZOOM_STEP, b.clientWidth / 2, b.clientHeight / 2);
+}
+function wfFsZoomReset() {
+    wfFsZoom = 1.0;
+    _wfFsCenterDiagram();
+    _applyWfFsTransform(true);
+    setTimeout(_wfFsCenterDiagram, 250);  // ensure settled after animation
+}
+
+/**
+ * Attach all mouse/touch/wheel listeners to the body div.
+ * Guarded by _wfListenersBound so they're only added once per element.
+ */
+function _wfFsAttachListeners(body) {
+    if (body._wfListenersBound) return;
+    body._wfListenersBound = true;
+
+    // ── Ctrl + scroll: zoom at cursor ─────────────────────────────
+    body.addEventListener('wheel', function(e) {
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        const r      = body.getBoundingClientRect();
+        const factor = e.deltaY < 0 ? (1 + WF_ZOOM_STEP) : 1 / (1 + WF_ZOOM_STEP);
+        _wfFsZoomAt(factor, e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
+
+    // ── Mouse drag to pan ─────────────────────────────────────────
+    body.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        wfFsDragging    = true;
+        wfFsDragStartX  = e.clientX;  wfFsDragStartY  = e.clientY;
+        wfFsDragStartTx = wfFsTx;     wfFsDragStartTy = wfFsTy;
+        body.style.cursor = 'grabbing';
+    });
+    // Use document so the drag works even if cursor briefly leaves the body
+document.addEventListener('mousemove', function(e) {
+        // Node drag has priority over body pan
+        if (wfFsDragNode !== null) {
+            const body = document.getElementById('wfDiagramFsBody');
+            if (!body) return;
+            const r = body.getBoundingClientRect();
+            const svgX = (e.clientX - r.left - wfFsTx) / wfFsZoom;
+            const svgY = (e.clientY - r.top  - wfFsTy) / wfFsZoom;
+            wfFsNodePositions[wfFsDragNode] = {
+                x: wfFsDragNodeOriginX + (svgX - wfFsDragStartSvgX),
+                y: wfFsDragNodeOriginY + (svgY - wfFsDragStartSvgY)
+            };
+            _renderWfDiagramIntoSvg(document.getElementById('wf_diagramSvgFs'), true);
+            return;
+        }
+        if (!wfFsDragging) return;
+        wfFsTx = wfFsDragStartTx + (e.clientX - wfFsDragStartX);
+        wfFsTy = wfFsDragStartTy + (e.clientY - wfFsDragStartY);
+        _applyWfFsTransform(false);
+    });
+    document.addEventListener('mouseup', function() {
+        if (wfFsDragNode !== null) { wfFsDragNode = null; return; }
+        if (!wfFsDragging) return;
+        wfFsDragging = false;
+        const b = document.getElementById('wfDiagramFsBody');
+        if (b) b.style.cursor = 'grab';
+    });
+
+    // ── Touch: 1-finger pan + 2-finger pinch zoom ─────────────────
+    body.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            wfFsDragging    = true;
+            wfFsDragStartX  = e.touches[0].clientX;
+            wfFsDragStartY  = e.touches[0].clientY;
+            wfFsDragStartTx = wfFsTx;
+            wfFsDragStartTy = wfFsTy;
+        } else if (e.touches.length === 2) {
+            wfFsDragging = false;
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            wfFsPinchDist = Math.sqrt(dx*dx + dy*dy);
+            const r = body.getBoundingClientRect();
+            wfFsPinchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left;
+            wfFsPinchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top;
+        }
+    }, { passive: true });
+
+    body.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        if (e.touches.length === 1 && wfFsDragging) {
+            wfFsTx = wfFsDragStartTx + (e.touches[0].clientX - wfFsDragStartX);
+            wfFsTy = wfFsDragStartTy + (e.touches[0].clientY - wfFsDragStartY);
+            _applyWfFsTransform(false);
+        } else if (e.touches.length === 2 && wfFsPinchDist > 0) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const newDist = Math.sqrt(dx*dx + dy*dy);
+            _wfFsZoomAt(newDist / wfFsPinchDist, wfFsPinchMidX, wfFsPinchMidY);
+            wfFsPinchDist = newDist;
+            const r = body.getBoundingClientRect();
+            wfFsPinchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left;
+            wfFsPinchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top;
+        }
+    }, { passive: false });
+
+    body.addEventListener('touchend', function() {
+        wfFsDragging = false; wfFsPinchDist = 0;
+    }, { passive: true });
+}
+
+function renderWfDiagramFullscreen() {
+    const svg = document.getElementById('wf_diagramSvgFs');
+    if (!svg) return;
+
+    // Update subtitle
+    const stateMap = {};
+    (window._wfParentStates || []).forEach(s => { stateMap[s.stateId] = s; });
+    const selIds = getSelectedWfStateIds();
+    const nodes  = selIds.map(id => stateMap[id]).filter(Boolean);
+    const edges  = currentWfTransitions.filter(t => t.fromStateId && t.toStateId);
+    document.getElementById('wfDiagramFsSubtitle').textContent =
+        `${nodes.length} state${nodes.length !== 1 ? 's' : ''} · ${edges.length} transition${edges.length !== 1 ? 's' : ''}`;
+
+_renderWfDiagramIntoSvg(svg, true);
+    // Re-center on every re-render (preserves zoom level, just repositions)
+    requestAnimationFrame(_wfFsCenterDiagram);
+}
+
+
+
+
+
 
 function escapeHtml(s) {
     if (!s) return '';

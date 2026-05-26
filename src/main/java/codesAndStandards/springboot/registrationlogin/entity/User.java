@@ -40,6 +40,9 @@ public class User {
     @Column(name = "email", length = 150, nullable = false)
     private String email;
 
+    @Column(name = "is_active", nullable = false, columnDefinition = "BIT DEFAULT 1")
+    private boolean active = true;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(
             name = "role_id",

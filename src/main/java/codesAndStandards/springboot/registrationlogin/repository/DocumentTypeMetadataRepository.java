@@ -66,4 +66,9 @@ public interface DocumentTypeMetadataRepository extends JpaRepository<DocumentTy
             "JOIN FETCH dtm.metadataDefinition " +
             "WHERE dtm.documentType.docTypeId = :docTypeId AND dtm.mandatory = true")
     List<DocumentTypeMetadata> findMandatoryByDocTypeId(@Param("docTypeId") Long docTypeId);
+
+    // Add this one method
+    @Query("SELECT COUNT(dtm) FROM DocumentTypeMetadata dtm " +
+            "WHERE dtm.documentType.docTypeId = :docTypeId")
+    int countByDocTypeId(@Param("docTypeId") Long docTypeId);
 }

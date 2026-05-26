@@ -23,4 +23,6 @@ public class DocumentType {
 
     @Column(name = "description", length = 150, nullable = true)
     private String description;
+
+
 }

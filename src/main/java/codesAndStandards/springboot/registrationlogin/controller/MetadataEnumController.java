@@ -110,7 +110,7 @@ public class MetadataEnumController {
      * Body: ["Value1", "Value2", "Value3"]
      */
     @PutMapping("/by-metadata/{metadataId}")
-    @PreAuthorize("hasRole('superadmin') or hasAuthority('METADATA_ENUM_CREATE')")
+    @PreAuthorize("hasRole('superadmin') or hasAuthority('METADATA_ENUM_CREATE') or hasAuthority('METADATA_ENUM_DELETE')")
     public ResponseEntity<?> replaceAll(@PathVariable Long metadataId, @RequestBody List<String> values) {
         if (!licenseService.isLicenseValid() || !"ED2".equalsIgnoreCase(licenseService.getCurrentEdition())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

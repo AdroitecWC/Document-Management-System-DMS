@@ -44,4 +44,5 @@ public interface UserService {
     void updateUserGroupAssociations(Long userId, List<Long> groupIds);
 
     List<GroupListDTO> getUserGroups(Long userId);
+    void toggleUserStatus(Long userId, boolean active);
 }
