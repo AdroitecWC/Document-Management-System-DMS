@@ -25,7 +25,7 @@ public class WorkflowTransition {
     @Column(name = "role_id", nullable = false)
     private Long roleId;
 
-    /** FK → Users.user_id — must be in DocumentTypeTeam for parent doc type */
+    /** FK → Users.user_id; one row per responsible person for this transition */
     @Column(name = "user_id", nullable = false)
     private Long userId;
 

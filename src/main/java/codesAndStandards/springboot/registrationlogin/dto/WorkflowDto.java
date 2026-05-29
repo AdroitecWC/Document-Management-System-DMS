@@ -29,25 +29,29 @@ public class WorkflowDto {
         public String color;
     }
 
-    public static class TransitionInfo {
-        public Long   id;
-        public Long   fromStateId;
-        public String fromStateName;
-        public Long   toStateId;
-        public String toStateName;
-        public Long   roleId;
-        public String roleName;
+    public static class UserInfo {
         public Long   userId;
         public String userName;
         public String userEmail;
     }
 
+    public static class TransitionInfo {
+        public Long         id;
+        public Long         fromStateId;
+        public String       fromStateName;
+        public Long         toStateId;
+        public String       toStateName;
+        public Long         roleId;
+        public String       roleName;
+        public List<UserInfo> users;
+    }
+
     public static class TransitionPayload {
-        public Long id;          // null = new row
-        public Long fromStateId;
-        public Long toStateId;
-        public Long roleId;
-        public Long userId;
+        public Long       id;           // null = new row
+        public Long       fromStateId;
+        public Long       toStateId;
+        public Long       roleId;
+        public List<Long> userIds;
     }
 
     // ─── getters / setters ───────────────────────────────────────────
