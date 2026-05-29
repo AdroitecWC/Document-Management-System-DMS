@@ -539,6 +539,35 @@
 }
 .transition-builder-row select:focus { border-color: #667eea; outline: none; }
 
+/* Multi-person dropdown inside transition row */
+.tr-person-wrapper { position: relative; flex: 1; min-width: 0; }
+.tr-person-btn {
+    width: 100%; text-align: left; border: 1px solid #d1d5db;
+    border-radius: 6px; padding: 6px 8px; font-size: 13px;
+    background: white; cursor: pointer; display: flex; align-items: center;
+    justify-content: space-between; gap: 4px; white-space: nowrap; overflow: hidden;
+}
+.tr-person-btn:focus { border-color: #667eea; outline: none; }
+.tr-person-dropdown {
+    display: none; position: absolute; z-index: 1050;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+    min-width: 220px; max-height: 220px; overflow-y: auto;
+    box-shadow: 0 6px 16px rgba(0,0,0,.12); top: calc(100% + 4px); left: 0;
+}
+.tr-person-dropdown.open { display: block; }
+.tr-person-option {
+    display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+    font-size: 13px; cursor: pointer; border-bottom: 1px solid #f3f4f6;
+}
+.tr-person-option:last-child { border-bottom: none; }
+.tr-person-option:hover { background: #f0f4ff; }
+.tr-person-option input[type=checkbox] { width: 15px; height: 15px; flex-shrink: 0; }
+.tr-person-optgroup-label {
+    font-size: 11px; font-weight: 700; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: .05em;
+    padding: 6px 10px 2px; background: #f9fafb;
+}
+
 /* State checkbox card */
 .state-check-card {
     display: flex; align-items: center; gap: 10px;
@@ -1912,6 +1941,13 @@ function closeActiveSettingsModal() {
 
     // ==================== INITIALIZATION ====================
   document.addEventListener('DOMContentLoaded', async function() {
+    // Close person dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.tr-person-wrapper')) {
+            document.querySelectorAll('.tr-person-dropdown.open').forEach(el => el.classList.remove('open'));
+        }
+    });
+
     // Re-center custom modals on resize
 window.addEventListener('resize', function() {
     if (activeSettingsModalId) centerSettingsModal(activeSettingsModalId);
@@ -4554,7 +4590,7 @@ async function populateWfModalFromParent(docTypeId, selectedStateIds, existingTr
     document.getElementById('wf_transitionsSection').style.display = '';
     currentWfTransitions = existingTransitions.map(t => ({
         id: t.id, fromStateId: t.fromStateId, toStateId: t.toStateId,
-        roleId: t.roleId, userId: t.userId
+        roleId: t.roleId, userIds: (t.users || []).map(u => u.userId)
     }));
 
     // Store for use in renderWfTransitions
@@ -4630,33 +4666,92 @@ const roleOpts  = (Array.isArray(window._wfAllRoles) ? window._wfAllRoles : []).
                 <option value="">LC Role</option>${roleOpts}
             </select>
             <span class="transition-arrow">→</span>
-            <select class="tr-person" onchange="updateWfTransition(${idx},'person',this.value)">
-                <option value="">Person</option>
-              ${buildWfPersonOptgroups(idx)}
-            </select>
+            <div class="tr-person-wrapper">
+                <button type="button" class="tr-person-btn"
+                        onclick="toggleWfPersonDropdown(${idx}, this)">
+                    <span class="tr-person-label">${buildWfPersonLabel(idx)}</span>
+                    <i class="bi bi-chevron-down" style="font-size:11px;flex-shrink:0;"></i>
+                </button>
+                <div class="tr-person-dropdown" id="wf-person-dd-${idx}">
+                    ${buildWfPersonCheckboxes(idx)}
+                </div>
+            </div>
             <button class="btn btn-sm p-1 ms-1 flex-shrink-0" style="color:#dc2626;"
                     onclick="removeWfTransition(${idx})">
                 <i class="bi bi-x-circle"></i>
             </button>`;
 
         // Restore selected values
-        if (tr.fromStateId) row.querySelector('.tr-from').value  = tr.fromStateId;
-        if (tr.toStateId)   row.querySelector('.tr-to').value    = tr.toStateId;
-        if (tr.roleId)      row.querySelector('.tr-role').value  = tr.roleId;
-        if (tr.userId)      row.querySelector('.tr-person').value = tr.userId;
+        if (tr.fromStateId) row.querySelector('.tr-from').value = tr.fromStateId;
+        if (tr.toStateId)   row.querySelector('.tr-to').value   = tr.toStateId;
+        if (tr.roleId)      row.querySelector('.tr-role').value = tr.roleId;
         container.appendChild(row);
     });
 }
 
-function buildWfPersonOptgroups(currentIdx) {
+function buildWfPersonLabel(idx) {
+    const tr = currentWfTransitions[idx];
+    const selected = tr ? (tr.userIds || []) : [];
+    if (selected.length === 0) return 'Person';
+    if (selected.length === 1) {
+        const groups = window._wfGroupedMembers || [];
+        for (const g of groups) {
+            const u = (g.members || []).find(m => m.userId === selected[0]);
+            if (u) return escapeHtml(u.username);
+        }
+        return '1 selected';
+    }
+    return selected.length + ' selected';
+}
+
+function buildWfPersonCheckboxes(idx) {
+    const tr = currentWfTransitions[idx];
+    const selected = new Set(tr ? (tr.userIds || []) : []);
     const groups = window._wfGroupedMembers || [];
     return groups.map(group => {
         if (!group.members || group.members.length === 0) return '';
-        const opts = group.members.map(u =>
-            `<option value="${u.userId}">${escapeHtml(u.username)}${u.email ? ' — ' + escapeHtml(u.email) : ''}</option>`
-        ).join('');
-        return `<optgroup label="${escapeHtml(group.groupName)}">${opts}</optgroup>`;
+        const items = group.members.map(u => `
+            <label class="tr-person-option">
+                <input type="checkbox" data-user-id="${u.userId}" ${selected.has(u.userId) ? 'checked' : ''}
+                       onchange="updateWfPersonCheck(${idx}, ${u.userId}, this.checked)">
+                <div>
+                    <div style="font-weight:600;">${escapeHtml(u.username)}</div>
+                    ${u.email ? `<div style="font-size:11px;color:#6b7280;">${escapeHtml(u.email)}</div>` : ''}
+                </div>
+            </label>`).join('');
+        return `<div class="tr-person-optgroup-label">${escapeHtml(group.groupName)}</div>${items}`;
     }).join('');
+}
+
+function toggleWfPersonDropdown(idx, btn) {
+    const dd = document.getElementById('wf-person-dd-' + idx);
+    if (!dd) return;
+    const isOpen = dd.classList.contains('open');
+    // close all other dropdowns
+    document.querySelectorAll('.tr-person-dropdown.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) dd.classList.add('open');
+}
+
+function updateWfPersonCheck(idx, userId, checked) {
+    const tr = currentWfTransitions[idx];
+    if (!tr) return;
+    if (!tr.userIds) tr.userIds = [];
+    if (checked) {
+        if (!tr.userIds.includes(userId)) tr.userIds.push(userId);
+    } else {
+        tr.userIds = tr.userIds.filter(id => id !== userId);
+    }
+    // Sync all checkboxes for the same userId across all groups in this dropdown
+    const dd = document.getElementById('wf-person-dd-' + idx);
+    if (dd) {
+        dd.querySelectorAll(`input[type="checkbox"][data-user-id="${userId}"]`).forEach(cb => {
+            cb.checked = checked;
+        });
+    }
+    // update label without re-rendering entire row
+    const wrapper = dd?.closest('.tr-person-wrapper');
+    if (wrapper) wrapper.querySelector('.tr-person-label').textContent = buildWfPersonLabel(idx);
+    renderWfDiagram();
 }
 // ==================== SHARED DIAGRAM RENDERER ====================
 function _renderWfDiagramIntoSvg(svgEl, isLarge) {
@@ -4882,7 +4977,7 @@ function renderWfDiagram() {
 
 
 function addWfTransitionRow() {
-    currentWfTransitions.push({ id: null, fromStateId: null, toStateId: null, roleId: null, userId: null });
+    currentWfTransitions.push({ id: null, fromStateId: null, toStateId: null, roleId: null, userIds: [] });
     renderWfTransitions();
     const modalBody = document.querySelector('#workflowModal .modal-body');
     if (modalBody) setTimeout(() => { modalBody.scrollTop = modalBody.scrollHeight; }, 30);
@@ -4899,20 +4994,20 @@ function updateWfTransition(idx, field, val) {
     const v = val ? parseInt(val) : null;
     if (field === 'from') {
         currentWfTransitions[idx].fromStateId = v;
-        // Auto-fill role + person from another row with same fromStateId
+        // Auto-fill role + persons from another row with same fromStateId
         if (v) {
-            const match = currentWfTransitions.find((t, i) => i !== idx && t.fromStateId === v && (t.roleId || t.userId));
+            const match = currentWfTransitions.find((t, i) => i !== idx && t.fromStateId === v && (t.roleId || (t.userIds && t.userIds.length)));
             if (match) {
-                if (!currentWfTransitions[idx].roleId)   currentWfTransitions[idx].roleId   = match.roleId;
-                if (!currentWfTransitions[idx].userId)    currentWfTransitions[idx].userId   = match.userId;
+                if (!currentWfTransitions[idx].roleId) currentWfTransitions[idx].roleId = match.roleId;
+                if (!currentWfTransitions[idx].userIds || !currentWfTransitions[idx].userIds.length)
+                    currentWfTransitions[idx].userIds = (match.userIds || []).slice();
                 renderWfTransitions();
                 return;
             }
         }
     }
-    if (field === 'to')     currentWfTransitions[idx].toStateId   = v;
-    if (field === 'role')   currentWfTransitions[idx].roleId      = v;
-    if (field === 'person') currentWfTransitions[idx].userId      = v;
+    if (field === 'to')   currentWfTransitions[idx].toStateId = v;
+    if (field === 'role') currentWfTransitions[idx].roleId    = v;
     renderWfDiagram();
 }
 
@@ -4928,9 +5023,9 @@ async function saveWorkflow() {
     if (selectedStateIds.length === 0) { showAlert('danger', 'Please select at least one state'); return; }
 
     const transitionPayloads = currentWfTransitions
-        .filter(t => t.fromStateId && t.toStateId && t.roleId && t.userId)
+        .filter(t => t.fromStateId && t.toStateId && t.roleId && t.userIds && t.userIds.length > 0)
         .map(t => ({ id: t.id, fromStateId: t.fromStateId, toStateId: t.toStateId,
-                     roleId: t.roleId, userId: t.userId }));
+                     roleId: t.roleId, userIds: t.userIds }));
 
     const payload = { docTypeId, workflowName: name, description: desc,
                       selectedStateIds, transitionPayloads };

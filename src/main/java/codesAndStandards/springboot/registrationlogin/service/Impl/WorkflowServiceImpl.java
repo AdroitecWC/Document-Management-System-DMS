@@ -10,19 +10,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class WorkflowServiceImpl implements WorkflowService {
 
-    @Autowired private WorkflowRepository            workflowRepo;
-    @Autowired private WorkflowStateRepository       wfStateRepo;
-    @Autowired private WorkflowTransitionRepository  transitionRepo;
-    @Autowired private DocumentTypeRepository        docTypeRepo;
-    @Autowired private DocumentTypeStateRepository   docTypeStateRepo;
-    @Autowired private LifeCycleStateRepository      lcStateRepo;
-    @Autowired private LifeCycleRoleRepository       lcRoleRepo;
-    @Autowired private UserRepository                userRepo;
+    @Autowired private WorkflowRepository           workflowRepo;
+    @Autowired private WorkflowStateRepository      wfStateRepo;
+    @Autowired private WorkflowTransitionRepository transitionRepo;
+    @Autowired private DocumentTypeRepository       docTypeRepo;
+    @Autowired private DocumentTypeStateRepository  docTypeStateRepo;
+    @Autowired private LifeCycleStateRepository     lcStateRepo;
+    @Autowired private LifeCycleRoleRepository      lcRoleRepo;
+    @Autowired private UserRepository               userRepo;
 
     // ─── helpers ─────────────────────────────────────────────────────
 
@@ -62,7 +63,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         // ── transitions ──────────────────────────────────────────────
         List<WorkflowTransition> transitions = transitionRepo.findByWorkflowId(wf.getWorkflowId());
 
-        // collect all state IDs used in transitions for lookup
+        // state lookup
         Set<Long> allStateIds = new HashSet<>(stateIds);
         transitions.forEach(t -> { allStateIds.add(t.getFromStateId()); allStateIds.add(t.getToStateId()); });
         Map<Long, LifeCycleState> allStates = allStateIds.isEmpty() ? Collections.emptyMap()
@@ -75,28 +76,40 @@ public class WorkflowServiceImpl implements WorkflowService {
                 : lcRoleRepo.findAllById(roleIds).stream()
                 .collect(Collectors.toMap(LifeCycleRole::getLcRoleId, r -> r));
 
-        // user lookup
-        List<Long> userIds = transitions.stream().map(WorkflowTransition::getUserId).distinct().collect(Collectors.toList());
-        Map<Long, User> userMap = userIds.isEmpty() ? Collections.emptyMap()
-                : userRepo.findAllById(userIds).stream()
-                .collect(Collectors.toMap(User::getUserId, u -> u));
+        // user lookup (all unique userIds across all rows)
+        List<Long> allUserIds = transitions.stream().map(WorkflowTransition::getUserId).distinct().collect(Collectors.toList());
+        Map<Long, User> userMap = allUserIds.isEmpty() ? Collections.emptyMap()
+                : userRepo.findAllById(allUserIds).stream()
+                .collect(Collectors.toMap(User::getUserId, Function.identity()));
 
-        dto.setTransitions(transitions.stream().map(t -> {
+        // Group rows by (fromStateId, toStateId, roleId) — one logical transition per group
+        Map<String, List<WorkflowTransition>> grouped = new LinkedHashMap<>();
+        for (WorkflowTransition t : transitions) {
+            String key = t.getFromStateId() + "_" + t.getToStateId() + "_" + t.getRoleId();
+            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(t);
+        }
+
+        dto.setTransitions(grouped.values().stream().map(group -> {
+            WorkflowTransition first = group.get(0);
             WorkflowDto.TransitionInfo ti = new WorkflowDto.TransitionInfo();
-            ti.id = t.getId();
-            LifeCycleState fs = allStates.get(t.getFromStateId());
-            LifeCycleState ts = allStates.get(t.getToStateId());
-            ti.fromStateId   = t.getFromStateId();
-            ti.fromStateName = fs != null ? fs.getStateName() : String.valueOf(t.getFromStateId());
-            ti.toStateId     = t.getToStateId();
-            ti.toStateName   = ts != null ? ts.getStateName() : String.valueOf(t.getToStateId());
-            LifeCycleRole role = roleMap.get(t.getRoleId());
-            ti.roleId   = t.getRoleId();
+            ti.id          = first.getId();
+            LifeCycleState fs = allStates.get(first.getFromStateId());
+            LifeCycleState ts = allStates.get(first.getToStateId());
+            ti.fromStateId   = first.getFromStateId();
+            ti.fromStateName = fs != null ? fs.getStateName() : String.valueOf(first.getFromStateId());
+            ti.toStateId     = first.getToStateId();
+            ti.toStateName   = ts != null ? ts.getStateName() : String.valueOf(first.getToStateId());
+            LifeCycleRole role = roleMap.get(first.getRoleId());
+            ti.roleId   = first.getRoleId();
             ti.roleName = role != null ? role.getRoleName() : "Unknown";
-            User u = userMap.get(t.getUserId());
-            ti.userId    = t.getUserId();
-            ti.userName  = u != null ? u.getUsername() : "Unknown";
-            ti.userEmail = u != null && u.getEmail() != null ? u.getEmail() : "";
+            ti.users = group.stream().map(t -> {
+                WorkflowDto.UserInfo ui = new WorkflowDto.UserInfo();
+                User u = userMap.get(t.getUserId());
+                ui.userId    = t.getUserId();
+                ui.userName  = u != null ? u.getUsername() : "Unknown";
+                ui.userEmail = u != null && u.getEmail() != null ? u.getEmail() : "";
+                return ui;
+            }).collect(Collectors.toList());
             return ti;
         }).collect(Collectors.toList()));
 
@@ -192,17 +205,20 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (dto.getTransitionPayloads() != null) {
             transitionRepo.deleteByWorkflowId(workflowId);
             for (WorkflowDto.TransitionPayload tp : dto.getTransitionPayloads()) {
-                if (tp.fromStateId == null || tp.toStateId == null
-                        || tp.roleId == null || tp.userId == null) continue;
-                transitionRepo.save(WorkflowTransition.builder()
-                        .workflowId(workflowId)
-                        .fromStateId(tp.fromStateId)
-                        .toStateId(tp.toStateId)
-                        .roleId(tp.roleId)
-                        .userId(tp.userId)
-                        .createdBy(actorId)
-                        .createdAt(LocalDateTime.now())
-                        .build());
+                if (tp.fromStateId == null || tp.toStateId == null || tp.roleId == null) continue;
+                List<Long> uIds = tp.userIds != null ? tp.userIds : Collections.emptyList();
+                // one DB row per responsible person
+                for (Long uid : uIds) {
+                    transitionRepo.save(WorkflowTransition.builder()
+                            .workflowId(workflowId)
+                            .fromStateId(tp.fromStateId)
+                            .toStateId(tp.toStateId)
+                            .roleId(tp.roleId)
+                            .userId(uid)
+                            .createdBy(actorId)
+                            .createdAt(LocalDateTime.now())
+                            .build());
+                }
             }
         }
     }
