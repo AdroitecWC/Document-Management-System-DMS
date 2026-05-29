@@ -4998,7 +4998,7 @@ function updateWfTransition(idx, field, val) {
         if (v) {
             const match = currentWfTransitions.find((t, i) => i !== idx && t.fromStateId === v && (t.roleId || (t.userIds && t.userIds.length)));
             if (match) {
-                if (!currentWfTransitions[idx].roleId)                          currentWfTransitions[idx].roleId   = match.roleId;
+                if (!currentWfTransitions[idx].roleId) currentWfTransitions[idx].roleId = match.roleId;
                 if (!currentWfTransitions[idx].userIds || !currentWfTransitions[idx].userIds.length)
                     currentWfTransitions[idx].userIds = (match.userIds || []).slice();
                 renderWfTransitions();
