@@ -26,6 +26,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import codesAndStandards.springboot.registrationlogin.service.WorkflowService;
+import codesAndStandards.springboot.registrationlogin.dto.WorkflowDto;
 
 
 
@@ -69,6 +71,9 @@ public class AuthController {
     private final DocumentService documentService;
     private final ActivityLogService activityLogService;
     private final GroupService groupService;
+
+    @Autowired
+    private WorkflowService workflowService;
 
 
     public AuthController(UserService userService, UserServiceImpl userServiceImpl,
@@ -600,16 +605,45 @@ public class AuthController {
     @GetMapping("/profile")
     public String showProfilePage(Model model, Principal principal) {
         User user = userService.findUserByUsername(principal.getName());
-        if (user == null) {
+        if (user == null) return "redirect:/login?error=userNotFound";
 
-
-            return "redirect:/login?error=userNotFound";
-        }
         UserDto userDto = userService.findUserById(user.getUserId());
         model.addAttribute("user", userDto);
-        // Add roles to the model for dropdown (if user can change role in profile)
-        List<Role> roles = roleRepository.findAll();
-        model.addAttribute("roles", roles);
+        model.addAttribute("roles", roleRepository.findAll());
+
+        // ── Groups ──────────────────────────────────────────────────
+        try {
+            model.addAttribute("userGroups", userService.getUserGroups(user.getUserId()));
+        } catch (Exception e) {
+            logger.warn("Could not load groups for profile: {}", e.getMessage());
+            model.addAttribute("userGroups", List.of());
+        }
+
+        // ── Document Types accessible via user's groups ──────────────
+        try {
+            List<DocumentDto> accessibleDocs =
+                    documentService.findDocumentsAccessibleByUser(user.getUserId());
+            List<String> docTypes = accessibleDocs.stream()
+                    .map(DocumentDto::getDocTypeName)
+                    .filter(n -> n != null && !n.trim().isEmpty())
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+            model.addAttribute("userDocTypes", docTypes);
+        } catch (Exception e) {
+            logger.warn("Could not load doc types for profile: {}", e.getMessage());
+            model.addAttribute("userDocTypes", List.of());
+        }
+
+        // ── Workflow transitions assigned to this user ───────────────
+        try {
+            model.addAttribute("userTransitions",
+                    workflowService.getTransitionsByUser(user.getUserId()));
+        } catch (Exception e) {
+            logger.warn("Could not load workflow transitions for profile: {}", e.getMessage());
+            model.addAttribute("userTransitions", List.of());
+        }
+
         return "profile";
     }
 

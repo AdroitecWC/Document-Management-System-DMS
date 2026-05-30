@@ -45,6 +45,7 @@
             margin: 0;
             padding: 0;
             padding-top: 70px;
+            overflow: hidden !important;  /* ADD THIS */
         }
 
         .page-header {
@@ -163,10 +164,10 @@
         .view-btn.active:hover { background: #1d4ed8; }
 
         .document-count {
-            color: var(--text-secondary);
-            font-size: 14px;
-            padding: 15px 25px;
-        }
+    color: var(--text-secondary);
+    font-size: 14px;
+    padding: 8px 25px;
+}
 
         .btn-clear-dates {
             padding: 7px 12px;
@@ -198,32 +199,65 @@
            =========================================== */
         .list-view { display: block; }
 
-        .documents-table {
-            background: var(--bg-white);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-        }
+.documents-table {
+    background: var(--bg-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    height: calc(100vh - 400px);
+    min-height: 300px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
 
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
+/* Ensure both inner tables never shrink below readable size */
+.table-responsive .data-grid-table,
+.tbody-scroll .data-grid-table {
+    min-width: 900px;
+}
 
-        .data-grid-table {
-            width: 100%;
-            margin-bottom: 0;
-            border-collapse: separate;
-            border-spacing: 0;
-            table-layout: auto;
-        }
+.table-responsive {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    flex-shrink: 0;
+    -webkit-overflow-scrolling: touch;
+}
 
-        .data-grid-table thead {
-            background-color: var(--primary-color);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
+.tbody-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    scrollbar-gutter: stable;
+}
+
+/* Both tables must be exactly the same width */
+.table-responsive .data-grid-table,
+.tbody-scroll .data-grid-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.tbody-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.tbody-scroll::-webkit-scrollbar-track { background: transparent; }
+.tbody-scroll::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 24px; }
+.tbody-scroll::-webkit-scrollbar-thumb:hover { background-color: rgba(0,0,0,0.25); }
+.data-grid-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+}
+
+.data-grid-table thead {
+    background-color: var(--primary-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 
         .data-grid-table thead th {
             color: white;
@@ -348,7 +382,19 @@
         /* ===========================================
            GRID VIEW STYLES
            =========================================== */
-        .grid-view { display: none; }
+      .grid-view { display: none; }
+
+.grid-view-scroll {
+    height: calc(100vh - 390px);
+    min-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.grid-view-scroll::-webkit-scrollbar { width: 6px; }
+.grid-view-scroll::-webkit-scrollbar-track { background: transparent; }
+.grid-view-scroll::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 3px; }
+.grid-view-scroll::-webkit-scrollbar-thumb:hover { background-color: rgba(0,0,0,0.25); }
 
         .documents-grid {
             display: grid;
@@ -614,15 +660,16 @@
            PAGINATION STYLES
            =========================================== */
         .pagination-container {
-            background: var(--bg-white);
-            padding: 20px 25px;
-            border-radius: 0 0 var(--radius-md) var(--radius-md);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid #e5e7eb;
-            margin-top: 20px;
-        }
+    background: var(--bg-white);
+    padding: 12px 25px;
+    border-radius: var(--radius-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 10px;
+    flex-shrink: 0;
+}
 
         .pagination-info { color: var(--text-secondary); font-size: 14px; }
         .pagination { margin: 0; }
@@ -787,9 +834,9 @@
 <div class="d-flex">
     <div th:replace="~{common/sidebar :: sidebar}"></div>
 
-    <div class="main-content flex-grow-1 p-4">
+    <div class="main-content flex-grow-1 p-3" style="display:flex; flex-direction:column; height:calc(100vh - 70px); overflow:hidden; padding-bottom:0 !important;">
 
-        <div class="d-flex justify-content-between align-items-center mb-4" style="position: relative;">
+        <div class="d-flex justify-content-between align-items-center mb-4 doc-lib-header" style="position: sticky; top:0; z-index:101; background:var(--bg-primary); padding-bottom:10px;">
             <div>
                 <h2 class="mb-1"><img src="/images/library_black.png" class="library-icon" alt="Document Library Icon"> Document Library</h2>
                 <p class="mb-0 text-muted">Browse and search through available documents</p>
@@ -820,7 +867,7 @@
             <div class="filter-row">
                 <div class="search-box">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="searchInput"  placeholder="Search by title, document type, version, uploaded by, tags, or classifications..." onkeyup="searchDocuments()">
+                    <input type="text" id="searchInput" placeholder="Search by title, document type, version, tags, or classifications..." onkeyup="searchDocuments()">
                 </div>
                 <div class="filter-controls">
                     <select class="filter-select" id="tagFilter" onchange="applyAllFilters()">
@@ -851,25 +898,54 @@
             <span id="totalCount" th:text="${documents.size()}">16</span> documents
         </div>
 
-        <!-- ==================== LIST VIEW ==================== -->
-        <div class="list-view" id="listView">
-            <div class="documents-table">
-                <div class="table-responsive">
-                    <table class="data-grid-table" id="documentsTable">
-                        <thead>
-                        <tr>
-                            <th class="col-title sortable" onclick="sortTable('title')">Document Details<span class="sort-icon"></span></th>
-                            <th class="col-code sortable" onclick="sortTable('docType')">Document Type<span class="sort-icon"></span></th>
-                            <th class="col-Edition sortable" onclick="sortTable('version')">Version<span class="sort-icon"></span></th>
-                            <th class="col-date sortable" onclick="sortTable('uploadDate')">Upload Date<span class="sort-icon"></span></th>
-                            <th class="col-code sortable" onclick="sortTable('uploadedBy')">Uploaded By<span class="sort-icon"></span></th>
-                            <th class="col-code sortable" onclick="sortTable('workflow')">Workflow<span class="sort-icon"></span></th>
-                            <th class="col-tags">Tags</th>
-                            <th class="col-classifications">Classifications</th>
-                            <th class="col-actions">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
+        <div class="content-scroll-area">
+
+            <!-- ==================== LIST VIEW ==================== -->
+            <div class="list-view" id="listView">
+                <div class="documents-table">
+                    <div class="table-responsive">
+                        <table class="data-grid-table" style="table-layout:fixed; width:100%;">
+                            <colgroup>
+                                <col style="width:18%;">
+                                <col style="width:10%;">
+                                <col style="width:6%;">
+                                <col style="width:10%;">
+                                <col style="width:14%;">
+                                <col style="width:8%;">
+                                <col style="width:11%;">
+                                <col style="width:13%;">
+                                <col style="width:10%;">
+                            </colgroup>
+                            <thead>
+
+                            <tr>
+                                <th class="col-title sortable" onclick="sortTable('title')">Document Details<span class="sort-icon"></span></th>
+                                <th class="col-code sortable" onclick="sortTable('docType')">Document Type<span class="sort-icon"></span></th>
+                                <th class="col-Edition sortable" onclick="sortTable('version')">Version<span class="sort-icon"></span></th>
+                                <th class="col-date sortable" onclick="sortTable('uploadDate')">Upload Date<span class="sort-icon"></span></th>
+                                <th class="col-code sortable" onclick="sortTable('workflow')">Workflow<span class="sort-icon"></span></th>
+                                <th class="col-code sortable" onclick="sortTable('currentState')">State<span class="sort-icon"></span></th>
+                                <th class="col-tags">Tags</th>
+                                <th class="col-classifications">Classifications</th>
+                                <th class="col-actions">Actions</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div class="tbody-scroll">
+                        <table class="data-grid-table" id="documentsTable" style="table-layout:fixed; width:100%;">
+                            <colgroup>
+                                <col style="width:18%;">
+                                <col style="width:10%;">
+                                <col style="width:6%;">
+                                <col style="width:10%;">
+                                <col style="width:14%;">
+                                <col style="width:8%;">
+                                <col style="width:11%;">
+                                <col style="width:13%;">
+                                <col style="width:10%;">
+                            </colgroup>
+                            <tbody>
                         <!--/*
                             ⭐ PHASE 2: Added data-file-type attribute to tr
                             ⭐ PHASE 2: doc.tags / doc.classifications fallbacks kept for backward compat
@@ -881,9 +957,10 @@
                                     data-title=${doc.title},
                                     data-doc-type=${doc.docTypeName != null ? doc.docTypeName : '-'},
                                     data-version=${doc.versionNumber != null ? doc.versionNumber : '1.0'},
-                                    data-uploaded-by=${doc.uploadedByUsername != null ? doc.uploadedByUsername : '-'},
                                     data-file-type=${doc.fileType != null ? doc.fileType : 'PDF'},
-                                    data-workflow=${doc.workflowName != null ? doc.workflowName : ''}">
+                                    data-workflow=${doc.workflowName != null ? doc.workflowName : ''},
+                                    data-current-state=${doc.currentStateName != null ? doc.currentStateName : ''},
+                                    data-current-state-color=${doc.currentStateColor != null ? doc.currentStateColor : ''}">
                             <td class="col-title">
                                 <a class="doc-main-link" th:href="@{/DocViewer(id=${doc.id})}" target="_blank" style="display:none;"></a>
                                 <div class="doc-title">
@@ -909,7 +986,6 @@
                             <td class="col-code"><span th:text="${doc.docTypeName != null ? doc.docTypeName : '-'}">Resume</span></td>
                             <td class="col-Edition"><span th:text="${doc.versionNumber != null ? doc.versionNumber : '1.0'}">1.0</span></td>
                             <td class="col-date"><span class="format-date-time" th:text="${doc.uploadedAt}">Mar 20, 2024</span></td>
-                            <td class="col-code"><span th:text="${doc.uploadedByUsername != null ? doc.uploadedByUsername : '-'}">admin</span></td>
                             <td class="col-code">
                                 <span th:if="${doc.workflowName != null}"
                                       style="background:#eef2ff;color:#1e3a5f;border:1px solid #c7d2fe;
@@ -928,6 +1004,18 @@
                                     <i class="bi bi-plus-circle" style="font-size:15px;"></i>
                                 </button>
                             </td>
+
+                            <!-- ── Current Document State ── -->
+                            <td class="col-code">
+                                <span th:if="${doc.currentStateName != null}"
+                                      th:with="sc=${doc.currentStateColor != null ? doc.currentStateColor : '#6b7280'}"
+                                      th:style="'background:' + ${sc} + '20;color:' + ${sc} + ';border:1px solid ' + ${sc} + '40;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;'">
+                                    <span th:style="'width:7px;height:7px;border-radius:50%;flex-shrink:0;background:' + ${doc.currentStateColor != null ? doc.currentStateColor : '#6b7280'} + ';'"></span>
+                                    <span th:text="${doc.currentStateName}"></span>
+                                </span>
+                                <span th:if="${doc.currentStateName == null}" style="color:#d1d5db;font-size:13px;">—</span>
+                            </td>
+
                             <td class="col-tags">
                                 <span th:if="${doc.tagNames != null and doc.tagNames != ''}">
                                     <th:block th:with="tagList=${#strings.arraySplit(doc.tagNames, ',')}">
@@ -971,15 +1059,15 @@
                                    onclick="showDeleteModal(this); return false;" style="display:none;"><i class="bi bi-trash"></i></a>
                             </td>
                         </tr>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-
         <!-- ==================== GRID VIEW ==================== -->
         <div class="grid-view" id="gridView">
-            <div class="documents-grid">
+            <div class="grid-view-scroll">
+                <div class="documents-grid">
                 <!--/*
                     ⭐ PHASE 2: Added data-file-type attribute and type-* CSS class to card
                 */-->
@@ -1089,10 +1177,13 @@
                     <!--                        <span class="card-pages" th:text="${doc.noOfPages != null ? doc.noOfPages + ' pages' : '-'}">52 pages</span>-->
                     <!--                    </div>-->
                 </div>
-            </div>
+                </div>
+            </div><!-- end grid-view-scroll -->
         </div>
 
-        <div class="pagination-container">
+    </div><!-- end content-scroll-area -->
+
+    <div class="pagination-container" style="margin-top:8px; flex-shrink:0;">
             <div class="pagination-info">
                 Showing <span id="pageStart">1</span>-<span id="pageEnd">10</span> of <span id="pageTotal" th:text="${documents.size()}">16</span>
             </div>
@@ -1297,7 +1388,7 @@ function applyDocumentPermissions() {
     let watermarkEnabled = true;
     let watermarkOpacity = 30;
     let watermarkPosition = 'Diagonal';
-    const itemsPerPage = 7;
+    const itemsPerPage = 15;
     let currentPage = 1;
     let currentView = 'list';
     let currentSortColumn = null;
@@ -1356,12 +1447,12 @@ function applyDocumentPermissions() {
                 title: (row.getAttribute('data-title') || '').toLowerCase(),
                 docType: (row.getAttribute('data-doc-type') || '').toLowerCase(),
                 version: (row.getAttribute('data-version') || '').toLowerCase(),
-                uploadedBy: (row.getAttribute('data-uploaded-by') || '').toLowerCase(),
                 tags: (row.getAttribute('data-tags') || '').toLowerCase(),
                 classifications: (row.getAttribute('data-classifications') || '').toLowerCase(),
                 uploadDate: row.getAttribute('data-upload-date') || '',
                fileType: (row.getAttribute('data-file-type') || 'PDF').toUpperCase(),
                 workflow: (row.getAttribute('data-workflow') || '').toLowerCase(),
+                currentState: (row.getAttribute('data-current-state') || '').toLowerCase(),
                 listElement: row,
                 gridElement: null
             });
@@ -1475,11 +1566,11 @@ function applyDocumentPermissions() {
                     doc.title.includes(searchTerm) ||
                     doc.docType.includes(searchTerm) ||
                     doc.version.includes(searchTerm) ||
-                    doc.uploadedBy.includes(searchTerm) ||
                     doc.tags.includes(searchTerm) ||
                     doc.classifications.includes(searchTerm) ||
                    doc.fileType.toLowerCase().includes(searchTerm) ||
-                    doc.workflow.includes(searchTerm);
+                    doc.workflow.includes(searchTerm) ||
+                    doc.currentState.includes(searchTerm);
                }
 
             let matchesTag = true;
@@ -1535,8 +1626,8 @@ function applyDocumentPermissions() {
                 case 'title': vA = a.title; vB = b.title; break;
                 case 'docType': vA = a.docType; vB = b.docType; break;
                 case 'version': vA = a.version; vB = b.version; break;
-                case 'uploadedBy': vA = a.uploadedBy; vB = b.uploadedBy; break;
                 case 'workflow': vA = a.workflow; vB = b.workflow; break;
+                case 'currentState': vA = a.currentState; vB = b.currentState; break;
                 case 'uploadDate': return direction === 'asc' ? parseDate(a.uploadDate) - parseDate(b.uploadDate) : parseDate(b.uploadDate) - parseDate(a.uploadDate);
                 default: return 0;
             }

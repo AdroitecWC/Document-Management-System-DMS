@@ -10,11 +10,12 @@
     <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
     <style>
         body {
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-            padding-top: 70px;
-        }
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    padding-top: 70px;
+    overflow: hidden !important;
+}
 
         .search-box {
             background: white;
@@ -287,6 +288,35 @@
         margin-right: 0px;
         transition: transform 0.3s ease;
     }
+
+        .classifications-scroll-area {
+    height: calc(100vh - 300px);
+    min-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.classifications-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.classifications-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+.classifications-scroll-area::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 3px;
+}
+.classifications-scroll-area::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0,0,0,0.25);
+}
+
+.main-content-classifications {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    overflow: hidden;
+}
+
     </style>
 </head>
 <body>
@@ -303,7 +333,7 @@
     <div th:replace="~{common/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
-    <div class="main-content flex-grow-1 p-4">
+    <div class="main-content flex-grow-1 p-4 main-content-classifications">
         <!-- Breadcrumb and Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -351,8 +381,11 @@
             </div>
         </div>
 
-        <!-- Loading Spinner -->
-        <div class="loading-spinner" id="loadingSpinner">
+        <!-- Scrollable Content Area -->
+        <div class="classifications-scroll-area">
+
+            <!-- Loading Spinner -->
+            <div class="loading-spinner" id="loadingSpinner">
             <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; color: #1e3a5f">
                 <span class="visually-hidden">Loading...</span>
             </div>
@@ -409,6 +442,7 @@
                 <p class="text-muted mt-3 fs-5">No classifications found.</p>
             </div>
         </div>
+        </div><!-- end classifications-scroll-area -->
     </div>
 </div>
 
@@ -671,16 +705,18 @@ function hasPerm(perm) {
     });
 
     // Scroll to top
-    const scrollTopBtn = document.getElementById("scrollTopBtn");
-    if (scrollTopBtn) {
-        window.onscroll = function() {
-            scrollTopBtn.style.display =
-                (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
-        };
-        scrollTopBtn.addEventListener("click", function() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
+   document.addEventListener('DOMContentLoaded', function() {
+        const scrollTopBtn = document.getElementById("scrollTopBtn");
+        const scrollArea = document.querySelector('.classifications-scroll-area');
+        if (scrollTopBtn && scrollArea) {
+            scrollArea.addEventListener("scroll", function() {
+                scrollTopBtn.style.display = scrollArea.scrollTop > 200 ? "block" : "none";
+            });
+            scrollTopBtn.addEventListener("click", function() {
+                scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+    });
 
    function applyRoleBasedRestrictions() {
     const createBtn = document.getElementById('createClassificationBtn');
@@ -972,7 +1008,7 @@ function hasPerm(perm) {
         return;
     }
 
-    const scrollPos = window.scrollY;
+   const scrollPos = document.querySelector('.classifications-scroll-area')?.scrollTop || 0;
 
     try {
         const response = await fetch(`${API_BASE_URL}/${classificationId}`, {
@@ -991,7 +1027,7 @@ function hasPerm(perm) {
         await loadClassifications();
         showAlert('Classification updated successfully!', 'success');
 
-        requestAnimationFrame(() => window.scrollTo(0, scrollPos));
+       requestAnimationFrame(() => { const sa = document.querySelector('.classifications-scroll-area'); if(sa) sa.scrollTop = scrollPos; });
 
     } catch (error) {
         errorEl.textContent = error.message || 'Failed to update classification.';
@@ -1007,7 +1043,7 @@ function hasPerm(perm) {
     return;
 }
 
-    const scrollPos = window.scrollY;
+   const scrollPos = document.querySelector('.classifications-scroll-area')?.scrollTop || 0;
 
     try {
         const response = await fetch(`${API_BASE_URL}/${deleteClassificationId}`, {
@@ -1025,7 +1061,7 @@ function hasPerm(perm) {
         deleteClassificationId = null;
         await loadClassifications();
 
-        requestAnimationFrame(() => window.scrollTo(0, scrollPos));
+       requestAnimationFrame(() => { const sa = document.querySelector('.classifications-scroll-area'); if(sa) sa.scrollTop = scrollPos; });
 
     } catch (error) {
         console.error('Error deleting classification:', error);
