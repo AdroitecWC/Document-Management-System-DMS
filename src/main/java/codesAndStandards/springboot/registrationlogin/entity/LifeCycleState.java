@@ -20,6 +20,14 @@ public class LifeCycleState {
     @Column(name = "color", length = 20)
     private String color;
 
+    // No-arg constructor (required by JPA)
+    public LifeCycleState() {}
+
+    // ID-only constructor (used for proxy reference in DocumentLifeCycleState)
+    public LifeCycleState(Long stateId) {
+        this.stateId = stateId;
+    }
+
     public Long getStateId()                    { return stateId; }
     public void setStateId(Long stateId)        { this.stateId = stateId; }
     public String getStateName()                { return stateName; }

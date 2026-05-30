@@ -264,26 +264,77 @@
         <p style="color: #2c3e50;">© 2026 Document Management System<br>
 
             Your role will be determined automatically based on your credentials</p>
+
+        <!-- Inline license warning (relocated from top banner) -->
+        <div id="license-inline-warning" style="text-align: center;"></div>
     </div>
 
 </div>
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script>
-    // Password toggle function
-    function togglePassword() {
-        const passwordInput = document.getElementById('password');
-        const eyeIcon = document.getElementById('eyeIcon');
 
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            // Change to eye-slash icon
-            eyeIcon.innerHTML = '<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>';
-        } else {
-            passwordInput.type = 'password';
-            // Change back to eye icon
-            eyeIcon.innerHTML = '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>';
-        }
-    }
+    // ── Show license warning inline below footer text ──────────────────────
+   window.addEventListener('DOMContentLoaded', function () {
+       // Fetch license status directly from the API and display inline
+       fetch('/api/license/status')
+           .then(function (res) { return res.ok ? res.json() : null; })
+           .then(function (data) {
+               if (!data) return;
+               const target = document.getElementById('license-inline-warning');
+               if (!target) return;
+
+               let msg = '';
+               if (data.warning) {
+                   msg = '⚠ ' + data.warning;
+               } else if (!data.isValid && data.message) {
+                   msg = '⛔ ' + data.message;
+               }
+
+               if (msg) {
+                   target.textContent = msg;
+                   target.style.color      = data.isValid ? '#b8860b' : '#c0392b';
+                   target.style.fontSize   = '13px';
+                   target.style.fontWeight = '500';
+                   target.style.marginTop  = '6px';
+                   target.style.display    = 'block';
+               }
+           })
+           .catch(function () { /* silently ignore */ });
+
+       // Also suppress any banner injected into <body> after load
+       const observer = new MutationObserver(function (mutations) {
+           mutations.forEach(function (m) {
+               m.addedNodes.forEach(function (node) {
+                   if (node.nodeType !== 1) return;
+                   const style = node.getAttribute('style') || '';
+                   const id    = node.id    || '';
+                   const cls   = node.className || '';
+                   if (style.includes('fixed') || style.includes('sticky') ||
+                       /license/i.test(id) || /license/i.test(cls)) {
+                       node.style.display = 'none';
+                   }
+               });
+           });
+       });
+       observer.observe(document.body, { childList: true, subtree: false });
+   });
+
+
+   // Password toggle function
+   function togglePassword() {
+       const passwordInput = document.getElementById('password');
+       const eyeIcon = document.getElementById('eyeIcon');
+
+       if (passwordInput.type === 'password') {
+           passwordInput.type = 'text';
+           // Change to eye-slash icon
+           eyeIcon.innerHTML = '<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>';
+       } else {
+           passwordInput.type = 'password';
+           // Change back to eye icon
+           eyeIcon.innerHTML = '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>';
+       }
+   }
 </script>
 </body>
 </html>

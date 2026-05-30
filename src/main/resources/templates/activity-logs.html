@@ -16,11 +16,12 @@
             --shadow: 0 6px 18px rgba(18,38,63,0.06);
         }
         body {
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-            padding-top: 70px;
-        }
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    padding-top: 70px;
+    overflow: hidden !important;
+}
         .page-container{ padding: 28px 32px; }
         .page-header { display:flex; align-items:center; gap:16px; margin-bottom:18px; }
         .btn-back, .btn-home { display:inline-flex; align-items:center; gap:8px; }
@@ -143,6 +144,88 @@
 border: 2px solid white;
 box-shadow: 0 0 15px rgba(255,255,255,0.6);
 }
+        .main-content-logs {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    overflow: hidden;
+}
+
+.table-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 500px);
+    min-height: 200px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.table-head-fixed {
+    flex-shrink: 0;
+    overflow: hidden;
+    background-color: #f8f9fa;
+}
+
+.table-head-fixed table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-bottom: 0;
+}
+
+.table-head-fixed table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+    padding: 12px 16px;
+    white-space: nowrap;
+}
+
+.table-body-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.table-body-scroll table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-bottom: 0;
+}
+
+.table-body-scroll table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table-body-scroll table tr:last-child td {
+    border-bottom: none;
+}
+
+.table-body-scroll::-webkit-scrollbar { width: 6px; }
+.table-body-scroll::-webkit-scrollbar-track { background: transparent; }
+.table-body-scroll::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 3px; }
+.table-body-scroll::-webkit-scrollbar-thumb:hover { background-color: rgba(0,0,0,0.25); }
+
+.col-id     { width: 80px; }
+.col-user   { width: 22%; }
+.col-action { width: 18%; }
+.col-detail { width: 35%; }
+.col-time   { width: 160px; }
+
+
+
     </style>
 </head>
 <body>
@@ -151,7 +234,7 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
 <div class="d-flex">
     <div th:replace="~{common/sidebar :: sidebar}"></div>
 
-    <div class="main-content flex-grow-1 p-4">
+    <div class="main-content flex-grow-1 p-4 main-content-logs">
         <!-- Breadcrumb -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -278,18 +361,39 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
                 <div class="muted-small">Showing recent activity</div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table align-middle" id="activityLogsTable">
-                    <thead class="table-light">
-                    <tr>
-                        <th style="width:80px">ID</th>
-                        <th>User</th>
-                        <th>Action</th>
-                        <th>Details</th>
-                        <th style="width:160px">Time</th>
-                    </tr>
-                    </thead>
-                    <tbody>
+            <div class="table-wrapper">
+                <!-- Fixed Header -->
+                <div class="table-head-fixed">
+                    <table>
+                        <colgroup>
+                            <col class="col-id">
+                            <col class="col-user">
+                            <col class="col-action">
+                            <col class="col-detail">
+                            <col class="col-time">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Time</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+                <!-- Scrollable Body -->
+                <div class="table-body-scroll">
+                    <table class="table align-middle" id="activityLogsTable">
+                        <colgroup>
+                            <col class="col-id">
+                            <col class="col-user">
+                            <col class="col-action">
+                            <col class="col-detail">
+                            <col class="col-time">
+                        </colgroup>
+                        <tbody>
                     <tr th:if="${logs == null or logs.isEmpty()}">
                         <td colspan="5" class="text-center py-4">No logs found</td>
                     </tr>
@@ -396,9 +500,10 @@ box-shadow: 0 0 15px rgba(255,255,255,0.6);
                             <div class="muted-small" th:text="${#temporals.format(log.timestamp, 'HH:mm:ss')}">10:30</div>
                         </td>
                     </tr>
-                    </tbody>
-                </table>
-            </div>
+                        </tbody>
+                    </table>
+                </div><!-- end table-body-scroll -->
+            </div><!-- end table-wrapper -->
         </div>
     </div>
 
@@ -490,11 +595,14 @@ function applyDownloadPermission() {
         });
 
         const scrollTopBtn = document.getElementById("scrollTopBtn");
-        if (scrollTopBtn) {
-            window.onscroll = function() {
-                scrollTopBtn.style.display = (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
-            };
-            scrollTopBtn.addEventListener("click", function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        const tableBodyScroll = document.querySelector('.table-body-scroll');
+        if (scrollTopBtn && tableBodyScroll) {
+            tableBodyScroll.addEventListener("scroll", function() {
+                scrollTopBtn.style.display = tableBodyScroll.scrollTop > 200 ? "block" : "none";
+            });
+            scrollTopBtn.addEventListener("click", function() {
+                tableBodyScroll.scrollTo({ top: 0, behavior: 'smooth' });
+            });
         }
 
         // Sort table ascending on page load

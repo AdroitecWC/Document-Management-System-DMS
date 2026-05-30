@@ -54,6 +54,9 @@ public class DocumentDto {
     private String uploadedByUsername;
     private Long uploadedByUserId;
 
+    private String currentStateName;
+    private String currentStateColor;
+
     // File type helpers (derived from fileExtension)
 
     public String getFileType() {

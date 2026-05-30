@@ -136,6 +136,70 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .map(this::toDetail).collect(Collectors.toList());
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkflowDto.TransitionInfo> getTransitionsByUser(Long userId) {
+        List<WorkflowTransition> transitions = transitionRepo.findByUserId(userId);
+        if (transitions.isEmpty()) return Collections.emptyList();
+
+        // State lookup
+        Set<Long> allStateIds = new HashSet<>();
+        transitions.forEach(t -> { allStateIds.add(t.getFromStateId()); allStateIds.add(t.getToStateId()); });
+        Map<Long, LifeCycleState> stateMap = lcStateRepo.findAllById(new ArrayList<>(allStateIds))
+                .stream().collect(Collectors.toMap(LifeCycleState::getStateId, s -> s));
+
+        // Role lookup
+        List<Long> roleIds = transitions.stream().map(WorkflowTransition::getRoleId)
+                .distinct().collect(Collectors.toList());
+        Map<Long, LifeCycleRole> roleMap = roleIds.isEmpty() ? Collections.emptyMap()
+                : lcRoleRepo.findAllById(roleIds).stream()
+                .collect(Collectors.toMap(LifeCycleRole::getLcRoleId, r -> r));
+
+        // Workflow + DocType lookup
+        List<Long> workflowIds = transitions.stream().map(WorkflowTransition::getWorkflowId)
+                .distinct().collect(Collectors.toList());
+        Map<Long, Workflow> workflowMap = workflowIds.isEmpty() ? Collections.emptyMap()
+                : workflowRepo.findAllById(workflowIds).stream()
+                .collect(Collectors.toMap(Workflow::getWorkflowId, w -> w));
+
+        // Collect all docTypeIds from those workflows
+        List<Long> docTypeIds = workflowMap.values().stream()
+                .map(Workflow::getDocTypeId).distinct().collect(Collectors.toList());
+        Map<Long, DocumentType> docTypeMap = docTypeIds.isEmpty() ? Collections.emptyMap()
+                : docTypeRepo.findAllById(docTypeIds).stream()
+                .collect(Collectors.toMap(DocumentType::getDocTypeId, d -> d));
+
+        User user = userRepo.findById(userId).orElse(null);
+
+        return transitions.stream().map(t -> {
+            WorkflowDto.TransitionInfo ti = new WorkflowDto.TransitionInfo();
+            ti.id            = t.getId();
+            LifeCycleState fs = stateMap.get(t.getFromStateId());
+            LifeCycleState ts = stateMap.get(t.getToStateId());
+            ti.fromStateId   = t.getFromStateId();
+            ti.fromStateName = fs != null ? fs.getStateName() : String.valueOf(t.getFromStateId());
+            ti.toStateId     = t.getToStateId();
+            ti.toStateName   = ts != null ? ts.getStateName() : String.valueOf(t.getToStateId());
+            LifeCycleRole role = roleMap.get(t.getRoleId());
+            ti.roleId   = t.getRoleId();
+            ti.roleName = role != null ? role.getRoleName() : "Unknown";
+
+            // Build UserInfo instead of setting fields that don't exist on TransitionInfo
+            WorkflowDto.UserInfo ui = new WorkflowDto.UserInfo();
+            ui.userId    = userId;
+            ui.userName  = user != null ? user.getUsername() : "Unknown";
+            ui.userEmail = user != null && user.getEmail() != null ? user.getEmail() : "";
+            Workflow wf = workflowMap.get(t.getWorkflowId());
+            ui.workflowName = wf != null ? wf.getWorkflowName() : "";
+            DocumentType dt = wf != null ? docTypeMap.get(wf.getDocTypeId()) : null;
+            ui.docTypeName  = dt != null ? dt.getDocTypeName() : "";
+            ti.users = Collections.singletonList(ui);
+
+            return ti;
+        }).collect(Collectors.toList());
+    }
+
     @Override @Transactional
     public WorkflowDto create(WorkflowDto dto, String username) {
         validate(dto, null);
