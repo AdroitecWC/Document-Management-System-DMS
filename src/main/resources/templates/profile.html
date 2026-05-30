@@ -15,7 +15,7 @@
             background-color: #f4f6f9;
             margin: 0;
             padding: 0;
-            padding-top:70px;
+            padding-top: 70px;
         }
         .profile-avatar {
             width: 120px;
@@ -76,34 +76,20 @@
             font-size: 0.85rem;
             font-weight: 600;
         }
-        .btn-change-password {
-            background-color: #1e3a5f;
-            border: none;
-            color: white;
-            padding: 10px 25px;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-        .btn-change-password:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(21, 148, 173, 0.4);
-            color: white;
-            background-color: #1e3a5f;
-        }
         .role-admin {
-          background-color: #0A3D91 !important;
-          color: white !important;
-          padding:10px;
+            background-color: #0A3D91 !important;
+            color: white !important;
+            padding: 10px;
         }
         .role-manager {
-          background-color: #4DA3FF !important;
-          color: white !important;
-          padding:10px;
+            background-color: #4DA3FF !important;
+            color: white !important;
+            padding: 10px;
         }
         .role-viewer {
-          background-color: #82b3e0 !important;
-          color: white !important;
-          padding:10px;
+            background-color: #82b3e0 !important;
+            color: white !important;
+            padding: 10px;
         }
         .btn-change-password {
             background-color: #1e3a5f !important;
@@ -113,166 +99,308 @@
             border-radius: 8px;
             transition: all 0.3s;
         }
-
         .btn-change-password i {
             color: white !important;
         }
-
         .btn-change-password:hover {
-            background-color: #1e3a5f !important; /* darker shade for hover */
+            background-color: #1e3a5f !important;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(45, 110, 196, 0.4);
             color: white !important;
         }
+
+        /* ==================== GROUP ACCESS ==================== */
+        .group-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .group-item:last-child {
+            border-bottom: none;
+        }
+        .group-icon-box {
+            width: 38px;
+            height: 38px;
+            background-color: #e8f0fe;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .group-icon-box i {
+            color: #1e3a5f;
+            font-size: 1rem;
+        }
+        .group-name {
+            font-weight: 600;
+            color: #1e3a5f;
+            font-size: 0.92rem;
+        }
+        .group-desc {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        /* ==================== DOCUMENT FORMATS ==================== */
+        .format-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 4px;
+        }
+        .format-badge-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #2c3e50;
+            transition: all 0.2s;
+        }
+        .format-badge-item:hover {
+            background-color: #e8f0fe;
+            border-color: #1e3a5f;
+            color: #1e3a5f;
+        }
+        .format-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .fmt-pdf   { background-color: #dc3545; }
+        .fmt-docx, .fmt-doc  { background-color: #2b579a; }
+        .fmt-xlsx, .fmt-xls  { background-color: #217346; }
+        .fmt-pptx, .fmt-ppt  { background-color: #d04423; }
+        .fmt-txt   { background-color: #6c757d; }
+        .fmt-csv   { background-color: #17a2b8; }
+        .fmt-odt   { background-color: #8e44ad; }
+        .fmt-rtf   { background-color: #e67e22; }
+        .fmt-other { background-color: #adb5bd; }
+
+        /* ==================== WORKFLOW TRANSITIONS ==================== */
+        .transition-item {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap
+
+        }
+        .transition-item:last-child {
+            border-bottom: none;
+        }
+        .state-chip {
+            background-color: #f0f4ff;
+            color: #1e3a5f;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border: 1px solid #c7d7f5;
+            white-space: nowrap;
+        }
+        .state-arrow {
+            color: #adb5bd;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .role-chip {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            border: 1px solid #c8e6c9;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        .empty-section {
+            text-align: center;
+            padding: 24px 0 8px;
+            color: #adb5bd;
+        }
+        .empty-section i {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .empty-section span {
+            font-size: 0.88rem;
+            font-style: italic;
+        }
+
         /* ==================== MODAL OVERLAY ==================== */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 9998;
-}
-.modal-overlay.active {
-    display: block;
-    animation: overlayFadeIn 0.25s ease forwards;
-}
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9998;
+        }
+        .modal-overlay.active {
+            display: block;
+            animation: overlayFadeIn 0.25s ease forwards;
+        }
+        @keyframes overlayFadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
 
-@keyframes overlayFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+        /* ==================== CUSTOM MODAL ==================== */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            z-index: 9999;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-height: 85vh;
+            overflow: hidden;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        .custom-modal.active {
+            display: flex;
+            animation: modalSlideIn 0.3s ease forwards;
+        }
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to   { opacity: 1; transform: scale(1)    translateY(0);    }
+        }
+        .custom-modal > form {
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+            overflow: hidden;
+        }
+        .custom-modal .modal-header {
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
+            flex-shrink: 0;
+        }
+        .custom-modal .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+        .custom-modal .modal-body::-webkit-scrollbar { width: 6px; }
+        .custom-modal .modal-body::-webkit-scrollbar-track { background: transparent; }
+        .custom-modal .modal-body::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 3px; }
+        .custom-modal .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 0 0 12px 12px;
+        }
+        .modal-close-btn {
+            background: none; border: none;
+            font-size: 1.5rem; cursor: pointer;
+            padding: 0; line-height: 1;
+            opacity: 0.8; transition: opacity 0.2s;
+        }
+        .modal-close-btn:hover { opacity: 1; }
 
-/* ==================== CUSTOM MODAL ==================== */
-.custom-modal {
-    display: none;
-    position: fixed;
-    background: white;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
-    z-index: 9999;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    max-height: 85vh;
-    overflow: hidden;
-    flex-direction: column;
-    transition: all 0.3s ease;
-}
-.custom-modal.active {
-    display: flex;
-    animation: modalSlideIn 0.3s ease forwards;
-}
+        /* ==================== ALERT ANIMATION ==================== */
+        .alert { animation: slideDown 0.5s ease-out; }
+        .alert.fade-out { animation: slideUp 0.4s ease-in forwards; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0);     }
+        }
+        @keyframes slideUp {
+            from { opacity: 1; transform: translateY(0);     }
+            to   { opacity: 0; transform: translateY(-20px); }
+        }
 
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95) translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-.custom-modal > form {
-    display: flex;
-    flex-direction: column;
-    max-height: 85vh;
-    overflow: hidden;
-}
-
-.custom-modal .modal-header {
-    padding: 16px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 12px 12px 0 0;
-    flex-shrink: 0;
-}
-
-.custom-modal .modal-body {
-    padding: 24px;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-}
-
-.custom-modal .modal-body::-webkit-scrollbar {
-    width: 6px;
-}
-.custom-modal .modal-body::-webkit-scrollbar-track {
-    background: transparent;
-}
-.custom-modal .modal-body::-webkit-scrollbar-thumb {
-    background-color: rgba(0,0,0,0.15);
-    border-radius: 3px;
-}
-.custom-modal .modal-body::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0,0,0,0.25);
-}
-
-.custom-modal .modal-footer {
-    padding: 16px 24px;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    flex-shrink: 0;
-    background: white;
-    border-radius: 0 0 12px 12px;
-}
-
-.modal-close-btn {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-}
-.modal-close-btn:hover {
-    opacity: 1;
-}
-/* ==================== ALERT ANIMATION ==================== */
-.alert {
-    animation: slideDown 0.5s ease-out;
-}
-.alert.fade-out {
-    animation: slideUp 0.4s ease-in forwards;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
         .library-icon {
-        width: 40px;
-        height: 40px;
-        object-fit: contain;
-        margin-right: 0px;
-        transition: transform 0.3s ease;
-    }
+            width: 40px; height: 40px;
+            object-fit: contain; margin-right: 0;
+            transition: transform 0.3s ease;
+        }
+        /* ── Workflow grouped layout ── */
+.wf-group { margin-bottom: 18px; }
+.wf-group:last-child { margin-bottom: 0; }
+
+.wf-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e3a5f;
+    color: white;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+}
+.wf-group-header i { font-size: 0.85rem; opacity: 0.85; }
+
+.wf-transition-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: #f8faff;
+    border: 1px solid #e8edf8;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+.wf-transition-row:last-child { margin-bottom: 0; }
+
+.wf-state {
+    background: white;
+    border: 1.5px solid #c7d2f5;
+    color: #1e3a5f;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.wf-arrow {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.wf-role {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #edfaf1;
+    color: #1a6e3c;
+    border: 1.5px solid #b2e5c8;
+    padding: 4px 13px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
     </style>
 </head>
 <body>
@@ -282,7 +410,6 @@
 
 <!-- Sidebar + Content -->
 <div class="d-flex">
-    <!-- Include Sidebar -->
     <div th:replace="~{common/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
@@ -291,9 +418,10 @@
         <!-- Breadcrumb -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h2 class="mb-1"><img src="/images/profile_black_fill.png"
-                                      class="library-icon"
-                                      alt="Document Library Icon"> User Profile</h2>
+                <h2 class="mb-1">
+                    <img src="/images/profile_black_fill.png" class="library-icon" alt="Profile Icon">
+                    User Profile
+                </h2>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item">
@@ -301,43 +429,40 @@
                                 <i class="bi bi-house me-1"></i> Home
                             </a>
                         </li>
-                        <li class="breadcrumb-item active"> User Profile</li>
+                        <li class="breadcrumb-item active">User Profile</li>
                     </ol>
                 </nav>
             </div>
         </div>
 
-        <!-- Success Message -->
+        <!-- Success / Error alerts -->
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
             <i class="bi bi-check-circle me-2"></i>
-            <strong>Success!</strong>
-            <span th:text="${success}"></span>
+            <strong>Success!</strong> <span th:text="${success}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-
-        <!-- Error Message -->
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-exclamation-triangle me-2"></i>
-            <strong>Error!</strong>
-            <span th:text="${error}"></span>
+            <strong>Error!</strong> <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-
         <div class="row">
-            <!-- Left Column - Profile Card -->
+
+            <!-- ===================== LEFT COLUMN ===================== -->
             <div class="col-md-4">
                 <div class="profile-card text-center">
                     <div class="profile-avatar">
-                        <span th:text="${#strings.substring(user.firstName, 0, 1) + #strings.substring(user.lastName, 0, 1)}">SA</span>
+                        <span th:text="${#strings.substring(user.firstName,0,1) + #strings.substring(user.lastName,0,1)}">SA</span>
                     </div>
                     <h3 th:text="${user.firstName + ' ' + user.lastName}">System Administrator</h3>
                     <p class="text-muted mb-3">
-                        <i class="bi bi-circle-fill text-success" style="font-size: 0.5rem;"></i>
+                        <i class="bi bi-circle-fill text-success" style="font-size:0.5rem;"></i>
                         <span th:text="${user.roleName}">Administrator</span>
                     </p>
                     <span class="role-badge"
-                          th:classappend="${user.roleName == 'Admin' ? 'role-admin' : (user.roleName == 'Manager' ? 'role-manager' : 'role-viewer')}"
+                          th:classappend="${user.roleName == 'Admin'   ? 'role-admin'   :
+                                          (user.roleName == 'Manager' ? 'role-manager' : 'role-viewer')}"
                           th:text="${user.roleName}">Administrator</span>
 
                     <div class="mt-4">
@@ -346,43 +471,51 @@
                             <span th:text="${user.email}">admin@company.com</span>
                         </p>
                     </div>
-                </div>
-            </div>
 
-            <!-- Right Column - Information Cards -->
-            <div class="col-md-8">
-                <!-- Personal Information -->
+                    <!-- Quick group count badge on the left card -->
+                    <div class="mt-3" th:if="${userGroups != null and !#lists.isEmpty(userGroups)}">
+                        <small class="text-muted">
+                            <i class="bi bi-people me-1"></i>
+                            Member of
+                            <strong th:text="${#lists.size(userGroups)}">0</strong>
+                            group<span th:if="${#lists.size(userGroups) != 1}">s</span>
+                        </small>
+                    </div>
+                </div>
+<!--            </div>-->
+
+            <!-- ===================== RIGHT COLUMN ===================== -->
+<!--            <div class="col-md-8">-->
+
+                <!-- ── Personal Information ── -->
                 <div class="profile-card">
                     <div class="section-title">
                         <i class="bi bi-person"></i> Personal Information
                     </div>
-
                     <div class="info-row">
                         <div class="info-label">Full Name</div>
                         <div class="info-value" th:text="${user.firstName + ' ' + user.lastName}">System Administrator</div>
                     </div>
-
                     <div class="info-row">
                         <div class="info-label">Email Address</div>
                         <div class="info-value" th:text="${user.email}">admin@company.com</div>
                     </div>
-
                     <div class="info-row">
                         <div class="info-label">User ID</div>
                         <div class="info-value" th:text="${user.username}">admin_001</div>
                     </div>
-
                     <div class="info-row">
                         <div class="info-label">Role</div>
                         <div class="info-value">
-                                <span class="role-badge"
-                                      th:classappend="${user.roleName == 'Admin' ? 'role-admin' : (user.roleName == 'Manager' ? 'role-manager' : 'role-viewer')}"
-                                      th:text="${user.roleName}">Administrator</span>
+                            <span class="role-badge"
+                                  th:classappend="${user.roleName == 'Admin'   ? 'role-admin'   :
+                                                  (user.roleName == 'Manager' ? 'role-manager' : 'role-viewer')}"
+                                  th:text="${user.roleName}">Administrator</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Account Security -->
+                <!-- ── Account Security ── -->
                 <div class="profile-card">
                     <div class="section-title">
                         <i class="bi bi-shield-lock"></i> Account Security
@@ -390,368 +523,437 @@
                             <i class="bi bi-key me-2"></i> Change Password
                         </button>
                     </div>
-
                     <div class="info-row">
                         <div class="info-label">Password</div>
                         <div class="info-value">••••••••••••</div>
                     </div>
                 </div>
 
-                <!-- Account Information -->
+                <!-- ── Account Information ── -->
                 <div class="profile-card">
                     <div class="section-title">
                         <i class="bi bi-calendar"></i> Account Information
                     </div>
-
                     <div class="info-row">
                         <div class="info-label">Account Created</div>
                         <div class="info-value" th:text="${user.createdAt != null ? user.createdAt : 'N/A'}">January 15, 2024</div>
                     </div>
-
                     <div class="info-row">
                         <div class="info-label">Created By</div>
                         <div class="info-value" th:text="${user.createdByUsername != null ? user.createdByUsername : 'System'}">System</div>
                     </div>
                 </div>
+
             </div>
-        </div>
-    </div>
+                <div class="col-md-8">
+                <!-- ── Group Access ── -->
+                <div class="profile-card">
+                    <div class="section-title">
+                        <i class="bi bi-people"></i> Group Access
+                        <span class="ms-auto badge rounded-pill"
+                              style="background-color:#e8f0fe; color:#1e3a5f; font-size:0.8rem; padding:5px 12px;"
+                              th:if="${userGroups != null and !#lists.isEmpty(userGroups)}"
+                              th:text="${#lists.size(userGroups) + ' group' + (#lists.size(userGroups) != 1 ? 's' : '')}">
+                            2 groups
+                        </span>
+                    </div>
 
+                    <!-- Has groups -->
+                    <div th:if="${userGroups != null and !#lists.isEmpty(userGroups)}">
+                        <div th:each="group : ${userGroups}" class="group-item">
+                            <div class="group-icon-box">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div>
+                                <div class="group-name" th:text="${group.groupName}">Group Name</div>
+                                <div class="group-desc"
+                                     th:text="${group.description != null and !#strings.isEmpty(group.description) ? group.description : 'No description'}">
+                                    Description
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No groups -->
+                    <div th:if="${userGroups == null or #lists.isEmpty(userGroups)}" class="empty-section">
+                        <i class="bi bi-people text-muted"></i>
+                        <span>No groups assigned to your account.</span>
+                    </div>
+                </div>
+
+                <!-- ── Document Types ── -->
+                <div class="profile-card">
+                    <div class="section-title">
+                        <i class="bi bi-diagram-3"></i> Document Types
+                        <span class="ms-auto badge rounded-pill"
+                              style="background-color:#e8f0fe; color:#1e3a5f; font-size:0.8rem; padding:5px 12px;"
+                              th:if="${userDocTypes != null and !#lists.isEmpty(userDocTypes)}"
+                              th:text="${#lists.size(userDocTypes) + ' type' + (#lists.size(userDocTypes) != 1 ? 's' : '')}">
+            3 types
+        </span>
+                    </div>
+
+                    <!-- Has types -->
+                    <div th:if="${userDocTypes != null and !#lists.isEmpty(userDocTypes)}"
+                         style="display:flex; flex-wrap:wrap; gap:10px; padding-top:4px;">
+                        <div th:each="dtype : ${userDocTypes}"
+                             style="display:inline-flex; align-items:center; gap:8px;
+                    background:#f0f4ff; border:1px solid #c7d2fe;
+                    border-radius:8px; padding:8px 16px;
+                    font-size:0.85rem; font-weight:600; color:#1e3a5f;">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <span th:text="${dtype}">Document Type</span>
+                        </div>
+                    </div>
+
+                    <!-- No types -->
+                    <div th:if="${userDocTypes == null or #lists.isEmpty(userDocTypes)}"
+                         class="empty-section">
+                        <i class="bi bi-diagram-3 text-muted"></i>
+                        <span>No document types accessible via your groups.</span>
+                    </div>
+                </div>
+
+                <!-- ── Workflow Transitions ── -->
+                <div class="profile-card">
+                    <div class="section-title">
+                        <i class="bi bi-diagram-3"></i> Workflow Transitions
+                        <span class="ms-auto badge rounded-pill"
+                              style="background-color:#e8f0fe; color:#1e3a5f; font-size:0.8rem; padding:5px 12px;"
+                              th:if="${userTransitions != null and !#lists.isEmpty(userTransitions)}"
+                              th:text="${#lists.size(userTransitions) + ' transition' + (#lists.size(userTransitions) != 1 ? 's' : '')}">
+        </span>
+                    </div>
+
+                    <div th:if="${userTransitions != null and !#lists.isEmpty(userTransitions)}">
+
+                        <!--
+                            Group by docTypeName client-side via JS since Thymeleaf
+                            doesn't have a native groupBy. Render all rows, JS will restructure.
+                        -->
+                        <div id="wfTransitionsRaw" style="display:none;">
+                            <div th:each="t : ${userTransitions}"
+                                 th:data-doctype="${t.docTypeName}"
+                                 th:data-from="${t.fromStateName}"
+                                 th:data-to="${t.toStateName}"
+                                 th:data-role="${t.roleName}"
+                                 class="wf-raw-row">
+                            </div>
+                        </div>
+
+                        <!-- Rendered grouped output -->
+                        <div id="wfTransitionsGrouped"></div>
+                    </div>
+
+                    <div th:if="${userTransitions == null or #lists.isEmpty(userTransitions)}"
+                         class="empty-section">
+                        <i class="bi bi-diagram-3 text-muted"></i>
+                        <span>No workflow transitions assigned to your account.</span>
+                    </div>
+                </div>
+
+            </div><!-- end col-md-8 -->
+        </div><!-- end row -->
+    </div><!-- end main-content -->
 </div>
-
 
 <!-- ==================== MODAL OVERLAY ==================== -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
 <!-- Change Password Modal -->
 <div class="custom-modal" id="changePasswordModal">
-            <form method="post" th:action="@{/profile/update}">
-                <div class="modal-header" style="background-color:#1e3a5f;color: white;">
-                    <h5 class="modal-title"><i class="bi bi-key me-2"></i>Change Password</h5>
-                    <button type="button" class="modal-close-btn" onclick="closeModal()" style="color:white;">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <!-- Hidden fields to maintain user data -->
-                    <input type="hidden" name="id" th:value="${user.id}">
-                    <input type="hidden" name="firstName" th:value="${user.firstName}">
-                    <input type="hidden" name="lastName" th:value="${user.lastName}">
-                    <input type="hidden" name="username" th:value="${user.username}">
-                    <input type="hidden" name="email" th:value="${user.email}">
-                    <input type="hidden" name="roleId" th:value="${user.roleId}">
-
-                    <div class="mb-3">
-                        <label for="currentPassword" class="form-label">Current Password</label>
-
-                        <!-- keep the base class in the normal class attribute and append conditionally -->
-                        <input type="password"
-                               id="currentPassword"
-                               name="currentPassword"
-                               class="form-control"
-                               th:classappend="${passwordError == 'current'} ? ' is-invalid' : ''"
-                               required>
-
-                        <!-- show this only when the backend sets passwordError == 'current' -->
-                        <div class="invalid-feedback" th:if="${passwordError == 'current'}">
-                            Current password is incorrect.
-                        </div>
-                    </div>
-
-
-
-                    <div class="mb-3">
-                        <label for="newPassword" class="form-label">New Password</label>
-                        <input type="password"
-                               class="form-control"
-                               id="newPassword"
-                               name="newPassword"
-                               required>
-                        <!-- Real-time validation error (JavaScript) -->
-                        <div id="newPasswordPolicyError" class="invalid-feedback" style="display: none;"></div>
-                        <!-- Backend validation error (Thymeleaf) -->
-                        <div class="invalid-feedback" th:if="${passwordError == 'policy'}">
-                            <span th:text="${error}">Password policy error</span>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
-
-                        <input type="password"
-                               id="confirmPassword"
-                               name="confirmPassword"
-                               class="form-control"
-                               oninput="validateConfirmPassword()">
-
-                        <div class="invalid-feedback" id="confirmPasswordError">
-                            New password and confirm password do not match.
-                        </div>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn btn-change-password">
-                        <i class="bi bi-check-circle me-2"></i>Update Password
-                    </button>
-                </div>
-            </form>
+    <form method="post" th:action="@{/profile/update}">
+        <div class="modal-header" style="background-color:#1e3a5f; color:white;">
+            <h5 class="modal-title"><i class="bi bi-key me-2"></i>Change Password</h5>
+            <button type="button" class="modal-close-btn" onclick="closeModal()" style="color:white;">&times;</button>
         </div>
-    </div>
+        <div class="modal-body">
+            <!-- Hidden fields to maintain user data -->
+            <input type="hidden" name="id"        th:value="${user.id}">
+            <input type="hidden" name="firstName"  th:value="${user.firstName}">
+            <input type="hidden" name="lastName"   th:value="${user.lastName}">
+            <input type="hidden" name="username"   th:value="${user.username}">
+            <input type="hidden" name="email"      th:value="${user.email}">
+            <input type="hidden" name="roleId"     th:value="${user.roleId}">
+
+            <div class="mb-3">
+                <label for="currentPassword" class="form-label">Current Password</label>
+                <input type="password"
+                       id="currentPassword" name="currentPassword"
+                       class="form-control"
+                       th:classappend="${passwordError == 'current'} ? ' is-invalid' : ''"
+                       required>
+                <div class="invalid-feedback" th:if="${passwordError == 'current'}">
+                    Current password is incorrect.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="newPassword" class="form-label">New Password</label>
+                <input type="password"
+                       class="form-control"
+                       id="newPassword" name="newPassword"
+                       required>
+                <div id="newPasswordPolicyError" class="invalid-feedback" style="display:none;"></div>
+                <div class="invalid-feedback" th:if="${passwordError == 'policy'}">
+                    <span th:text="${error}">Password policy error</span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                <input type="password"
+                       id="confirmPassword" name="confirmPassword"
+                       class="form-control"
+                       oninput="validateConfirmPassword()">
+                <div class="invalid-feedback" id="confirmPasswordError">
+                    New password and confirm password do not match.
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-change-password">
+                <i class="bi bi-check-circle me-2"></i>Update Password
+            </button>
+        </div>
+    </form>
 </div>
 
 <script src="/js/bootstrap.bundle.min.js"></script>
-
-<!-- Include Navbar JavaScript -->
 <div th:replace="~{common/navbar :: navbar-js}"></div>
 
 <script>
     // ==================== MODAL POSITIONING (sidebar-aware) ====================
-function centerModalToMainContent() {
-    const modal = document.getElementById('changePasswordModal');
-    const mainContent = document.querySelector('.main-content');
-    if (!modal || !mainContent) return;
-
-    const mainRect = mainContent.getBoundingClientRect();
-    const modalWidth = modal.offsetWidth;
-    const modalHeight = modal.offsetHeight;
-
-    const left = mainRect.left + (mainRect.width / 2) - (modalWidth / 2);
-    const top = Math.max(80, (window.innerHeight / 2) - (modalHeight / 2));
-
-    modal.style.left = `${left}px`;
-    modal.style.top = `${top}px`;
-}
-
-function openModal() {
-    const modal = document.getElementById('changePasswordModal');
-    const overlay = document.getElementById('modalOverlay');
-    if (!modal || !overlay) return;
-
-    // Step 1: Make visible but invisible to measure
-    modal.style.visibility = 'hidden';
-    modal.style.display = 'flex';
-
-    // Step 2: Position correctly while invisible
-    centerModalToMainContent();
-
-    // Step 3: Hide again
-    modal.style.display = '';
-    modal.style.visibility = '';
-
-    // Step 4: Show with animation at correct position
-    modal.classList.add('active');
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-    const modal = document.getElementById('changePasswordModal');
-    const overlay = document.getElementById('modalOverlay');
-
-    if (modal) {
-        modal.classList.remove('active');
-        modal.style.left = '';
-        modal.style.top = '';
+    function centerModalToMainContent() {
+        const modal = document.getElementById('changePasswordModal');
+        const mainContent = document.querySelector('.main-content');
+        if (!modal || !mainContent) return;
+        const mainRect  = mainContent.getBoundingClientRect();
+        const left = mainRect.left + (mainRect.width  / 2) - (modal.offsetWidth  / 2);
+        const top  = Math.max(80,   (window.innerHeight / 2) - (modal.offsetHeight / 2));
+        modal.style.left = `${left}px`;
+        modal.style.top  = `${top}px`;
     }
-    if (overlay) {
-        overlay.classList.remove('active');
-    }
-    document.body.style.overflow = '';
 
-    // Cleanup form errors
-    document.getElementById('newPassword')?.classList.remove('is-invalid');
-    const policyError = document.getElementById('newPasswordPolicyError');
-    if (policyError) policyError.style.display = 'none';
-    document.getElementById('confirmPassword')?.classList.remove('is-invalid');
-    const confirmError = document.getElementById('confirmPasswordError');
-    if (confirmError) confirmError.style.display = 'none';
-}
-
-// Re-center on window resize
-window.addEventListener('resize', function() {
-    const modal = document.getElementById('changePasswordModal');
-    if (modal && modal.classList.contains('active')) {
+    function openModal() {
+        const modal   = document.getElementById('changePasswordModal');
+        const overlay = document.getElementById('modalOverlay');
+        if (!modal || !overlay) return;
+        modal.style.visibility = 'hidden';
+        modal.style.display    = 'flex';
         centerModalToMainContent();
-    }
-});
-
-// Escape key closes modal
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeModal();
-});
-    // Password confirmation validation
-    document.querySelector('#changePasswordModal form')?.addEventListener('submit', function(e) {
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-
-        if (newPassword !== confirmPassword) {
-            e.preventDefault();
-            alert('New passwords do not match!');
-            return false;
-        }
-
-        if (newPassword.length < 1) {
-            e.preventDefault();
-            alert('Password must be at least 1 characters long!');
-            return false;
-        }
-    });
-    document.addEventListener("DOMContentLoaded", function () {
-        /* If backend sends an error flag, open modal automatically */
-       if ("[[${passwordError}]]" === "current" || "[[${passwordError}]]" === "mismatch" || "[[${passwordError}]]" === "policy") {
-    openModal();
-}
-        // Re-center on sidebar toggle
-const sidebarToggle = document.querySelector('[data-bs-toggle="offcanvas"]');
-if (sidebarToggle) {
-    sidebarToggle.addEventListener('click', function() {
-        setTimeout(() => {
-            const modal = document.getElementById('changePasswordModal');
-            if (modal && modal.classList.contains('active')) {
-                centerModalToMainContent();
-            }
-        }, 350);
-    });
-}
-
-// MutationObserver for sidebar
-const sidebar = document.querySelector('.sidebar, .offcanvas, [class*="sidebar"]');
-if (sidebar) {
-    const observer = new MutationObserver(function() {
-        setTimeout(() => {
-            const modal = document.getElementById('changePasswordModal');
-            if (modal && modal.classList.contains('active')) {
-                centerModalToMainContent();
-            }
-        }, 350);
-    });
-    observer.observe(sidebar, { attributes: true, attributeFilter: ['class', 'style'] });
-}
-    });
-
-    function validateConfirmPassword() {
-        const newPassword = document.getElementById("newPassword");
-        const confirmPassword = document.getElementById("confirmPassword");
-        const errorMsg = document.getElementById("confirmPasswordError");
-
-        if (confirmPassword.value !== newPassword.value) {
-            confirmPassword.classList.add("is-invalid");
-            errorMsg.style.display = "block";
-        } else {
-            confirmPassword.classList.remove("is-invalid");
-            errorMsg.style.display = "none";
-        }
+        modal.style.display    = '';
+        modal.style.visibility = '';
+        modal.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
+    function closeModal() {
+        const modal   = document.getElementById('changePasswordModal');
+        const overlay = document.getElementById('modalOverlay');
+        if (modal)   { modal.classList.remove('active'); modal.style.left = ''; modal.style.top = ''; }
+        if (overlay) { overlay.classList.remove('active'); }
+        document.body.style.overflow = '';
+        document.getElementById('newPassword')?.classList.remove('is-invalid');
+        const pe = document.getElementById('newPasswordPolicyError');
+        if (pe) pe.style.display = 'none';
+        document.getElementById('confirmPassword')?.classList.remove('is-invalid');
+        const ce = document.getElementById('confirmPasswordError');
+        if (ce) ce.style.display = 'none';
+    }
+
+    window.addEventListener('resize', () => {
+        const modal = document.getElementById('changePasswordModal');
+        if (modal && modal.classList.contains('active')) centerModalToMainContent();
+    });
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ==================== AUTO-OPEN MODAL ON BACKEND ERROR ====================
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Workflow transitions: grouped + collapsible ──────────────
+    const rawRows = document.querySelectorAll('.wf-raw-row');
+    if (rawRows.length) {
+        const groups = new Map();
+        rawRows.forEach(row => {
+            const dt   = row.dataset.doctype || 'Unknown';
+            const from = row.dataset.from    || '';
+            const to   = row.dataset.to      || '';
+            const role = row.dataset.role    || '';
+            if (!groups.has(dt)) groups.set(dt, []);
+            groups.get(dt).push({ from, to, role });
+        });
+
+        const container = document.getElementById('wfTransitionsGrouped');
+        if (container) {
+            let groupIndex = 0;
+            groups.forEach((transitions, docType) => {
+                const bodyId   = 'wfBody_' + groupIndex;
+                const arrowId  = 'wfArrow_' + groupIndex;
+                groupIndex++;
+
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'wf-group';
+
+                // Header — only down arrow, no transition count in header
+                groupDiv.innerHTML = `
+                    <div class="wf-group-header" style="cursor:pointer;"
+                         onclick="toggleWfGroup('${bodyId}','${arrowId}')">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>${escapeHtml(docType)}</span>
+                        <i id="${arrowId}" class="bi bi-chevron-down ms-auto"
+                           style="font-size:0.85rem; transition:transform 0.25s ease;"></i>
+                    </div>
+                    <div id="${bodyId}" style="display:none; padding-top:4px;"></div>`;
+
+                // Transition rows (hidden by default)
+                const body = groupDiv.querySelector('#' + bodyId);
+                transitions.forEach(t => {
+                    const row = document.createElement('div');
+                    row.className = 'wf-transition-row';
+                    row.innerHTML = `
+                        <span class="wf-state">${escapeHtml(t.from)}</span>
+                        <i class="bi bi-arrow-right wf-arrow"></i>
+                        <span class="wf-state">${escapeHtml(t.to)}</span>
+                        <span class="wf-role">
+                            <i class="bi bi-person-badge"></i>
+                            ${escapeHtml(t.role)}
+                        </span>`;
+                    body.appendChild(row);
+                });
+
+                container.appendChild(groupDiv);
+            });
+        }
+    }
+
+    // ── Auto-open modal on backend error ────────────────────────
+    const pwErr = /*[[${passwordError}]]*/ null;
+    if (pwErr === 'current' || pwErr === 'mismatch' || pwErr === 'policy') {
+        openModal();
+    }
+
+    // ── Sidebar re-centering ─────────────────────────────────────
+    const sidebarToggle = document.querySelector('[data-bs-toggle="offcanvas"]');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            setTimeout(() => {
+                const modal = document.getElementById('changePasswordModal');
+                if (modal && modal.classList.contains('active')) centerModalToMainContent();
+            }, 350);
+        });
+    }
+
+    // ── Auto-dismiss alerts ──────────────────────────────────────
+    document.querySelectorAll('.alert').forEach(alert => {
         setTimeout(() => {
             alert.classList.add('fade-out');
-            alert.addEventListener('animationend', () => {
-                alert.remove();
-            }, { once: true });
+            alert.addEventListener('animationend', () => alert.remove(), { once: true });
         }, 5000);
     });
 });
-// ==================== PASSWORD POLICY REAL-TIME VALIDATION FOR PROFILE ====================
-let profilePasswordPolicyCache = null;
 
-async function fetchProfilePasswordPolicy() {
-    if (profilePasswordPolicyCache !== null) {
-        return profilePasswordPolicyCache;
-    }
-    try {
-        const response = await fetch('/api/settings/password-policy');
-        if (response.ok) {
-            profilePasswordPolicyCache = await response.json();
-            console.log('✅ Password policy loaded for profile:', profilePasswordPolicyCache);
-            return profilePasswordPolicyCache;
+// ── Toggle collapse ───────────────────────────────────────────────
+function toggleWfGroup(bodyId, arrowId) {
+    const body  = document.getElementById(bodyId);
+    const arrow = document.getElementById(arrowId);
+    if (!body) return;
+    const isOpen = body.style.display !== 'none';
+    body.style.display  = isOpen ? 'none' : 'block';
+    if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g,
+        c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+
+    // ==================== CONFIRM PASSWORD VALIDATION ====================
+    function validateConfirmPassword() {
+        const newPw  = document.getElementById('newPassword');
+        const confPw = document.getElementById('confirmPassword');
+        const errMsg = document.getElementById('confirmPasswordError');
+        if (confPw.value !== newPw.value) {
+            confPw.classList.add('is-invalid');
+            errMsg.style.display = 'block';
+        } else {
+            confPw.classList.remove('is-invalid');
+            errMsg.style.display = 'none';
         }
-    } catch (error) {
-        console.error('❌ Error fetching password policy:', error);
     }
-    return null;
-}
 
-function validateProfilePasswordPolicy(password, policy) {
-    if (!policy || !policy.enforcePasswordPolicy) {
-        return { valid: true, errors: [] };
-    }
-    const errors = [];
-    if (policy.minPasswordLength && password.length < policy.minPasswordLength) {
-        errors.push(`Must be at least ${policy.minPasswordLength} characters`);
-    }
-    if (policy.requireUppercase && !/[A-Z]/.test(password)) {
-        errors.push('Must contain uppercase letter');
-    }
-    if (policy.requireLowercase && !/[a-z]/.test(password)) {
-        errors.push('Must contain lowercase letter');
-    }
-    if (policy.requireNumber && !/[0-9]/.test(password)) {
-        errors.push('Must contain number');
-    }
-    if (policy.requireSpecialChar && !/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password)) {
-        errors.push('Must contain special character');
-    }
-    return { valid: errors.length === 0, errors: errors };
-}
+    // ==================== PASSWORD POLICY REAL-TIME VALIDATION ====================
+    let profilePasswordPolicyCache = null;
 
-function showProfilePasswordErrors(errors) {
-    const input = document.getElementById('newPassword');
-    const errorDiv = document.getElementById('newPasswordPolicyError');
-    if (errors.length > 0) {
-        input.classList.add('is-invalid');
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = errors.join(', ');
-    } else {
-        input.classList.remove('is-invalid');
-        errorDiv.style.display = 'none';
-    }
-}
-
-// Real-time validation as user types
-document.getElementById('newPassword')?.addEventListener('input', async function() {
-    const password = this.value;
-    if (password.length === 0) {
-        showProfilePasswordErrors([]);
-        return;
-    }
-    const policy = await fetchProfilePasswordPolicy();
-    if (policy) {
-        const result = validateProfilePasswordPolicy(password, policy);
-        showProfilePasswordErrors(result.errors);
-    }
-});
-
-// Validate on form submit
-const profileForm = document.querySelector('#changePasswordModal form');
-if (profileForm) {
-    profileForm.addEventListener('submit', async function(e) {
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-
-        // Check password match first
-        if (newPassword !== confirmPassword) {
-            e.preventDefault();
-            alert('New passwords do not match!');
-            return false;
-        }
-
-        // Check password policy
-        const policy = await fetchProfilePasswordPolicy();
-        if (policy && policy.enforcePasswordPolicy) {
-            const result = validateProfilePasswordPolicy(newPassword, policy);
-            if (!result.valid) {
-                e.preventDefault();
-                showProfilePasswordErrors(result.errors);
-                alert('Please fix password policy errors');
-                return false;
+    async function fetchProfilePasswordPolicy() {
+        if (profilePasswordPolicyCache !== null) return profilePasswordPolicyCache;
+        try {
+            const res = await fetch('/api/settings/password-policy');
+            if (res.ok) {
+                profilePasswordPolicyCache = await res.json();
+                return profilePasswordPolicyCache;
             }
+        } catch (e) { console.error('Error fetching password policy:', e); }
+        return null;
+    }
+
+    function validateProfilePasswordPolicy(password, policy) {
+        if (!policy || !policy.enforcePasswordPolicy) return { valid: true, errors: [] };
+        const errors = [];
+        if (policy.minPasswordLength && password.length < policy.minPasswordLength)
+            errors.push(`Must be at least ${policy.minPasswordLength} characters`);
+        if (policy.requireUppercase && !/[A-Z]/.test(password))
+            errors.push('Must contain uppercase letter');
+        if (policy.requireLowercase && !/[a-z]/.test(password))
+            errors.push('Must contain lowercase letter');
+        if (policy.requireNumber && !/[0-9]/.test(password))
+            errors.push('Must contain number');
+        if (policy.requireSpecialChar && !/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password))
+            errors.push('Must contain special character');
+        return { valid: errors.length === 0, errors };
+    }
+
+    function showProfilePasswordErrors(errors) {
+        const input    = document.getElementById('newPassword');
+        const errorDiv = document.getElementById('newPasswordPolicyError');
+        if (errors.length > 0) {
+            input.classList.add('is-invalid');
+            errorDiv.style.display = 'block';
+            errorDiv.textContent   = errors.join(', ');
+        } else {
+            input.classList.remove('is-invalid');
+            errorDiv.style.display = 'none';
         }
+    }
+
+    document.getElementById('newPassword')?.addEventListener('input', async function () {
+        if (!this.value) { showProfilePasswordErrors([]); return; }
+        const policy = await fetchProfilePasswordPolicy();
+        if (policy) showProfilePasswordErrors(validateProfilePasswordPolicy(this.value, policy).errors);
     });
-}
 
-
+    const profileForm = document.querySelector('#changePasswordModal form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async function (e) {
+            const newPw  = document.getElementById('newPassword').value;
+            const confPw = document.getElementById('confirmPassword').value;
+            if (newPw !== confPw) { e.preventDefault(); alert('New passwords do not match!'); return false; }
+            const policy = await fetchProfilePasswordPolicy();
+            if (policy && policy.enforcePasswordPolicy) {
+                const result = validateProfilePasswordPolicy(newPw, policy);
+                if (!result.valid) {
+                    e.preventDefault();
+                    showProfilePasswordErrors(result.errors);
+                    alert('Please fix password policy errors');
+                    return false;
+                }
+            }
+        });
+    }
 </script>
 </body>
 </html>

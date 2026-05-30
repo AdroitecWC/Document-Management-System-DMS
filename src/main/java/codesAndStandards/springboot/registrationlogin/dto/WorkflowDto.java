@@ -33,6 +33,8 @@ public class WorkflowDto {
         public Long   userId;
         public String userName;
         public String userEmail;
+        public String workflowName;
+        public String docTypeName;
     }
 
     public static class TransitionInfo {

@@ -10,11 +10,12 @@
     <th:block th:replace="~{common/sidebar :: sidebar-styles}"></th:block>
     <style>
         body {
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-            padding-top: 70px;
-        }
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    padding-top: 70px;
+    overflow: hidden !important;
+}
 
         .search-box {
             background: white;
@@ -362,6 +363,34 @@
         margin-right: 0px;
         transition: transform 0.3s ease;
     }
+        .tags-scroll-area {
+    height: calc(100vh - 300px);
+    min-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.tags-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.tags-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+.tags-scroll-area::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 3px;
+}
+.tags-scroll-area::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0,0,0,0.25);
+}
+
+.main-content-tags {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    overflow: hidden;
+}
+
     </style>
 </head>
 <body>
@@ -377,7 +406,7 @@
     <div th:replace="~{common/sidebar :: sidebar}"></div>
 
     <!-- Main Content -->
-    <div class="main-content flex-grow-1 p-4">
+    <div class="main-content flex-grow-1 p-4 main-content-tags">
         <!-- Breadcrumb and Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -425,8 +454,11 @@
             </div>
         </div>
 
-        <!-- Loading Spinner -->
-        <div class="loading-spinner" id="loadingSpinner">
+        <!-- Scrollable Content Area -->
+        <div class="tags-scroll-area">
+
+            <!-- Loading Spinner -->
+            <div class="loading-spinner" id="loadingSpinner">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
@@ -450,6 +482,7 @@
                 <p class="text-muted mt-3 fs-5">No tags found.</p>
             </div>
         </div>
+        </div><!-- end tags-scroll-area -->
     </div>
 </div>
 
@@ -719,16 +752,18 @@ function hasPerm(perm) {
     });
 
     // Scroll to top button
-    const scrollTopBtn = document.getElementById("scrollTopBtn");
-    if (scrollTopBtn) {
-        window.onscroll = function() {
-            scrollTopBtn.style.display =
-                (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
-        };
-        scrollTopBtn.addEventListener("click", function() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
+   document.addEventListener('DOMContentLoaded', function() {
+        const scrollTopBtn = document.getElementById("scrollTopBtn");
+        const scrollArea = document.querySelector('.tags-scroll-area');
+        if (scrollTopBtn && scrollArea) {
+            scrollArea.addEventListener("scroll", function() {
+                scrollTopBtn.style.display = scrollArea.scrollTop > 200 ? "block" : "none";
+            });
+            scrollTopBtn.addEventListener("click", function() {
+                scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+    });
 
     // Apply role-based restrictions
     function applyRoleBasedRestrictions() {
@@ -1009,7 +1044,7 @@ function openCreateTagModal() {
     }
 
     // Save scroll position before DOM rebuild
-    const scrollPos = window.scrollY;
+   const scrollPos = document.querySelector('.tags-scroll-area')?.scrollTop || 0;
 
     try {
         const response = await fetch(`${API_BASE_URL}/${tagId}`, {
@@ -1029,7 +1064,7 @@ function openCreateTagModal() {
         showAlert('Tag updated successfully!', 'success');
 
         // Restore scroll position after DOM rebuild
-        requestAnimationFrame(() => window.scrollTo(0, scrollPos));
+       requestAnimationFrame(() => { const sa = document.querySelector('.tags-scroll-area'); if(sa) sa.scrollTop = scrollPos; });
 
     } catch (error) {
         errorEl.textContent = error.message || 'Failed to update tag.';
@@ -1041,7 +1076,7 @@ function openCreateTagModal() {
      if (!hasPerm('TAG_DELETE')) { showAlert('You do not have permission to delete tags.', 'danger'); closeModal('deleteModal'); return; }
 
     // Save scroll position before DOM rebuild
-    const scrollPos = window.scrollY;
+  const scrollPos = document.querySelector('.tags-scroll-area')?.scrollTop || 0;
 
     try {
         const response = await fetch(`${API_BASE_URL}/${deleteTagId}`, {
@@ -1060,7 +1095,7 @@ function openCreateTagModal() {
         await loadTags();
 
         // Restore scroll position after DOM rebuild
-        requestAnimationFrame(() => window.scrollTo(0, scrollPos));
+       requestAnimationFrame(() => { const sa = document.querySelector('.tags-scroll-area'); if(sa) sa.scrollTop = scrollPos; });
 
     } catch (error) {
         console.error('Error deleting tag:', error);

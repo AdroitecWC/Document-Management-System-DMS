@@ -10,4 +10,5 @@ public interface WorkflowService {
     WorkflowDto       create(WorkflowDto dto, String username);
     WorkflowDto       update(Long id, WorkflowDto dto, String username);
     void              delete(Long id);
+    List<WorkflowDto.TransitionInfo> getTransitionsByUser(Long userId);
 }

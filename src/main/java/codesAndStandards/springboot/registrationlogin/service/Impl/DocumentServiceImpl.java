@@ -41,6 +41,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentTagRepository documentTagRepository;
     private final DocumentClassificationRepository documentClassificationRepository;
     private final WorkflowRepository workflowRepository;
+    private final DocumentLifeCycleStateRepository documentLifeCycleStateRepository;
+    private final LifeCycleStateRepository lifecycleStateRepository;
 
     @Autowired
     private ApplicationSettingsService settingsService;
@@ -57,7 +59,9 @@ public class DocumentServiceImpl implements DocumentService {
                                DocumentTypeRepository documentTypeRepository,
                                DocumentTagRepository documentTagRepository,
                                DocumentClassificationRepository documentClassificationRepository,
-                               WorkflowRepository workflowRepository) {
+                               WorkflowRepository workflowRepository,
+                               DocumentLifeCycleStateRepository documentLifeCycleStateRepository,
+                               LifeCycleStateRepository lifecycleStateRepository) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.storedProcedureRepository = storedProcedureRepository;
@@ -68,8 +72,9 @@ public class DocumentServiceImpl implements DocumentService {
         this.documentTagRepository = documentTagRepository;
         this.documentClassificationRepository = documentClassificationRepository;
         this.workflowRepository = workflowRepository;
+        this.documentLifeCycleStateRepository = documentLifeCycleStateRepository;
+        this.lifecycleStateRepository = lifecycleStateRepository;
     }
-
     private String extractFileExtension(String fileName) {
         if (fileName == null || !fileName.contains(".")) return "";
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
@@ -375,12 +380,41 @@ public class DocumentServiceImpl implements DocumentService {
             dto.setDocTypeId(document.getDocumentType().getDocTypeId());
             dto.setDocTypeName(document.getDocumentType().getDocTypeName());
         }
-
         // Workflow name (null = no workflow assigned yet)
         dto.setWorkflowId(document.getWorkflowId());
         if (document.getWorkflowId() != null) {
             workflowRepository.findById(document.getWorkflowId())
                     .ifPresent(wf -> dto.setWorkflowName(wf.getWorkflowName()));
+        }
+
+        // Current lifecycle state — most recent entry in DocumentLifeCycleState
+        // Current lifecycle state — most recent entry in DocumentLifeCycleState
+        // Falls back to the workflow's initial state if no history entry exists yet
+        Optional<DocumentLifeCycleState> latestStateEntry =
+                documentLifeCycleStateRepository
+                        .findFirstByDocumentIdOrderByChangedAtDesc(document.getDocumentId());
+
+        if (latestStateEntry.isPresent()) {
+            // Has history — use the most recent state
+            LifeCycleState state = latestStateEntry.get().getState();
+            if (state != null) {
+                dto.setCurrentStateName(state.getStateName());
+                dto.setCurrentStateColor(state.getColor());
+            }
+        } else if (document.getWorkflowId() != null) {
+            // No history yet — find and show the initial (Start) state of the workflow
+            try {
+                documentLifeCycleStateRepository
+                        .findInitialStateIdForWorkflow(document.getWorkflowId())
+                        .flatMap(lifecycleStateRepository::findById)
+                        .ifPresent(state -> {
+                            dto.setCurrentStateName(state.getStateName());
+                            dto.setCurrentStateColor(state.getColor());
+                        });
+            } catch (Exception e) {
+                logger.warn("Could not resolve initial state for document {} workflow {}: {}",
+                        document.getDocumentId(), document.getWorkflowId(), e.getMessage());
+            }
         }
         // Uploader info
         if (document.getCreatedAt() != null) {
@@ -466,7 +500,44 @@ public class DocumentServiceImpl implements DocumentService {
                 .orElseThrow(() -> new RuntimeException("Document not found: " + documentId));
         doc.setWorkflowId(workflowId);
         documentRepository.save(doc);
+
+        // Insert the initial (Start) state into DocumentLifeCycleState
+        try {
+            documentLifeCycleStateRepository
+                    .findInitialStateIdForWorkflow(workflowId)
+                    .ifPresent(initialStateId -> {
+                        // Get current user from Security context
+                        Long changedByUserId = getCurrentUserId();
+
+                        DocumentLifeCycleState initialEntry = DocumentLifeCycleState.builder()
+                                .documentId(documentId)
+                                .state(new LifeCycleState(initialStateId))  // proxy reference  // proxy reference
+                                .changedAt(java.time.LocalDateTime.now())
+                                .changedBy(changedByUserId != null ? changedByUserId : 1L)
+                                .comments("Workflow assigned — initial state set automatically")
+                                .build();
+
+                        documentLifeCycleStateRepository.save(initialEntry);
+                        logger.info("Set initial state {} for document {} via workflow {}",
+                                initialStateId, documentId, workflowId);
+                    });
+        } catch (Exception e) {
+            logger.warn("Could not set initial state for document {}: {}", documentId, e.getMessage());
+        }
+
         logger.info("Assigned workflow {} to document {}", workflowId, documentId);
+    }
+
+    /** Gets the current authenticated user's ID from Spring Security context. */
+    private Long getCurrentUserId() {
+        try {
+            String username = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication().getName();
+            User user = userRepository.findByUsername(username);
+            return user != null ? user.getUserId() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Override
